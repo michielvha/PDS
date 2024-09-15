@@ -10,8 +10,24 @@ tooling I require
 - pycharm
 - git
 - az cli
-- kubernetes tools
+- kubernetes tools ( helm / )
+- terraform
 
+## windows specific
 binaries installed in sys directory and added to path
+- grep on windows
 
-various tweaks in registry for windows
+
+various tweaks in registry
+
+- numlock on by default
+- backlit keyboard on by default if available
+
+## Linux Specific
+
+set locale
+
+
+### future enhancements:
+
+- sync shell history across all devices
