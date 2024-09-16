@@ -33,7 +33,7 @@ jobs:
       # Step 3: Install and Import PS2EXE module
       - name: Install and Import PS2EXE module
         run: |
-          Install-Module -Name PS2EXE -Scope CurrentUser -Force -AllowClobber
+          Install-Module -Name PS2EXE -Force -AllowClobber
           Import-Module PS2EXE
         shell: pwsh
 
@@ -52,6 +52,8 @@ jobs:
       # Step 6: Package the PowerShell script into an executable using the GitVersion output
       - name: Package PowerShell script into EXE
         run: |
+          Install-Module -Name PS2EXE -Force -AllowClobber
+          Import-Module PS2EXE
           ps2exe -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe"
         shell: pwsh
 
