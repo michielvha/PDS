@@ -3,10 +3,10 @@ name: Package PowerShell Script
 on:
   push:
     paths:
-      - 'pwsh/**'  # Trigger the workflow only when changes are made in the pwsh folder
+      - 'pwsh/**'
   pull_request:
     paths:
-      - 'pwsh/**'  # Trigger the workflow only for PRs involving changes in the pwsh folder
+      - 'pwsh/**'
 
 jobs:
   build:
@@ -16,34 +16,46 @@ jobs:
       # Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # To fetch all tags
 
-      # Step 2: Install the PS2EXE module
-      - name: Install PS2EXE module
+      # Step 2: Get the latest semantic version tag
+      - name: Get latest tag
+        id: get_tag
         run: |
-          Install-Module -Name PS2EXE -Scope CurrentUser -Force
+          latestTag=$(git describe --tags --abbrev=0)
+          echo "Latest tag: $latestTag"
+          echo "##[set-output name=tag;$latestTag]"
+        shell: bash
+
+      # Step 3: Install and Import PS2EXE module
+      - name: Install and Import PS2EXE module
+        run: |
+          Install-Module -Name PS2EXE -Scope CurrentUser -Force -AllowClobber
+          Import-Module PS2EXE
         shell: pwsh
 
-      # Step 3: Create output directory for the exe file
+      # Step 4: Create output directory for the exe file
       - name: Create output directory
         run: |
           mkdir $env:GITHUB_WORKSPACE\output
         shell: pwsh
 
-      # Step 4: Copy the pwsh directory to the output directory
+      # Step 5: Copy the pwsh directory to the output directory
       - name: Copy scripts to output directory
         run: |
           Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
         shell: pwsh
 
-      # Step 5: Package the PowerShell script into an executable
+      # Step 6: Package the PowerShell script into an executable
       - name: Package PowerShell script into EXE
         run: |
-          Invoke-PS2EXE -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS.exe"
+          Invoke-PS2EXE -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.get_tag.outputs.tag }}.exe"
         shell: pwsh
 
-      # Step 6: Upload the executable as an artifact
+      # Step 7: Upload the executable as a versioned artifact
       - name: Upload packaged EXE
         uses: actions/upload-artifact@v3
         with:
-          name: packaged-script
-          path: ${{ github.workspace }}/output/PDS.exe
+          name: "packaged-script-${{ steps.get_tag.outputs.tag }}"
+          path: ${{ github.workspace }}/output/PDS-${{ steps.get_tag.outputs.tag }}.exe
