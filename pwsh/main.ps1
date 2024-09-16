@@ -11,6 +11,7 @@ choco install nmap `
               pycharm-community `
               angryip `                 # fast port scans ?
               unxutils `                # a bunch of common unix utils like grep etc (look into overwriting aliases)
+             # raspberry pi imager / rufus
 
 
 # te
