@@ -25,6 +25,11 @@ jobs:
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
+      - name: Set PowerShell Execution Policy
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+        shell: pwsh
+
       # Step 3: Install and Import PS2EXE module
       - name: Install and Import PS2EXE module
         run: |
