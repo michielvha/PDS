@@ -13,7 +13,7 @@ choco install nmap `
               unxutils `                # a bunch of common unix utils like grep etc (look into overwriting aliases)
 
 
-
+# test
 
 
 # once azure cli is installed use it to install kubectl
