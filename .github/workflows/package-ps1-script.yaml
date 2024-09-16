@@ -47,7 +47,7 @@ jobs:
       # Step 6: Package the PowerShell script into an executable using the GitVersion output
       - name: Package PowerShell script into EXE
         run: |
-          Invoke-PS2EXE -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe"
+          ps2exe -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe"
         shell: pwsh
 
       # Step 7: Upload the executable as a versioned artifact
