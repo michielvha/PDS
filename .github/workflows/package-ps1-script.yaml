@@ -1,4 +1,4 @@
-name: Package PowerShell Script
+name: Package PowerShell Script with GitVersion
 
 on:
   push:
@@ -13,20 +13,17 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Step 1: Checkout the repository
+      # Step 1: Checkout the repository with full history and tags
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # To fetch all tags
+          fetch-depth: 0  # Fetch all history to use GitVersion
 
-      # Step 2: Get the latest semantic version tag
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          latestTag=$(git describe --tags --abbrev=0)
-          echo "Latest tag: $latestTag"
-          echo "##[set-output name=tag;$latestTag]"
-        shell: bash
+      # Step 2: Call your custom GitVersion action to tag the version
+      - name: Tag with GitVersion
+        uses: MKTHEPLUGG/gitversion-tag-action@v1
+        with:
+          configFilePath: gitversion.yml  # Path to your GitVersion config file
 
       # Step 3: Install and Import PS2EXE module
       - name: Install and Import PS2EXE module
@@ -47,15 +44,15 @@ jobs:
           Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
         shell: pwsh
 
-      # Step 6: Package the PowerShell script into an executable
+      # Step 6: Package the PowerShell script into an executable using the GitVersion output
       - name: Package PowerShell script into EXE
         run: |
-          Invoke-PS2EXE -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.get_tag.outputs.tag }}.exe"
+          Invoke-PS2EXE -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe"
         shell: pwsh
 
       # Step 7: Upload the executable as a versioned artifact
       - name: Upload packaged EXE
         uses: actions/upload-artifact@v3
         with:
-          name: "packaged-script-${{ steps.get_tag.outputs.tag }}"
-          path: ${{ github.workspace }}/output/PDS-${{ steps.get_tag.outputs.tag }}.exe
+          name: "packaged-script-${{ steps.gitversion.outputs.semVer }}"
+          path: ${{ github.workspace }}/output/PDS-${{ steps.gitversion.outputs.semVer }}.exe
