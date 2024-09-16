@@ -15,6 +15,7 @@ choco install nmap `
 
 
 
+
 # once azure cli is installed use it to install kubectl
 
 # shell customizations with the startship and config file thing
