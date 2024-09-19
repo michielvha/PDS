@@ -25,6 +25,7 @@ various tweaks in registry
 
 ## Linux Specific
 
+configure ohmyzsh with history
 set locale
 
 
