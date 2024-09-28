@@ -12,16 +12,19 @@ tooling I require
 - az cli
 - kubernetes tools ( helm / )
 - terraform
+- wireguard client
 
 ## windows specific
 binaries installed in sys directory and added to path
 - grep on windows
+- cat on windows
+- starship + ps readline config
 
 
 various tweaks in registry
 
 - numlock on by default
-- backlit keyboard on by default if available
+- backlit keyboard on by default if available => seems to be controlled by bios
 
 ## Linux Specific
 
