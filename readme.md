@@ -18,6 +18,8 @@ tooling I require
 binaries installed in sys directory and added to path
 - grep on windows
 - cat on windows
+
+shell config
 - starship + ps readline config
 
 
