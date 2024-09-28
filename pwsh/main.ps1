@@ -4,14 +4,19 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 
 # close and reopen shell if needed
 
-choco install nmap `
-              git `
-              azure-cli `
-              terraform `
-              pycharm-community `
-              angryip `                 # fast port scans ?
-              unxutils `                # a bunch of common unix utils like grep etc (look into overwriting aliases)
-             # raspberry pi imager / rufus
+#choco install nmap `
+#              git `
+#              azure-cli `
+#              terraform `
+#              pycharm-community `
+#              angryip `                 # fast port scans ?
+#              unxutils `                # a bunch of common unix utils like grep etc (look into overwriting aliases)
+#             # raspberry pi imager / rufus
+
+# Read the file and install each package
+Get-Content ".\packages.env" | ForEach-Object {
+    choco install $_ -y
+}
 
 
 # te
