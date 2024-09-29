@@ -79,7 +79,4 @@ az aks install-cli
 # => Figure out a way to copy default config to all users files
 
 # 4. package with cicd pipeline into exe that can easily be ran as admin
-
 # 5. Add logging and error handeling.
-
-# function check to put in seperate module
