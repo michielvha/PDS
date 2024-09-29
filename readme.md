@@ -25,7 +25,7 @@ tooling I require
 
 ## windows specific
 
-debloat windows by using this [script](https://github.com/Raphire/Win11Debloat/tree/master) define which options and settings you want to set
+**next steps: debloat windows by using this [script](https://github.com/Raphire/Win11Debloat/tree/master) define which options and settings you want to set**
 
 binaries installed in sys directory and added to path
 - grep on windows

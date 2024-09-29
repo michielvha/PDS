@@ -12,7 +12,7 @@ else {
 }
 
 # Import the required Functions from src
-Import-Module -Name "$scriptPath\src\Functions\Functions.psd1"
+# Import-Module -Name "$scriptPath\src\Functions\Functions.psd1"
 
 # Check if already installed before installing chocolatey
 $chocoVersion = choco --version 2>$null
@@ -43,6 +43,56 @@ Install-Kubectl
 
 
 
+# Define an array of package names
+$packagesToInstall = @(
+    "nmap",
+    "git",
+    "azure-cli",
+    "terraform",
+    "pycharm-community",
+    "angryip",
+    "unxutils",
+    "mobaxterm",
+    "starship",
+    "rpi-imager",
+    "openlens",
+    "grep"
+)
+
+# Function to install the packages (same as before)
+function Install-ChocoPackagesFromFile {
+    param (
+        [string[]]$packagesToInstall  # Change to accept an array
+    )
+
+    Write-Host "The following packages will be installed if not already present:"
+    $packagesToInstall
+
+    foreach ($packageName in $packagesToInstall) {
+        Write-Host "`nAttempting to install $packageName..."
+        choco install $packageName -y
+    }
+}
+
+# Call the function and pass the array directly
+Install-ChocoPackagesFromFile -packagesToInstall $packagesToInstall
 
 
-start-sleep 50
+function Set-PSReadLineModule {
+    # Define the commands you want to append to the profile
+$commands = @"
+Install-Module -Name PSReadLine -Force -SkipPublisherCheck
+Import-Module -Name PSReadLine
+Invoke-Expression (&starship init powershell)
+Set-PSReadLineOption -PredictionViewStyle ListView
+"@
+
+# Append the commands to the global profile using tee
+$commands | Out-File -Append -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
+
+}
+
+function Install-Kubectl {
+    # using azure cli to auto configure kubectl / kubelogin etc
+    az aks install-cli
+}

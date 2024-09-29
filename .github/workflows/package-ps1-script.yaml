@@ -1,8 +1,7 @@
-name: Package PowerShell Script with GitVersion
+# reference
+# https://stackoverflow.com/questions/75008756/running-ps2exe-in-github-actions
 
-permissions:
-  id-token: write
-  contents: write
+name: Package PowerShell Script with GitVersion
 
 on:
   push:
@@ -22,12 +21,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch all history to use GitVersion
-          persist-credentials: true
 
-      # Step 2: Call my custom GitVersion action to tag the version
+      # Step 2: Call your custom GitVersion action to tag the version
       - name: Tag with GitVersion
-        id: gitversion  # Add an ID to reference later
-        uses: MKTHEPLUGG/gitversion-tag-action@v2
+        uses: MKTHEPLUGG/gitversion-tag-action@v1
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
@@ -44,83 +41,21 @@ jobs:
           mkdir $env:GITHUB_WORKSPACE\output
         shell: powershell
 
-      # Step 5: Package the PowerShell script and other resources into an executable
-      - name: Package PowerShell script into EXE
+      # Step 5: Copy the pwsh directory to the output directory
+      - name: Copy scripts to output directory
         run: |
-          ps2exe -InputFile "$env:GITHUB_WORKSPACE\pwsh\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe" -Resource "$env:GITHUB_WORKSPACE\pwsh\*"
+          Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
         shell: powershell
 
-      # Step 6: Upload the executable as a versioned artifact
+      # Step 6: Package the PowerShell script into an executable using the GitVersion output
+      - name: Package PowerShell script into EXE
+        run: |
+          ps2exe -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe"
+        shell: powershell
+
+      # Step 7: Upload the executable as a versioned artifact
       - name: Upload packaged EXE
         uses: actions/upload-artifact@v4
         with:
           name: "packaged-script-${{ steps.gitversion.outputs.semVer }}"
           path: ${{ github.workspace }}/output/PDS-${{ steps.gitversion.outputs.semVer }}.exe
-
-
-# reference
-# https://stackoverflow.com/questions/75008756/running-ps2exe-in-github-actions
-
-#name: Package PowerShell Script with GitVersion
-#
-#on:
-#  push:
-#    paths:
-#      - 'pwsh/**'
-#  pull_request:
-#    paths:
-#      - 'pwsh/**'
-#
-#jobs:
-#  build:
-#    runs-on: windows-latest
-#
-#    steps:
-#      # Step 1: Checkout the repository with full history and tags
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0  # Fetch all history to use GitVersion
-#
-#      # Step 2: Call your custom GitVersion action to tag the version
-#      - name: Tag with GitVersion
-#        uses: MKTHEPLUGG/gitversion-tag-action@v1
-#        with:
-#          configFilePath: gitversion.yml  # Path to your GitVersion config file
-#
-##      - name: Set PowerShell Execution Policy
-##        run: |
-##          Set-ExecutionPolicy Bypass -Scope Process -Force
-##        shell: pwsh
-#
-#      # Step 3: Install and Import PS2EXE module
-#      - name: Install and Import PS2EXE module
-#        run: |
-#          Install-Module -Name PS2EXE -Force -AllowClobber
-#          Import-Module PS2EXE
-#        shell: powershell
-#
-#      # Step 4: Create output directory for the exe file
-#      - name: Create output directory
-#        run: |
-#          mkdir $env:GITHUB_WORKSPACE\output
-#        shell: powershell
-#
-#      # Step 5: Copy the pwsh directory to the output directory
-#      - name: Copy scripts to output directory
-#        run: |
-#          Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
-#        shell: powershell
-#
-#      # Step 6: Package the PowerShell script into an executable using the GitVersion output
-#      - name: Package PowerShell script into EXE
-#        run: |
-#          ps2exe -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe"
-#        shell: powershell
-#
-#      # Step 7: Upload the executable as a versioned artifact
-#      - name: Upload packaged EXE
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: "packaged-script-${{ steps.gitversion.outputs.semVer }}"
-#          path: ${{ github.workspace }}/output/PDS-${{ steps.gitversion.outputs.semVer }}.exe
