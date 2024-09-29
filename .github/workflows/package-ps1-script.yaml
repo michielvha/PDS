@@ -35,25 +35,25 @@ jobs:
         run: |
           Install-Module -Name PS2EXE -Force -AllowClobber
           Import-Module PS2EXE
-        shell: pwsh
+        shell: powershell
 
       # Step 4: Create output directory for the exe file
       - name: Create output directory
         run: |
           mkdir $env:GITHUB_WORKSPACE\output
-        shell: pwsh
+        shell: powershell
 
       # Step 5: Copy the pwsh directory to the output directory
       - name: Copy scripts to output directory
         run: |
           Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
-        shell: pwsh
+        shell: powershell
 
       # Step 6: Package the PowerShell script into an executable using the GitVersion output
       - name: Package PowerShell script into EXE
         run: |
           ps2exe -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe"
-        shell: pwsh
+        shell: powershell
 
       # Step 7: Upload the executable as a versioned artifact
       - name: Upload packaged EXE
