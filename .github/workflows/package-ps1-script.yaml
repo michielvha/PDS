@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history to use GitVersion
 
-      # Step 2: Call your custom GitVersion action to tag the version
+      # Step 2: Call my custom GitVersion action to tag the version
       - name: Tag with GitVersion
         id: gitversion  # Add an ID to reference later
         uses: MKTHEPLUGG/gitversion-tag-action@v1
