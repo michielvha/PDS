@@ -25,9 +25,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch all history to use GitVersion
+          persist-credentials: true
 
       # Step 2: Call your custom GitVersion action to tag the version
       - name: Tag with GitVersion
+        id: gitversion
         uses: MKTHEPLUGG/gitversion-tag-action@v2
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
