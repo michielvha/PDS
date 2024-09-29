@@ -28,6 +28,7 @@ if (!$chocoVersion) {
 Install-ChocoPackagesFromFile -packageFilePath "$ScriptPath\packages.env"
 
 # configure psreadline module for all users
+# https://www.powershellgallery.com/packages/PSReadLine/2.2.6
 Set-PSReadLineModule
 
 # Use azure cli to configure kubectl / kubelogin

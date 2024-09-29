@@ -48,17 +48,18 @@ jobs:
       # Step 6: Package the PowerShell script into an executable using the GitVersion output
       - name: Package PowerShell script into EXE
         run: |
-          ps2exe -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-$(${{ steps.gitversion.outputs.semVer }}).exe"
+          ps2exe -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS.exe"
         shell: powershell
 
       # Step 7: Upload the executable as a versioned artifact
       - name: Upload packaged EXE
         uses: actions/upload-artifact@v4
         with:
-          name: "packaged-script-${{ steps.gitversion.outputs.semVer }}"
-          path: ${{ github.workspace }}/output/PDS-${{ steps.gitversion.outputs.semVer }}.exe
+          name: "packaged-script"
+          path: ${{ github.workspace }}/output/PDS.exe
 
-
+# reference
+# https://stackoverflow.com/questions/75008756/running-ps2exe-in-github-actions
 
 #name: Package PowerShell Script with GitVersion
 #
