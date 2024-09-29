@@ -23,7 +23,6 @@ if (!$chocoVersion) {
  Write-Output "Chocolatey is already installed. Version: $chocoVersion"
 }
 
-
 # install all the packages in the .env file, adjust as required
 Install-ChocoPackagesFromFile -packageFilePath "$ScriptPath\packages.env"
 

@@ -47,7 +47,7 @@ jobs:
       # Step 5: Package the PowerShell script and other resources into an executable
       - name: Package PowerShell script into EXE
         run: |
-          ps2exe -InputFile "$env:GITHUB_WORKSPACE\pwsh\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe" -iconPath "icon.ico" -Resource "$env:GITHUB_WORKSPACE\pwsh\*"
+          ps2exe -InputFile "$env:GITHUB_WORKSPACE\pwsh\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe" -Resource "$env:GITHUB_WORKSPACE\pwsh\*"
         shell: powershell
 
       # Step 6: Upload the executable as a versioned artifact
