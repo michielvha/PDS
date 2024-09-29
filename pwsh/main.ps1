@@ -28,6 +28,8 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 
 # function check to put in seperate module
 
+
+
 function Install-ChocoPackagesFromFile {
     param (
         [string]$packageFilePath
@@ -39,24 +41,43 @@ function Install-ChocoPackagesFromFile {
         return
     }
 
-    # Read all package names from the file
-    $packages = Get-Content -Path $packageFilePath
+    # Get all installed package names (fetch the list of installed packages and extract only the names, skipping empty lines, lines starting with two numbers, a number followed by whitespace, or a hyphen)
+    $installedPackages = choco list -i | ForEach-Object {
+        $line = ($_ -split '\|')[0].Trim()  # Split on '|' and take the package name part, trimming spaces
+
+        # Filter out any empty or whitespace lines and lines that start with two numbers, a number followed by whitespace, or a hyphen
+        if (-not [string]::IsNullOrWhiteSpace($line) -and $line -notmatch '^\d{2}' -and $line -notmatch '^\d\s' -and $line -notmatch '^-') {
+            $line
+        }
+    }
+
+
+
+    # Convert installed packages to an array for easy lookup
+    $installedPackagesList = $installedPackages | Sort-Object
+    write-host "these packages are already installed:"
+    $installedPackagesList
+
+
+
+    # Read all package names from the file (packages you want to install)
+    $packagesToInstall = Get-Content -Path $packageFilePath
+    write-host "the following packages will be checked:"
+    $packagesToInstall
+
+    # works till here, now properly check packages against each other and install
 
     # Loop through each package and check if it is installed
-    foreach ($packageName in $packages) {
-        if (-Not [string]::IsNullOrWhiteSpace($packageName)) {
-            $packageName = $packageName.Trim()
-            $installedPackages = choco list -l
-
-            if ($installedPackages -match $packageName) {
-                Write-Host "$packageName is already installed."
-            } else {
-                Write-Host "$packageName is not installed. Installing..."
-                choco install $packageName -y
-            }
+    foreach ($packageName in $packagesToInstall) {
+        if ($installedPackagesList -contains $packageName) {
+            Write-Host "$packageName is already installed."
+        } else {
+            Write-Host "$packageName is not installed. Installing..."
+            choco install $packageName -y
         }
     }
 }
 
+# Example usage of the function
 Install-ChocoPackagesFromFile -packageFilePath ".\packages.env"
 
