@@ -76,6 +76,7 @@ Set-PSReadLineModule
 az aks install-cli
 
 # 3. shell customizations with the startship and config file thing
+# => Figure out a way to copy default config to all users files
 
 # 4. package with cicd pipeline into exe that can easily be ran as admin
 
