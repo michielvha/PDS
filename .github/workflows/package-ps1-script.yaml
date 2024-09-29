@@ -3,6 +3,10 @@
 
 name: Package PowerShell Script with GitVersion
 
+permissions:
+  id-token: write
+  contents: write
+
 on:
   push:
     paths:
