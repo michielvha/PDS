@@ -14,8 +14,7 @@ else {
 # Import the required Functions from src
 Import-Module -Name "$scriptPath\src\Functions\Functions.psd1"
 
-# Install Chocolatey
-# TODO: check before trying to install
+# Check if already installed before installing chocolatey
 $chocoVersion = choco --version 2>$null
 if (!$chocoVersion) {
  Write-Output "Chocolatey will be installed"
@@ -24,11 +23,14 @@ if (!$chocoVersion) {
  Write-Output "Chocolatey is already installed. Version: $chocoVersion"
 }
 
-# close and reopen shell if needed
+# install all the packages in the .env file, adjust as required
+Install-ChocoPackagesFromFile -packageFilePath "$ScriptPath\packages.env"
 
+# configure psreadline module for all users
+Set-PSReadLineModule
 
-
-# 2. once azure cli is installed use it to install kubectl
+# Use azure cli to configure kubectl / kubelogin
+Install-Kubectl
 
 # 3. shell customizations with the startship and config file thing
 
@@ -39,7 +41,7 @@ if (!$chocoVersion) {
 # function check to put in seperate module
 
 
-# Example usage of the function
-Install-ChocoPackagesFromFile -packageFilePath "$ScriptPath\packages.env"
+
+
 
 start-sleep 50
