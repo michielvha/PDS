@@ -16,13 +16,13 @@ Import-Module -Name "$scriptPath\src\Functions\Functions.psd1"
 
 # Install Chocolatey
 # TODO: check before trying to install
- $chocoVersion = choco --version 2>$null
- if (!$chocoVersion) {
-     Write-Output "Chocolatey will be installed"
-     Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
- } else {
-     Write-Output "Chocolatey is already installed. Version: $chocoVersion"
- }
+$chocoVersion = choco --version 2>$null
+if (!$chocoVersion) {
+ Write-Output "Chocolatey will be installed"
+ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+} else {
+ Write-Output "Chocolatey is already installed. Version: $chocoVersion"
+}
 
 # close and reopen shell if needed
 
