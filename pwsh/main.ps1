@@ -1,30 +1,17 @@
 # install chocolatey package manager
 
+# check before trying to install
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
 # close and reopen shell if needed
 
-#choco install nmap `
-#              git `
-#              azure-cli `
-#              terraform `
-#              pycharm-community `
-#              angryip `                 # fast port scans ?
-#              unxutils `                # a bunch of common unix utils like grep etc (look into overwriting aliases)
-#             # raspberry pi imager / rufus
-
-# Read the file and install each package
-# Get-Content ".\packages.env" | ForEach-Object {
-#    choco install $_ -y
-#}
 
 
-# te
+# 2. once azure cli is installed use it to install kubectl
 
+# 3. shell customizations with the startship and config file thing
 
-# once azure cli is installed use it to install kubectl
-
-# shell customizations with the startship and config file thing
+# 4. package with cicd pipeline into exe that can easily be ran as admin
 
 # function check to put in seperate module
 
@@ -67,12 +54,22 @@ function Install-ChocoPackagesFromFile {
 
     # works till here, now properly check packages against each other and install
 
-    # Loop through each package and check if it is installed
+    # Loop through each package in the file
     foreach ($packageName in $packagesToInstall) {
-        if ($installedPackagesList -contains $packageName) {
-            Write-Host "$packageName is already installed."
+        # Check if the package is installed by comparing with each installed package
+        $isInstalled = $false
+        foreach ($installedPackage in $installedPackagesList) {
+            if ($installedPackage -like $packageName) {
+                write-host $installedPackage
+                $isInstalled = $true
+                break  # Exit inner loop as we found a match
+            }
+        }
+
+        if ($isInstalled) {
+            Write-Host "`n$packageName is already installed."
         } else {
-            Write-Host "$packageName is not installed. Installing..."
+            Write-Host "`n$packageName is not installed. Installing..."
             choco install $packageName -y
         }
     }
