@@ -14,9 +14,9 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 #             # raspberry pi imager / rufus
 
 # Read the file and install each package
-Get-Content ".\packages.env" | ForEach-Object {
-    choco install $_ -y
-}
+# Get-Content ".\packages.env" | ForEach-Object {
+#    choco install $_ -y
+#}
 
 
 # te
@@ -25,3 +25,38 @@ Get-Content ".\packages.env" | ForEach-Object {
 # once azure cli is installed use it to install kubectl
 
 # shell customizations with the startship and config file thing
+
+# function check to put in seperate module
+
+function Install-ChocoPackagesFromFile {
+    param (
+        [string]$packageFilePath
+    )
+
+    # Check if the file exists
+    if (-Not (Test-Path $packageFilePath)) {
+        Write-Host "The file $packageFilePath does not exist."
+        return
+    }
+
+    # Read all package names from the file
+    $packages = Get-Content -Path $packageFilePath
+
+    # Loop through each package and check if it is installed
+    foreach ($packageName in $packages) {
+        if (-Not [string]::IsNullOrWhiteSpace($packageName)) {
+            $packageName = $packageName.Trim()
+            $installedPackages = choco list -l
+
+            if ($installedPackages -match $packageName) {
+                Write-Host "$packageName is already installed."
+            } else {
+                Write-Host "$packageName is not installed. Installing..."
+                choco install $packageName -y
+            }
+        }
+    }
+}
+
+Install-ChocoPackagesFromFile -packageFilePath ".\packages.env"
+
