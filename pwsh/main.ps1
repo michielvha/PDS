@@ -24,6 +24,7 @@ if (!$chocoVersion) {
 }
 
 
+
 # install all the packages in the .env file, adjust as required
 Install-ChocoPackagesFromFile -packageFilePath "$ScriptPath\packages.env"
 

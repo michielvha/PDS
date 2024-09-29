@@ -27,7 +27,7 @@ jobs:
       # Step 2: Call my custom GitVersion action to tag the version
       - name: Tag with GitVersion
         id: gitversion  # Add an ID to reference later
-        uses: MKTHEPLUGG/gitversion-tag-action@v1
+        uses: MKTHEPLUGG/gitversion-tag-action@v2
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
