@@ -32,6 +32,7 @@ Set-PSReadLineModule
 # Use azure cli to configure kubectl / kubelogin
 Install-Kubectl
 
+
 # 3. shell customizations with the startship and config file thing
 
 # 4. package with cicd pipeline into exe that can easily be ran as admin
