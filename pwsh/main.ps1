@@ -38,7 +38,6 @@ $packagesToInstall = @(
     "openlens",
     "grep"
 )
-
 # Function to install the packages (same as before)
 function Install-ChocoPackagesFromFile {
     param (
@@ -53,8 +52,6 @@ function Install-ChocoPackagesFromFile {
         choco install $packageName -y
     }
 }
-
-# Call the function and pass the array directly
 Install-ChocoPackagesFromFile -packagesToInstall $packagesToInstall
 
 start-sleep 20
@@ -62,7 +59,6 @@ start-sleep 20
 # configure psreadline module for all users
 # https://www.powershellgallery.com/packages/PSReadLine/2.2.6
 function Set-PSReadLineModule {
-    # Define the commands you want to append to the profile
 $commands = @"
 Install-Module -Name PSReadLine -Force -SkipPublisherCheck
 Import-Module -Name PSReadLine
@@ -74,9 +70,7 @@ Set-PSReadLineOption -PredictionViewStyle ListView
 $commands | Out-File -Append -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
 
 }
-
 Set-PSReadLineModule
-
 
 # using azure cli to auto configure kubectl / kubelogin etc
 az aks install-cli
