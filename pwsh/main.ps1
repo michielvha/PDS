@@ -59,6 +59,8 @@ Install-ChocoPackagesFromFile -packagesToInstall $packagesToInstall
 
 start-sleep 20
 
+# configure psreadline module for all users
+# https://www.powershellgallery.com/packages/PSReadLine/2.2.6
 function Set-PSReadLineModule {
     # Define the commands you want to append to the profile
 $commands = @"
@@ -73,8 +75,6 @@ $commands | Out-File -Append -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
 
 }
 
-# configure psreadline module for all users
-# https://www.powershellgallery.com/packages/PSReadLine/2.2.6
 Set-PSReadLineModule
 
 
