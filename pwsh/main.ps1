@@ -57,6 +57,8 @@ function Install-ChocoPackagesFromFile {
 # Call the function and pass the array directly
 Install-ChocoPackagesFromFile -packagesToInstall $packagesToInstall
 
+start-sleep 20
+
 function Set-PSReadLineModule {
     # Define the commands you want to append to the profile
 $commands = @"
