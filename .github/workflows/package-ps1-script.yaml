@@ -44,24 +44,19 @@ jobs:
           mkdir $env:GITHUB_WORKSPACE\output
         shell: powershell
 
-      # Step 5: Copy the pwsh directory to the output directory
-      - name: Copy scripts to output directory
-        run: |
-          Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
-        shell: powershell
-
-      # Step 6: Package the PowerShell script into an executable using the GitVersion output
+      # Step 5: Package the PowerShell script and other resources into an executable
       - name: Package PowerShell script into EXE
         run: |
-          ps2exe -InputFile "$env:GITHUB_WORKSPACE\output\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS.exe"
+          ps2exe -InputFile "$env:GITHUB_WORKSPACE\pwsh\main.ps1" -OutputFile "$env:GITHUB_WORKSPACE\output\PDS-${{ steps.gitversion.outputs.semVer }}.exe" -iconPath "icon.ico" -Resource "$env:GITHUB_WORKSPACE\pwsh\*"
         shell: powershell
 
-      # Step 7: Upload the executable as a versioned artifact
+      # Step 6: Upload the executable as a versioned artifact
       - name: Upload packaged EXE
         uses: actions/upload-artifact@v4
         with:
-          name: "packaged-script"
-          path: ${{ github.workspace }}/output/PDS.exe
+          name: "packaged-script-${{ steps.gitversion.outputs.semVer }}"
+          path: ${{ github.workspace }}/output/PDS-${{ steps.gitversion.outputs.semVer }}.exe
+
 
 # reference
 # https://stackoverflow.com/questions/75008756/running-ps2exe-in-github-actions
