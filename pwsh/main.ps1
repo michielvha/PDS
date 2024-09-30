@@ -84,9 +84,7 @@ if (!$KubectlVer -or !$KubeloginVer) {
  $KubeloginVer
 }
 
-
 # 3. shell customizations with the startship and config file thing
-# => Figure out a way to copy default config to all users files, do it like a bove to make script portable in psreadlinemodule
 # Define the content of the starship.toml file (modify as needed)
 $configContent = @"
 [azure]
@@ -124,17 +122,15 @@ format = '[🏎💨 $workspace]($style) '
 function Set-StarshipConfigForAllUsers {
     # Get all user profile directories
     $userProfiles = Get-WmiObject Win32_UserProfile | Where-Object { $_.Special -eq $false }
-
+    # loop through all users
     foreach ($profile in $userProfiles) {
         $userConfigDir = Join-Path $profile.LocalPath ".config"
         $starshipFile = Join-Path $userConfigDir "starship.toml"
-
         # Check if .config directory exists, create it if not
         if (-Not (Test-Path $userConfigDir)) {
             Write-Host "Creating .config directory for user: $($profile.LocalPath)"
             New-Item -Path $userConfigDir -ItemType Directory -Force
         }
-
         # Write the starship.toml configuration file
         if (-Not (Test-Path $starshipFile)) {
             Write-Host "Creating starship.toml for user: $($profile.LocalPath)"
@@ -144,7 +140,6 @@ function Set-StarshipConfigForAllUsers {
         }
     }
 }
-
 # Run the function to create starship.toml for all users
 Create-StarshipConfigForAllUsers
 
