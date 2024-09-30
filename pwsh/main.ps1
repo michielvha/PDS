@@ -14,6 +14,10 @@ else {
 # Import the required Functions from src
 # Import-Module -Name "$scriptPath\src\Functions\Functions.psd1"
 
+# insert step here for cleaning up w11 build.
+# 1. Debloat windows
+
+# 2. Install package manager
 # Check if already installed before installing chocolatey
 $chocoVersion = choco --version 2>$null
 if (!$chocoVersion) {
@@ -54,9 +58,8 @@ function Install-ChocoPackagesFromFile {
 }
 Install-ChocoPackagesFromFile -packagesToInstall $packagesToInstall
 
-start-sleep 20
 
-# configure psreadline module for all users
+# 3. Configure psreadline module for all users
 # https://www.powershellgallery.com/packages/PSReadLine/2.2.6
 function Set-PSReadLineModule {
 $commands = @"
@@ -72,7 +75,7 @@ $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
 }
 Set-PSReadLineModule
 
-# using azure cli to auto configure kubectl / kubelogin etc
+# 4. Install & Configure kubectl/login
 $KubectlVer = kubectl version 2>$null
 $KubeloginVer = kubelogin --version  2>$null
 if (!$KubectlVer -or !$KubeloginVer) {
@@ -84,7 +87,7 @@ if (!$KubectlVer -or !$KubeloginVer) {
  $KubeloginVer
 }
 
-# 3. shell customizations with the startship and config file thing
+# 5. shell customizations with the startship
 # Define the content of the starship.toml file (modify as needed)
 $configContent = @"
 [azure]
@@ -143,5 +146,7 @@ function Set-StarshipConfigForAllUsers {
 # Run the function to create starship.toml for all users
 Create-StarshipConfigForAllUsers
 
-# 4. package with cicd pipeline into exe that can easily be ran as admin
-# 5. Add logging and error handeling.
+# 6.
+# ...
+# 8. package with cicd pipeline into exe (done)
+# 9. Add logging and error handeling.
