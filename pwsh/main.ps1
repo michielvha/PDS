@@ -67,13 +67,23 @@ Set-PSReadLineOption -PredictionViewStyle ListView
 "@
 
 # Append the commands to the global profile using tee
-$commands | Out-File -Append -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
+$commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
 
 }
 Set-PSReadLineModule
 
 # using azure cli to auto configure kubectl / kubelogin etc
-az aks install-cli
+$KubectlVer = kubectl version 2>$null
+$KubeloginVer = kubelogin --version  2>$null
+if (!$KubectlVer -or !$KubeloginVer) {
+ Write-Host "kubectl & kubelogin will be installed via az cli"
+ az aks install-cli
+} else {
+ Write-Host "Kubectl and kubelogin are already installed:"
+ $KubectlVer
+ $KubeloginVer
+}
+
 
 # 3. shell customizations with the startship and config file thing
 # => Figure out a way to copy default config to all users files, do it like a bove to make script portable in psreadlinemodule
