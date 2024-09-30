@@ -100,7 +100,6 @@ style = 'blue bold'
 symbol = '🌱 '
 truncation_length = 4
 truncation_symbol = ''
-ignore_branches = ['master', 'main']
 
 [git_commit]
 commit_hash_length = 4
