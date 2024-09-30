@@ -138,6 +138,5 @@ function Set-StarshipConfigForAllUsers {
 # Run the function to create starship.toml for all users
 Create-StarshipConfigForAllUsers
 
-
 # 4. package with cicd pipeline into exe that can easily be ran as admin
 # 5. Add logging and error handeling.
