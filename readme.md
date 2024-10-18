@@ -49,7 +49,6 @@ set locale
 ### future enhancements:
 
 - sync shell history across all devices
-- pipeline is not running on managed host, maybe run own hosts in kubernetes after RKE2 Setup ?
 - unifi server local host?
 
 
