@@ -48,7 +48,7 @@ jobs:
       # Step 3: Get the latest Git commit message
       - name: Get commit message
         id: commitMessage
-        run: echo "::set-output name=message::$(git log -1 --pretty=%B)"
+        run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
         shell: bash
 
       # Step 4: Create output directory for the exe file
@@ -66,7 +66,13 @@ jobs:
       # Step 6: Create a new module manifest based on current gitversion and commit message
       - name: Create new module manifest
         run: |
-          New-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\module\PDS.psd1" -RootModule PDS -FunctionsToExport '*' -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}" -Description 'Personal Deploy Script' -CompanyName 'meti.pro' -ReleaseNotes "${{ steps.commitMessage.outputs.message }}"
+          New-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\module\PDS.psd1" `
+          -RootModule PDS `
+          -FunctionsToExport '*'  `
+          -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}"  `
+          -Description 'Personal Deploy Script'  `
+          -CompanyName 'meti.pro'  `
+          -ReleaseNotes -ReleaseNotes "$env:message"
         shell: powershell
 
       # Step 7: Publish Powershell module to PowershellGallery, Set API key via variable groups.
