@@ -20,10 +20,10 @@ Function Set-English {
         Set-WinUILanguageOverride -Language "en-US"
 
         # Set the system locale to English (United States)
-        Set-WinSystemLocale -SystemLocale "en-US"
+        Set-WinSystemLocale -SystemLocale "nl-BE"
 
         # Set the input method and language list to English (United States)
-        $LanguageList = New-WinUserLanguageList -Language "en-US"
+        $LanguageList = New-WinUserLanguageList -Language "nl-BE"
         Set-WinUserLanguageList $LanguageList -Force
 
         # Set the home location (locale) to the United States
