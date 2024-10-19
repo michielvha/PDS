@@ -72,7 +72,7 @@ jobs:
           -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}"  `
           -Description 'Personal Deploy Script'  `
           -CompanyName 'meti.pro'  `
-          -ReleaseNotes -ReleaseNotes "$env:message"
+          -ReleaseNotes "$env:message"
         shell: powershell
 
       # Step 7: Publish Powershell module to PowershellGallery, Set API key via variable groups.

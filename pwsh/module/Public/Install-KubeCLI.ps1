@@ -9,7 +9,6 @@ Function Install-KubeCLI {
     .EXAMPLE
         Install-KubeCLI
 
-
         This command checks for the installation of both `kubectl` and `kubelogin`. If they are not found, it installs them using the Azure CLI. If they are already installed, it prints their current version.
 
     .NOTES
