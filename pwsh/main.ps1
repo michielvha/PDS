@@ -15,7 +15,7 @@ else {
 # Import-Module -Name "$scriptPath\src\Functions\Functions.psd1"
 
 # insert step here for cleaning up w11 build.
-# 1. Debloat windows
+# 1. Debloat windows => Use tiny11builder to clean windows image.
 
 # 2. Install package manager
 # Check if already installed before installing chocolatey
