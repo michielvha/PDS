@@ -31,6 +31,9 @@ function Set-PSReadLineModule {
         https://www.powershellgallery.com/packages/PSReadLine/2.2.6
         Learn more about `PSReadline Module` and how it is used to manage powershell.
     #>
+
+
+    #TODO: Make this function more general by not hardcoding the values and just making this function about adding some to profile of all users.
 $commands = @"
 Install-Module -Name PSReadLine -Force -SkipPublisherCheck
 Import-Module -Name PSReadLine
