@@ -1,5 +1,9 @@
 # reference
-# https://stackoverflow.com/questions/75008756/running-ps2exe-in-github-actions
+# https://www.powershellgallery.com/packages/PDS/1.0
+# https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/new-modulemanifest?view=powershell-7.4
+# https://learn.microsoft.com/en-us/powershell/module/powershellget/publish-module?view=powershellget-3.x
+# Install-Module -Name PowerShellGet -Force -AllowClobber # If not already newest version
+
 
 name: Publish powershell module leveraging gitVersion
 
@@ -34,12 +38,18 @@ jobs:
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
-      # Step 3: Install and Import PS2EXE module
-      - name: Install and Import PS2EXE module
-        run: |
-          Install-Module -Name PS2EXE -Force -AllowClobber
-          Import-Module PS2EXE
-        shell: powershell
+#      # Step 3: Install and Import PS2EXE module
+#      - name: Install and Import PS2EXE module
+#        run: |
+#          Install-Module -Name PS2EXE -Force -AllowClobber
+#          Import-Module PS2EXE
+#        shell: powershell
+
+      # Step 3: Get the latest Git commit message
+      - name: Get commit message
+        id: commitMessage
+        run: echo "::set-output name=message::$(git log -1 --pretty=%B)"
+        shell: bash
 
       # Step 4: Create output directory for the exe file
       - name: Create output directory
@@ -53,14 +63,14 @@ jobs:
           Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
         shell: powershell
 
-      # Step 6: Create a new module manifest based on current gitversion
-      - name: Create a new module manifest based on current gitversion
+      # Step 6: Create a new module manifest based on current gitversion and commit message
+      - name: Create new module manifest
         run: |
-          New-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\module\PDS.psd1" -RootModule PDS -FunctionsToExport '*' -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}" -Description 'Personal Deploy Script' -CompanyName 'meti.pro'
+          New-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\module\PDS.psd1" -RootModule PDS -FunctionsToExport '*' -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}" -Description 'Personal Deploy Script' -CompanyName 'meti.pro' -ReleaseNotes "${{ steps.commitMessage.outputs.message }}"
         shell: powershell
 
       # Step 7: Publish Powershell module to PowershellGallery, Set API key via variable groups.
-      - name:  Publish Powershell module to PowershellGallery
+      - name:  Publish Powershell module to PSGallery
         run: |
           Publish-Module -Path $env:GITHUB_WORKSPACE\output\module\PDS.psm1 -NuGetApiKey ${{ secrets.API_KEY }}
         shell: powershell
