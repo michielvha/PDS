@@ -26,7 +26,6 @@ Function Set-English {
         $LanguageList = New-WinUserLanguageList -Language "nl-BE"
         Set-WinUserLanguageList $LanguageList -Force
 
-
         # Set the home location (locale) to the United States
         Set-WinHomeLocation -GeoId 244
 
