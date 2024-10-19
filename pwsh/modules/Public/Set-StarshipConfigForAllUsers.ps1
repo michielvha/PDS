@@ -1,3 +1,4 @@
+function Set-StarshipConfigForAllUsers {
 <#
 .SYNOPSIS
     This function sets the Starship configuration for all users on the system.
@@ -36,8 +37,6 @@
     Author: MKTHEPLUGG
     This function requires administrative privileges to access other user profiles.
 #>
-
-function Set-StarshipConfigForAllUsers {
     [CmdletBinding()]
     param (
         # Define a string parameter for the starship configuration content
