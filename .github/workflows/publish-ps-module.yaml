@@ -1,0 +1,66 @@
+# reference
+# https://stackoverflow.com/questions/75008756/running-ps2exe-in-github-actions
+
+name: Publish powershell module leveraging gitVersion
+
+permissions:
+  id-token: write
+  contents: write
+
+on:
+  push:
+    paths:
+      - 'pwsh/module'
+  pull_request:
+    paths:
+      - 'pwsh/module'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # Step 1: Checkout the repository with full history and tags
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history to use GitVersion
+          persist-credentials: true
+
+      # Step 2: Call your custom GitVersion action to tag the version
+      - name: Tag with GitVersion
+        id: gitversion
+        uses: MKTHEPLUGG/gitversion-tag-action@v3
+        with:
+          configFilePath: gitversion.yml  # Path to your GitVersion config file
+
+      # Step 3: Install and Import PS2EXE module
+      - name: Install and Import PS2EXE module
+        run: |
+          Install-Module -Name PS2EXE -Force -AllowClobber
+          Import-Module PS2EXE
+        shell: powershell
+
+      # Step 4: Create output directory for the exe file
+      - name: Create output directory
+        run: |
+          mkdir $env:GITHUB_WORKSPACE\output
+        shell: powershell
+
+      # Step 5: Copy the pwsh directory to the output directory
+      - name: Copy scripts to output directory
+        run: |
+          Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
+        shell: powershell
+
+      # Step 6: Create a new module manifest based on current gitversion
+      - name: Create a new module manifest based on current gitversion
+        run: |
+          New-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\module\PDS.psd1" -RootModule PDS -FunctionsToExport '*' -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}" -Description 'Personal Deploy Script' -CompanyName 'meti.pro'
+        shell: powershell
+
+      # Step 7: Publish Powershell module to PowershellGallery, Set API key via variable groups.
+      - name:  Publish Powershell module to PowershellGallery
+        run: |
+          Publish-Module -Path $env:GITHUB_WORKSPACE\output\module\PDS.psm1 -NuGetApiKey ${{ secrets.API_KEY }}
+        shell: powershell

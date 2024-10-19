@@ -12,7 +12,7 @@ else {
 }
 
 # Import the required Functions from powershell gallery
-Install-Module -Name "$scriptPath\src\Functions\Functions.psd1"
+Install-Module -Name PDS
 
 # insert step here for cleaning up w11 build.
 # 1. Debloat windows => Use tiny11builder to clean windows image.

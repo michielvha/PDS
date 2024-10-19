@@ -79,7 +79,7 @@ You can publish your PowerShell module to the PowerShell Gallery, which allows o
    - Create a `.psm1` file (PowerShell module script) where you define your functions and variables.
    - Create a manifest file (`.psd1`) that describes the module (name, version, author, etc.). You can generate this using `New-ModuleManifest`.
      ```powershell
-     New-ModuleManifest -Path example.psd1 -RootModule example.psm1 -FunctionsToExport '*' -Author "MKTHEPLUGG"
+     New-ModuleManifest -Path example.psd1 -RootModule example.psm1 -FunctionsToExport '*' -Author "MKTHEPLUGG" -ModuleVersion "0.0.1"
      ```
 
 2. **Create a PowerShell Gallery account:**
