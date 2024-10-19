@@ -26,6 +26,10 @@ function Set-PSReadLineModule {
         Author: MKTHEPLUGG
         Requires: PowerShell 5.1 or higher and Starship CLI installed.
         This function modifies the global profile located at `$PROFILE.AllUsersAllHosts`, and administrative privileges are required to make these changes.
+
+    .LINK
+        https://www.powershellgallery.com/packages/PSReadLine/2.2.6
+        Learn more about `PSReadline Module` and how it is used to manage powershell.
     #>
 $commands = @"
 Install-Module -Name PSReadLine -Force -SkipPublisherCheck

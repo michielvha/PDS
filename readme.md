@@ -44,11 +44,12 @@ various tweaks in registry
 
 configure ohmyzsh with history
 set locale
+we'll use the work done in edge-cloud to generate a script for this. Looking to support both fedora & debian based distro's.
 
 
 ### future enhancements:
 
-- sync shell history across all devices
+- sync shell history across all devices => Create a seperate project in Go for this.
 - unifi server local host?
 
 

@@ -13,9 +13,10 @@ else {
 
 # Import the required Functions from powershell gallery
 Install-Module -Name PDS
+Import-Module -Name PDS
 
 # insert step here for cleaning up w11 build.
-# 1. Debloat windows => Use tiny11builder to clean windows image.
+# 1. Debloat windows => Use tiny11builder to clean windows image. I might add some extra cleanup steps later in script using Win11Debloat as inspiration.
 
 # 2. Install package manager
 # Check if already installed before installing chocolatey
