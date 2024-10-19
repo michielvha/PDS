@@ -90,7 +90,8 @@ You can publish your PowerShell module to the PowerShell Gallery, which allows o
      - Go to your profile on the PowerShell Gallery website and generate an API key.
    - Once you’ve done that, publish your module with the following command:
      ```powershell
-     Publish-Module -Name <moduleName> -NuGetApiKey <apiKey> 
+     # import-module .\PDS.psm1
+     Publish-Module -Name <moduleName>.psm1 -NuGetApiKey <apiKey> 
      ```
    - you can publish any script using this command:
      ```powershell
