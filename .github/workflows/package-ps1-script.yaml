@@ -10,10 +10,10 @@ permissions:
 on:
   push:
     paths:
-      - 'pwsh/**'
+      - 'pwsh/scripts/**'
   pull_request:
     paths:
-      - 'pwsh/**'
+      - 'pwsh/scripts/**'
 
 jobs:
   build:

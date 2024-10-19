@@ -14,10 +14,10 @@ permissions:
 on:
   push:
     paths:
-      - 'pwsh/module'
+      - 'pwsh/module/**'
   pull_request:
     paths:
-      - 'pwsh/module'
+      - 'pwsh/module/**'
 
 jobs:
   build:
