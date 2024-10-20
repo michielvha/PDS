@@ -9,9 +9,13 @@ permissions:
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'pwsh/scripts/**'
   pull_request:
+    branches:
+      - main
     paths:
       - 'pwsh/scripts/**'
 

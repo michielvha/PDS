@@ -13,9 +13,13 @@ permissions:
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'pwsh/module/**'
   pull_request:
+    branches:
+      - main
     paths:
       - 'pwsh/module/**'
 
