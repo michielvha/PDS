@@ -5,7 +5,7 @@
 # Install-Module -Name PowerShellGet -Force -AllowClobber # If not already newest version
 
 
-name: Publish powershell module leveraging gitVersion
+name: Publish powershell module
 
 permissions:
   id-token: write
@@ -78,6 +78,8 @@ jobs:
           -CompanyName 'meti.pro'  `
           -ReleaseNotes "$env:message"
         shell: powershell
+
+      # TODO: add a step here to test the module before publishing it with ``Test-ModuleManifest``
 
       # Step 7: Publish Powershell module to PowershellGallery, Set API key via variable groups.
       - name:  Publish Powershell module to PSGallery

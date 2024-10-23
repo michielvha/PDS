@@ -1,7 +1,7 @@
 # reference
 # https://stackoverflow.com/questions/75008756/running-ps2exe-in-github-actions
 
-name: Package PowerShell Script with GitVersion
+name: Package PowerShell Script
 
 permissions:
   id-token: write

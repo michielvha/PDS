@@ -1,3 +1,5 @@
+# How to use modules in Powershell
+
 ### 1. **Create a PowerShell Module (`.psm1` File)**
 
 1. **Create a Directory** for your module:
@@ -47,11 +49,7 @@ To use the module in your PowerShell script, you need to import it using the `Im
 ```powershell
 # Import the module (assuming it's in the default modules folder)
 Import-Module MyModule
-
-# Call the functions from the module
-Get-HelloWorld
-$sum = Add-Numbers -a 5 -b 10
-Write-Host "Sum: $sum"
+# or dot source it
 ```
 
 ### 3. **If the Module is Not in the Default Path**
@@ -62,6 +60,21 @@ If your module is not in the default module path (`$env:PSModulePath`), you can 
 Import-Module "C:\path\to\MyModule\MyModule.psm1"
 ```
 
+### 4. **If the modules code gets updated**
+If your module has been updated be sure to update to get the latest features:
+
+```powershell
+Update-Module -Name ModuleName
+```
+
+### 5. **Get information about your module**
+use the ``get-command`` cmdlet to view what's inside the module:
+
+```powershell
+Get-Command -Module ModuleName
+```
+
+
 ### Summary
 
 1. **Create a module** by creating a `.psm1` file containing your functions.
@@ -71,7 +84,7 @@ Import-Module "C:\path\to\MyModule\MyModule.psm1"
 
 # Publish module to PSGallery for modularity
 
-You can publish your PowerShell module to the PowerShell Gallery, which allows others (or your scripts) to import it directly using the `Install-Module` or `Import-Module` cmdlets, just like PSReadline. Here's how you can do it:
+You can publish your PowerShell module to the PowerShell Gallery, which allows to import it directly using the `Install-Module` or `Import-Module` cmdlets. Here's how you can do it:
 
 ### Steps to publish your module:
 
@@ -80,6 +93,15 @@ You can publish your PowerShell module to the PowerShell Gallery, which allows o
    - Create a manifest file (`.psd1`) that describes the module (name, version, author, etc.). You can generate this using `New-ModuleManifest`.
      ```powershell
      New-ModuleManifest -Path example.psd1 -RootModule example.psm1 -FunctionsToExport '*' -Author "MKTHEPLUGG" -ModuleVersion "0.0.1"
+     
+     # example from pipeline
+     New-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\module\PDS.psd1" `
+          -RootModule PDS `
+          -FunctionsToExport '*'  `
+          -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}"  `
+          -Description 'Personal Deploy Script'  `
+          -CompanyName 'meti.pro'  `
+          -ReleaseNotes "$env:message"
      ```
 
 2. **Create a PowerShell Gallery account:**
@@ -105,8 +127,6 @@ You can publish your PowerShell module to the PowerShell Gallery, which allows o
      ```
 
 ### Considerations:
-- **Versioning:** Ensure you update the version in the manifest each time you make changes.
+- **Versioning:** Ensure you update the version in the manifest each time you make changes. **Handled by pipeline**
 - **Dependencies:** If your module depends on others, specify them in the manifest file.
-- **Testing:** Use `Test-ModuleManifest` to validate your module before publishing.
-
-This way, you can keep your script modular and easily manage updates by just updating the module instead of the entire script.
+- **Testing:** Use `Test-ModuleManifest` to validate your module before publishing. **To be included in pipeline, we don't do any testing for the moment**
