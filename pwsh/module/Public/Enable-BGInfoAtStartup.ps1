@@ -1,4 +1,20 @@
 Function Enable-BGInfoAtStartup {
+    <#
+    .SYNOPSIS
+
+    .DESCRIPTION
+
+    .PARAMETER Username
+
+    .PARAMETER Password
+
+    .EXAMPLE
+
+    .NOTES
+
+    .LINK
+
+    #>
     # Path to the .bgi file inside the assets folder of the module
     $bgiFilePath = Join-Path $PSScriptRoot "assets\default.bgi"
     $bginfoPath = "C:\ProgramData\chocolatey\lib\bginfo\tools\Bginfo64.exe"
