@@ -1,6 +1,8 @@
 # PDS
 
 I want to create a personal deploy script that will enable me to easily install all required tooling onto either a windows or linux vm. I'll be using bash and powershell respectively.
+I'd like to support both fedora and debian based distro's. I won't be doing arch because I personally never use it but if anybody wants to contribute please feel free to create a branch.
+
 
 I'll be wanting to use package managers or either wget to fetch the urls
 
