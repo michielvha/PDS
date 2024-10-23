@@ -27,7 +27,7 @@ tooling I require
 
 ## windows specific
 
-**next steps: debloat windows by using this [script](https://github.com/Raphire/Win11Debloat/tree/master) define which options and settings you want to set**
+**Step 1: debloat windows by using this [script](https://github.com/Raphire/Win11Debloat/tree/master) define which options and settings you want to set or use tiny11 on standard image to create custom trimmed image.**
 
 binaries installed in sys directory and added to path => handeld by unxutils package in choco
 
@@ -43,6 +43,10 @@ various tweaks in registry
 - numlock on by default
 - long path support in registry
 - backlit keyboard on by default if available => seems to be controlled by bios
+
+### Feature list (TO DO)
+
+Look into the main script to find the specific features.
 
 ## Linux Specific
 
