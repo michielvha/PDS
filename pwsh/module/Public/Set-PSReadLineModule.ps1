@@ -42,6 +42,6 @@ Set-PSReadLineOption -PredictionViewStyle ListView
 "@
 
 # Append the commands to the global profile using tee
-$commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
+$commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
 
 }
