@@ -87,6 +87,8 @@ Set-StarshipConfigForAllUsers -configContent $configContent
 
 # 6. Configuring WSL
 Install-WSL -d Kali-Linux
+
+
 # ...
 # 8. package with cicd pipeline into exe (done)
 # 9. Add logging and error handeling.

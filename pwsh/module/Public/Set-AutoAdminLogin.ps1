@@ -34,17 +34,39 @@ Function Set-AutoAdminLogin {
 
     #>
 
-    # Define the auto-login user and password
-    $Username = "YourUsername"    # Replace with your username
-    # TODO: Implement password encryption to securely store the password in the registry
-    $Password = "YourPassword"    # Replace with your password
+    param (
+        [Alias("u")]
+        [string]$Username,
+
+        [Alias("p")]
+        [SecureString]$Password
+    )
+
+#    # Define the auto-login user and password
+#    $Username = "YourUsername"    # Replace with your username
+#    # TDO: Implement password encryption to securely store the password in the registry
+#    $Password = "YourPassword"    # Replace with your password
 
     # Registry path for auto-login settings
     $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 
     # Set the DefaultUserName and password (creates the key if it doesn't exist)
-    Set-ItemProperty -Path $registryPath -Name "DefaultUserName" -Value $Username
-    Set-ItemProperty -Path $registryPath -Name "DefaultPassword" -Value $Password
+    if($Username){
+        try {
+            write-output "setting ${Username} as DefaultUserName"
+            Set-ItemProperty -Path $registryPath -Name "DefaultUserName" -Value $Username
+        } catch {
+            write-output "An error occured while trying to set the ``DefaultUserName``: $_"
+        }
+    }
+    if($Password){
+        try {
+            write-output "setting DefaultPassword"
+            Set-ItemProperty -Path $registryPath -Name "DefaultPassword" -Value $Password
+        } catch {
+            write-output "An error occured while trying to set the ``DefaultPassword``: $_"
+        }
+    }
 
     # Enable AutoAdminLogon by setting it to "1"
     Set-ItemProperty -Path $registryPath -Name "AutoAdminLogon" -Value "1"

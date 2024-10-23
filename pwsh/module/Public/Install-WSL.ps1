@@ -49,7 +49,7 @@ Function Install-WSL {
                 Write-Output "`nAttempting to install $distro..."
                 wsl --install -d $distro
             } catch {
-                Write-Output "An error occured while installing ${distro} :" $_
+                Write-Output "An error occured while installing ${distro} : $_"
             }
         }
     }
