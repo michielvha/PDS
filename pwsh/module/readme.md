@@ -4,21 +4,24 @@
 - take inspiration from past works. => Go Through/Cleanup all old scripts, add to github, ... **CLEANUP**
 - 
 
-### Useful Modules
+### Implement these useful functions into module
 
 - **Power setting configuration**, take parameters to set the mode.
 - Enable developer mode
 - **File explorer options**, Adjust settings to show hidden files and extensions.
 - Taskbar Customization
-- WSL install & Config
 - Privacy Settings
-- **Hostmetrics on background:** BGinfo (lightweight) or rainmeter (extensible), ...
+
 
 
 
 ## Done
 
-- we need a pipeline to automate the build of the module leveraging gitVersion for version. [workflow](./../../.github/workflows/publish-ps-module.yaml)  created
+- **WSL** install & Config
+
+- **Hostmetrics on background:** BGinfo (lightweight) or rainmeter (extensible), ...
+
+- we need a **pipeline to automate the build of the module** leveraging gitVersion for versioning. [workflow](./../../.github/workflows/publish-ps-module.yaml)  created
 
 - manual command:
     ````powershell
