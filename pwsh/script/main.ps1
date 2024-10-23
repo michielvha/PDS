@@ -35,7 +35,8 @@ $packagesToInstall = @(
     "starship",
     "rpi-imager",
     "openlens",
-    "grep"
+    "grep",
+    "bginfo"
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 
