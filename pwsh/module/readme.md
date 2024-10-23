@@ -17,6 +17,7 @@ here we need to create the docs for the module we created, define all the functi
 - Privacy Settings
 
 
+### List & Description of Functions in Module (TO DO)
 
 
 ## Done
@@ -36,3 +37,8 @@ here we need to create the docs for the module we created, define all the functi
     ````powershell
     New-ModuleManifest -Path PDS.psd1 -FunctionsToExport '*' -Author "MKTHEPLUGG" -Description 'Personal Deploy Script' -CompanyName 'meti.pro'
     ````
+  
+
+### Reference
+
+[Official NuGet Repo in PSGallery](https://www.powershellgallery.com/packages/PDS/)
