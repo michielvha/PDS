@@ -4,7 +4,7 @@ I want to create a personal deploy script that will enable me to easily install 
 I'd like to support both fedora and debian based distro's. I won't be doing arch because I personally never use it but if anybody wants to contribute please feel free to create a branch.
 
 
-I'll be wanting to use package managers or either wget to fetch the urls
+[//]: # (I'll be wanting to use package managers or either wget to fetch the urls)
 
 tooling I require
 
@@ -29,7 +29,8 @@ tooling I require
 
 **next steps: debloat windows by using this [script](https://github.com/Raphire/Win11Debloat/tree/master) define which options and settings you want to set**
 
-binaries installed in sys directory and added to path
+binaries installed in sys directory and added to path => handeld by unxutils package in choco
+
 - grep on windows
 - cat on windows
 
@@ -40,13 +41,14 @@ shell config
 various tweaks in registry
 
 - numlock on by default
+- long path support in registry
 - backlit keyboard on by default if available => seems to be controlled by bios
 
 ## Linux Specific
 
 configure ohmyzsh with history
 set locale
-we'll use the work done in edge-cloud to generate a script for this. Looking to support both fedora & debian based distro's.
+#### we'll use the work done in edge-cloud to generate a script for this. Looking to support both fedora & debian based distro's.
 
 
 ### future enhancements:

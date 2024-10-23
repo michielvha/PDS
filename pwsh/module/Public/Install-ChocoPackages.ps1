@@ -31,6 +31,7 @@ function Install-ChocoPackages {
     #>
 
     param (
+        [Alias("p")]
         [string[]]$packagesToInstall  # Accepts an array of package names
     )
 
