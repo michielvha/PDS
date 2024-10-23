@@ -1,5 +1,7 @@
 # Architecture
 
+looking into a package manager like nuget for bash, seeing if there is any added value instead of just using 1 script or a seperate file for functions and script and just sourcing it.
+
 `bpkg` (Bash Package Manager) is a lightweight package manager designed specifically for Bash scripts and utilities. It aims to provide a simple way to manage Bash packages and reusable scripts, much like how `npm` works for Node.js or `NuGet` works for PowerShell.
 
 ### Key Features of `bpkg`:
