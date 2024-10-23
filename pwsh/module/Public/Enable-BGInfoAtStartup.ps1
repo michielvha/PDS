@@ -1,14 +1,10 @@
 # Path to the .bgi file inside the assets folder of the module
 $bgiFilePath = Join-Path $PSScriptRoot "assets\default.bgi"
-
-# Command to run BGInfo silently with the .bgi file
 $bginfoPath = "C:\ProgramData\chocolatey\lib\bginfo\tools\Bginfo64.exe"
-$arguments = "`"$bgiFilePath`" /silent /timer:0"
+$arguments = "`"$bgiFilePath`" /timer:0"
 
 # Create a shortcut in the startup folder
 $shortcutPath = Join-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup" "BGInfo.lnk"
-
-# Create the shortcut
 $WshShell = New-Object -ComObject WScript.Shell
 $shortcut = $WshShell.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = $bginfoPath
