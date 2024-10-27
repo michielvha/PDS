@@ -1,5 +1,5 @@
 # reference
-# https://www.powershellgallery.com/packages/PDS/1.0
+# https://www.powershellgallery.com/packages/PDS
 # https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/new-modulemanifest?view=powershell-7.4
 # https://learn.microsoft.com/en-us/powershell/module/powershellget/publish-module?view=powershellget-3.x
 # Install-Module -Name PowerShellGet -Force -AllowClobber # If not already newest version
@@ -35,7 +35,7 @@ jobs:
           fetch-depth: 0  # Fetch all history to use GitVersion
           persist-credentials: true
 
-      # Step 2: Call your custom GitVersion action to tag the version
+      # Step 2: Call my `GitVersion action` to tag the version
       - name: Tag with GitVersion
         id: gitversion
         uses: MKTHEPLUGG/gitversion-tag-action@v3
@@ -48,22 +48,22 @@ jobs:
         run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
         shell: bash
 
-      # Step 4: Create output directory for the exe file
+      # Step 4: Create output directory for the module
       - name: Create output directory
         run: |
           mkdir $env:GITHUB_WORKSPACE\output
         shell: powershell
 
-      # Step 5: Copy the pwsh directory to the output directory
+      # Step 5: Copy the pwsh module directory to the output directory
       - name: Copy scripts to output directory
         run: |
-          Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
+          Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\module\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
         shell: powershell
 
       # Step 6: Create a new module manifest based on current gitversion and commit message
       - name: Create new module manifest
         run: |
-          New-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\module\PDS.psd1" `
+          New-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\PDS.psd1" `
           -RootModule PDS `
           -FunctionsToExport '*'  `
           -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}"  `

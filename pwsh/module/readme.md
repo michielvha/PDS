@@ -1,5 +1,6 @@
 # Module Docs
 
+### List & Description of Functions in Module (TO DO)
 here we need to create the docs for the module we created, define all the functions etc etc, the specific docs for each function should be in the functions to be compliant with the way powershell handles Function docs.
 
 ## Future enhancements
@@ -8,7 +9,7 @@ here we need to create the docs for the module we created, define all the functi
 - take inspiration from past works. => Go Through/Cleanup all old scripts, add to github, ... **CLEANUP**
 - 
 
-### Implement these useful functions into module
+### TODO: Implement these useful functions into module
 
 - **Power setting configuration**, take parameters to set the mode.
 - Enable developer mode
@@ -17,7 +18,7 @@ here we need to create the docs for the module we created, define all the functi
 - Privacy Settings
 
 
-### List & Description of Functions in Module (TO DO)
+
 
 
 ## Done
