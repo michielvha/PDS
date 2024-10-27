@@ -42,13 +42,6 @@ jobs:
         with:
           configFilePath: gitversion.yml  # Path to your GitVersion config file
 
-#      # Step 3: Install and Import PS2EXE module
-#      - name: Install and Import PS2EXE module
-#        run: |
-#          Install-Module -Name PS2EXE -Force -AllowClobber
-#          Import-Module PS2EXE
-#        shell: powershell
-
       # Step 3: Get the latest Git commit message
       - name: Get commit message
         id: commitMessage
@@ -79,9 +72,15 @@ jobs:
           -ReleaseNotes "$env:message"
         shell: powershell
 
-      # TODO: add a step here to test the module before publishing it with ``Test-ModuleManifest``
+      # DONE: add a step here to test the module before publishing it with ``Test-ModuleManifest``
+      # Step 1: Validate the module using the ``Test-ModuleManifest`` command.
+      - name: Test module manifest
+        run: |
+          Test-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\module\PDS.psd1" `
+        shell: powershell
 
-      # Step 7: Publish Powershell module to PowershellGallery, Set API key via variable groups.
+
+      # Step 8: Publish Powershell module to PowershellGallery, Set API key via variable groups.
       - name:  Publish Powershell module to PSGallery
         run: |
           Publish-Module -Name $env:GITHUB_WORKSPACE\output\module\PDS.psm1 -NuGetApiKey ${{ secrets.API_KEY }}
