@@ -35,7 +35,6 @@ here we need to create the docs for the module we created, define all the functi
     ````powershell
     New-ModuleManifest -Path PDS.psd1 -FunctionsToExport '*' -Author "MKTHEPLUGG" -Description 'Personal Deploy Script' -CompanyName 'meti.pro'
     ````
-  
 
 
 ### Reference
