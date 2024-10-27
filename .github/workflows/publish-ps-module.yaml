@@ -76,7 +76,7 @@ jobs:
       # Step 1: Validate the module using the ``Test-ModuleManifest`` command.
       - name: Test module manifest
         run: |
-          Test-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\module\PDS.psd1" `
+          Test-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\PDS.psd1" `
         shell: powershell
 
 
