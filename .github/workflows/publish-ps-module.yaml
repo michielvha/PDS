@@ -48,22 +48,19 @@ jobs:
         run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
         shell: bash
 
-      # Step 4: Create output directory for the module
-      - name: Create output directory
+      # Step 4: Define the required filepaths as env vars
+      - name: Define file paths in env.
         run: |
-          mkdir $env:GITHUB_WORKSPACE\output
+          $psd1Path = "$env:GITHUB_WORKSPACE\pwsh\module\PDS.psd1"
+          $psm1Path = "$env:GITHUB_WORKSPACE\pwsh\module\PDS.psm1"
+          echo "psd1Path=$psd1Path" >> $GITHUB_ENV
+          echo "psm1Path=$psm1Path" >> $GITHUB_ENV
         shell: powershell
 
-      # Step 5: Copy the pwsh module directory to the output directory
-      - name: Copy scripts to output directory
-        run: |
-          Copy-Item -Path "$env:GITHUB_WORKSPACE\pwsh\module\*" -Destination "$env:GITHUB_WORKSPACE\output" -Recurse
-        shell: powershell
-
-      # Step 6: Create a new module manifest based on current gitversion and commit message
+      # Step 5: Create module manifest directly in the module's original path
       - name: Create new module manifest
         run: |
-          New-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\PDS.psd1" `
+          New-ModuleManifest -Path "$env:psd1Path" `
           -RootModule PDS `
           -FunctionsToExport '*'  `
           -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}"  `
@@ -72,16 +69,17 @@ jobs:
           -ReleaseNotes "$env:message"
         shell: powershell
 
+
       # DONE: add a step here to test the module before publishing it with ``Test-ModuleManifest``
       # Step 1: Validate the module using the ``Test-ModuleManifest`` command.
       - name: Test module manifest
         run: |
-          Test-ModuleManifest -Path "$env:GITHUB_WORKSPACE\output\PDS.psd1" `
+          Test-ModuleManifest -Path "$env:psd1Path" `
         shell: powershell
 
 
       # Step 8: Publish Powershell module to PowershellGallery, Set API key via variable groups.
       - name:  Publish Powershell module to PSGallery
         run: |
-          Publish-Module -Name $env:GITHUB_WORKSPACE\output\PDS.psm1 -NuGetApiKey ${{ secrets.API_KEY }}
+          Publish-Module -Name $env:psm1Path" -NuGetApiKey ${{ secrets.API_KEY }}
         shell: powershell
