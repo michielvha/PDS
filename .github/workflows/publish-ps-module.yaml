@@ -83,5 +83,5 @@ jobs:
       # Step 8: Publish Powershell module to PowershellGallery, Set API key via variable groups.
       - name:  Publish Powershell module to PSGallery
         run: |
-          Publish-Module -Name $env:GITHUB_WORKSPACE\output\module\PDS.psm1 -NuGetApiKey ${{ secrets.API_KEY }}
+          Publish-Module -Name $env:GITHUB_WORKSPACE\output\PDS.psm1 -NuGetApiKey ${{ secrets.API_KEY }}
         shell: powershell
