@@ -53,8 +53,8 @@ jobs:
         run: |
           $psd1Path = "$env:GITHUB_WORKSPACE\pwsh\module\PDS.psd1"
           $psm1Path = "$env:GITHUB_WORKSPACE\pwsh\module\PDS.psm1"
-          echo "psd1Path=$psd1Path" >> $GITHUB_ENV
-          echo "psm1Path=$psm1Path" >> $GITHUB_ENV
+          [System.Environment]::SetEnvironmentVariable("psd1Path", $psd1Path, [System.EnvironmentVariableTarget]::Process)
+          [System.Environment]::SetEnvironmentVariable("psm1Path", $psm1Path, [System.EnvironmentVariableTarget]::Process)
         shell: powershell
 
       # Step 5: Create module manifest directly in the module's original path
