@@ -28,12 +28,12 @@ jobs:
       with:
         fetch-depth: 0
 
-
+    # Step 2: Publish PowerShell Module
     - name: Publish PowerShell Module
       uses: ./.github/actions/publish-pwsh-module
       with:
-        psd1Path: "${{ github.workspace }}/pwsh/module/PDS.psd1"
-        psm1Path: "${{ github.workspace }}/pwsh/module/"
+        psd1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psd1"   # Updated with consistent backslashes
+        psm1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psm1"   # Updated with consistent backslashes
         apiKey: ${{ secrets.API_KEY }}
         description: "Personal Deploy Script"
         rootModule: "PDS"
