@@ -63,7 +63,7 @@ jobs:
           New-ModuleManifest -Path "$env:psd1Path" `
           -RootModule PDS `
           -FunctionsToExport '*'  `
-          -Author "MKTHEPLUGG" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}"  `
+          -Author "itmvha" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}"  `
           -Description 'Personal Deploy Script'  `
           -CompanyName 'meti.pro'  `
           -ReleaseNotes "$env:message"
