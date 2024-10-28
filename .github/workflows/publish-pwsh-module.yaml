@@ -48,10 +48,10 @@ jobs:
 
     # Step 2: Publish PowerShell Module
     - name: Publish PowerShell Module
-      uses: MKTHEPLUGG/publish-pwsh-module-action@v1
+      uses: MKTHEPLUGG/publish-pwsh-module-action@v2
       with:
-        psd1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psd1"   # Updated with consistent backslashes
-        psm1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psm1"   # Updated with consistent backslashes
+        psd1Path: "${{ github.workspace }}\pwsh\module\PDS.psd1"   # Updated with consistent backslashes
+        psm1Path: "${{ github.workspace }}\pwsh\module\PDS.psm1"   # Updated with consistent backslashes
         apiKey: ${{ secrets.API_KEY }}
         description: "Personal Deploy Script"
         rootModule: "PDS"
