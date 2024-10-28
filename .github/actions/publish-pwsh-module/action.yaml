@@ -10,6 +10,9 @@ inputs:
   psm1Path:
     description: "Path to the PSM1 module file."
     required: true
+  companyName:
+    description: "The name of the company required by nuget"
+    required: true
   apiKey:
     description: "NuGet API key for publishing to the PowerShell Gallery."
     required: true
@@ -18,6 +21,12 @@ inputs:
     description: "Path to the GitVersion configuration file."
     required: true
     default: "gitversion.yml"
+  rootModule:
+    description: "the name of the module."
+    required: true
+  description:
+    description: "the description for the module."
+    required: true
 
 runs:
   using: "composite"
@@ -45,11 +54,11 @@ runs:
     - name: Create module manifest
       run: |
         New-ModuleManifest -Path "${{ inputs.psd1Path }}" `
-        -RootModule PDS `
+        -RootModule "${{ inputs.rootModule }}" `
         -FunctionsToExport '*' `
         -Author "itmvha" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}" `
-        -Description 'Personal Deploy Script' `
-        -CompanyName 'meti.pro' `
+        -Description "${{ inputs.description }}" `
+        -CompanyName "${{ inputs.companyName }}" `
         -ReleaseNotes "$env:message"
       shell: powershell
 

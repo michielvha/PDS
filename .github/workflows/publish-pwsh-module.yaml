@@ -29,3 +29,6 @@ jobs:
           psm1Path: "${{ github.workspace }}/pwsh/module/PDS.psm1"
           apiKey: ${{ secrets.API_KEY }}
           gitVersionConfigPath: "gitversion.yml"
+          description: "Personal Deploy Script"
+          rootModule: "PDS"
+          companyName: "meti.pro"
