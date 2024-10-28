@@ -28,13 +28,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    # Step 2: Tag with GitVersion
-    - name: Tag with GitVersion
-      id: gitversion
-      uses: MKTHEPLUGG/gitversion-tag-action@v3
-      with:
-        configFilePath: gitversion.yml
-
 
     - name: Publish PowerShell Module
       uses: ./.github/actions/publish-pwsh-module

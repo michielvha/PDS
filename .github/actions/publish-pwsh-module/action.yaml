@@ -27,7 +27,18 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # Step 1: Checkout code
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
+    # Step 2: Tag with GitVersion
+    - name: Tag with GitVersion
+      id: gitversion
+      uses: MKTHEPLUGG/gitversion-tag-action@v3
+      with:
+        configFilePath: gitversion.yml
 
     # Step 3: Get commit message
     - name: Get commit message
