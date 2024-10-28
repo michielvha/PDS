@@ -33,7 +33,7 @@ jobs:
       uses: ./.github/actions/publish-pwsh-module
       with:
         psd1Path: "${{ github.workspace }}/pwsh/module/PDS.psd1"
-        psm1Path: "${{ github.workspace }}/pwsh/module/PDS.psm1"
+        psm1Path: "${{ github.workspace }}/pwsh/module/"
         apiKey: ${{ secrets.API_KEY }}
         description: "Personal Deploy Script"
         rootModule: "PDS"
