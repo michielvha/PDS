@@ -1,0 +1,66 @@
+# .github/actions/publish-pwsh-module/action.yml
+name: "Publish PowerShell Module"
+description: "Reusable action to build, tag, validate, and publish a PowerShell module to the PowerShell Gallery."
+author: "itmvha"
+
+inputs:
+  psd1Path:
+    description: "Path to the PSD1 manifest file."
+    required: true
+  psm1Path:
+    description: "Path to the PSM1 module file."
+    required: true
+  apiKey:
+    description: "NuGet API key for publishing to the PowerShell Gallery."
+    required: true
+    secret: true
+  gitVersionConfigPath:
+    description: "Path to the GitVersion configuration file."
+    required: true
+    default: "gitversion.yml"
+
+runs:
+  using: "composite"
+  steps:
+    # Step 1: Checkout code
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # Step 2: Tag with GitVersion
+    - name: Tag with GitVersion
+      id: gitversion
+      uses: MKTHEPLUGG/gitversion-tag-action@v3
+      with:
+        configFilePath: ${{ inputs.gitVersionConfigPath }}
+
+    # Step 3: Get commit message
+    - name: Get commit message
+      id: commitMessage
+      run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+      shell: bash
+
+    # Step 4: Create module manifest
+    - name: Create module manifest
+      run: |
+        New-ModuleManifest -Path "${{ inputs.psd1Path }}" `
+        -RootModule PDS `
+        -FunctionsToExport '*' `
+        -Author "itmvha" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}" `
+        -Description 'Personal Deploy Script' `
+        -CompanyName 'meti.pro' `
+        -ReleaseNotes "$env:message"
+      shell: powershell
+
+    # Step 5: Test module manifest
+    - name: Test module manifest
+      run: |
+        Test-ModuleManifest -Path "${{ inputs.psd1Path }}"
+      shell: powershell
+
+    # Step 6: Publish PowerShell module
+    - name: Publish to PowerShell Gallery
+      run: |
+        Publish-Module -Path "${{ inputs.psm1Path }}" -NuGetApiKey "${{ inputs.apiKey }}"
+      shell: powershell

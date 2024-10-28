@@ -24,7 +24,7 @@ here we need to create the docs for the module we created, define all the functi
 
 - **Hostmetrics on background:** BGinfo (lightweight) or rainmeter (extensible), ...
 
-- we need a **pipeline to automate the build of the module** leveraging gitVersion for versioning. [workflow](./../../.github/workflows/publish-ps-module.yaml)  created
+- we need a **pipeline to automate the build of the module** leveraging gitVersion for versioning. [workflow](./../../.github/workflows/publish-pwsh-module.yaml)  created
 
 - manual command:
     ````powershell

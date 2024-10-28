@@ -1,0 +1,31 @@
+# .github/workflows/publish-module.yml
+name: Publish PowerShell Module
+
+permissions:
+  id-token: write
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'pwsh/module/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'pwsh/module/**'
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Publish PowerShell Module
+        uses: ./.github/actions/publish-pwsh-module
+        with:
+          psd1Path: "${{ github.workspace }}/pwsh/module/PDS.psd1"
+          psm1Path: "${{ github.workspace }}/pwsh/module/PDS.psm1"
+          apiKey: ${{ secrets.API_KEY }}
+          gitVersionConfigPath: "gitversion.yml"

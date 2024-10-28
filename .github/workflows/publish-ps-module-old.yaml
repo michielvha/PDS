@@ -1,0 +1,85 @@
+## reference
+## https://www.powershellgallery.com/packages/PDS
+## https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/new-modulemanifest?view=powershell-7.4
+## https://learn.microsoft.com/en-us/powershell/module/powershellget/publish-module?view=powershellget-3.x
+## Install-Module -Name PowerShellGet -Force -AllowClobber # If not already newest version
+#
+#
+#name: Publish powershell module
+#
+#permissions:
+#  id-token: write
+#  contents: write
+#
+#on:
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - 'pwsh/module/**'
+#  pull_request:
+#    branches:
+#      - main
+#    paths:
+#      - 'pwsh/module/**'
+#
+#jobs:
+#  build:
+#    runs-on: windows-latest
+#
+#    steps:
+#      # Step 1: Checkout the repository with full history and tags
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0  # Fetch all history to use GitVersion
+#          persist-credentials: true
+#
+#      # Step 2: Call my `GitVersion action` to tag the version
+#      - name: Tag with GitVersion
+#        id: gitversion
+#        uses: MKTHEPLUGG/gitversion-tag-action@v3
+#        with:
+#          configFilePath: gitversion.yml  # Path to your GitVersion config file
+#
+#      # Step 3: Get the latest Git commit message
+#      - name: Get commit message
+#        id: commitMessage
+#        run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+#        shell: bash
+#
+#      # Step 4: Define the required filepaths as env vars
+#      - name: Define file paths in env.
+#        run: |
+#          $psd1Path = "$env:GITHUB_WORKSPACE\pwsh\module\PDS.psd1"
+#          $psm1Path = "$env:GITHUB_WORKSPACE\pwsh\module\PDS.psm1"
+#          "psd1Path=$psd1Path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+#          "psm1Path=$psm1Path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+#        shell: powershell
+#
+#      # Step 5: Create module manifest directly in the module's original path
+#      - name: Create new module manifest
+#        run: |
+#          New-ModuleManifest -Path "$env:psd1Path" `
+#          -RootModule PDS `
+#          -FunctionsToExport '*'  `
+#          -Author "itmvha" -ModuleVersion "${{ steps.gitversion.outputs.semVer }}"  `
+#          -Description 'Personal Deploy Script'  `
+#          -CompanyName 'meti.pro'  `
+#          -ReleaseNotes "$env:message"
+#        shell: powershell
+#
+#
+#      # DONE: add a step here to test the module before publishing it with ``Test-ModuleManifest``
+#      # Step 1: Validate the module using the ``Test-ModuleManifest`` command.
+#      - name: Test module manifest
+#        run: |
+#          Test-ModuleManifest -Path "$env:psd1Path" `
+#        shell: powershell
+#
+#
+#      # Step 8: Publish Powershell module to PowershellGallery, Set API key via variable groups.
+#      - name:  Publish Powershell module to PSGallery
+#        run: |
+#          Publish-Module -Name $env:psm1Path -NuGetApiKey ${{ secrets.API_KEY }}
+#        shell: powershell
