@@ -55,4 +55,4 @@ jobs:
         apiKey: ${{ secrets.API_KEY }}
         description: "Personal Deploy Script"
         rootModule: "PDS"
-        companyName: "meti.pro"
+        companyName: "itmvha"
