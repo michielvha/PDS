@@ -22,29 +22,29 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    # Step 1: Checkout code
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    # Step 2: Debug Step - Verify Directory Structure and Files
-    - name: Debug - List Files and Verify Paths
-      run: |
-        Write-Host "Workspace Directory Structure:"
-        Get-ChildItem -Path "${{ github.workspace }}" -Recurse
-        Write-Host "Checking for PSD1 and PSM1 Files..."
-        if (Test-Path "${{ github.workspace }}\pwsh\module\PDS.psd1") {
-          Write-Host "Found PDS.psd1 file."
-        } else {
-          Write-Error "PDS.psd1 file not found at expected path."
-        }
-        if (Test-Path "${{ github.workspace }}\pwsh\module\PDS.psm1") {
-          Write-Host "Found PDS.psm1 file."
-        } else {
-          Write-Error "PDS.psm1 file not found at expected path."
-        }
-      shell: powershell
+#    # Step 1: Checkout code
+#    - name: Checkout code
+#      uses: actions/checkout@v4
+#      with:
+#        fetch-depth: 0
+#
+#    # Step 2: Debug Step - Verify Directory Structure and Files
+#    - name: Debug - List Files and Verify Paths
+#      run: |
+#        Write-Host "Workspace Directory Structure:"
+#        Get-ChildItem -Path "${{ github.workspace }}" -Recurse
+#        Write-Host "Checking for PSD1 and PSM1 Files..."
+#        if (Test-Path "${{ github.workspace }}\pwsh\module\PDS.psd1") {
+#          Write-Host "Found PDS.psd1 file."
+#        } else {
+#          Write-Error "PDS.psd1 file not found at expected path."
+#        }
+#        if (Test-Path "${{ github.workspace }}\pwsh\module\PDS.psm1") {
+#          Write-Host "Found PDS.psm1 file."
+#        } else {
+#          Write-Error "PDS.psm1 file not found at expected path."
+#        }
+#      shell: powershell
 
     # Step 2: Publish PowerShell Module
     - name: Publish PowerShell Module
