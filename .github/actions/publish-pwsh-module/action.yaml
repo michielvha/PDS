@@ -17,10 +17,6 @@ inputs:
     description: "NuGet API key for publishing to the PowerShell Gallery."
     required: true
     secret: true
-  gitVersionConfigPath:
-    description: "Path to the GitVersion configuration file."
-    required: true
-    default: "gitversion.yml"
   rootModule:
     description: "the name of the module."
     required: true
@@ -31,18 +27,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # Step 1: Checkout code
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
-    # Step 2: Tag with GitVersion
-    - name: Tag with GitVersion
-      id: gitversion
-      uses: MKTHEPLUGG/gitversion-tag-action@v3
-      with:
-        configFilePath: ${{ inputs.gitVersionConfigPath }}
 
     # Step 3: Get commit message
     - name: Get commit message

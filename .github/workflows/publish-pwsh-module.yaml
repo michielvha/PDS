@@ -22,13 +22,27 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Publish PowerShell Module
-        uses: ./.github/actions/publish-pwsh-module
-        with:
-          psd1Path: "${{ github.workspace }}/pwsh/module/PDS.psd1"
-          psm1Path: "${{ github.workspace }}/pwsh/module/PDS.psm1"
-          apiKey: ${{ secrets.API_KEY }}
-          gitVersionConfigPath: "gitversion.yml"
-          description: "Personal Deploy Script"
-          rootModule: "PDS"
-          companyName: "meti.pro"
+    # Step 1: Checkout code
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # Step 2: Tag with GitVersion
+    - name: Tag with GitVersion
+      id: gitversion
+      uses: MKTHEPLUGG/gitversion-tag-action@v3
+      with:
+        configFilePath: gitversion.yml
+
+
+    - name: Publish PowerShell Module
+      uses: ./.github/actions/publish-pwsh-module
+      with:
+        psd1Path: "${{ github.workspace }}/pwsh/module/PDS.psd1"
+        psm1Path: "${{ github.workspace }}/pwsh/module/PDS.psm1"
+        apiKey: ${{ secrets.API_KEY }}
+        gitVersionConfigPath: "gitversion.yml"
+        description: "Personal Deploy Script"
+        rootModule: "PDS"
+        companyName: "meti.pro"
