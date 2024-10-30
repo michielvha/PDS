@@ -37,7 +37,8 @@ $packagesToInstall = @(
     "openlens",
     "grep",
     "bginfo",
-    "gh"
+    "gh",
+    "docker"
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 
