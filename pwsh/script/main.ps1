@@ -36,7 +36,8 @@ $packagesToInstall = @(
     "rpi-imager",
     "openlens",
     "grep",
-    "bginfo"
+    "bginfo",
+    "gh"
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 
