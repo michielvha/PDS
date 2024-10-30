@@ -1,6 +1,6 @@
 # reference
 # https://stackoverflow.com/questions/75008756/running-ps2exe-in-github-actions
-
+# ?TO DO?: Create action from this workflow to be reusable across powershell scripts
 name: Package PowerShell Script
 
 permissions:
