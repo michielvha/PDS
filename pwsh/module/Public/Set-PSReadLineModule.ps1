@@ -13,7 +13,7 @@ function Set-PSReadLineModule {
 
     .EXAMPLE
         $commands = @"
-        Install-Module -Name PSReadLine -Force -SkipPublisherCheck
+        Install-Module -Name PSReadLine -Force -SkipPublisherCheck -Scope CurrentUser
         Import-Module -Name PSReadLine
         Invoke-Expression (&starship init powershell)
         Set-PSReadLineOption -PredictionViewStyle ListView
@@ -30,6 +30,10 @@ function Set-PSReadLineModule {
     .LINK
         https://www.powershellgallery.com/packages/PSReadLine/2.2.6
         Learn more about `PSReadline Module` and how it is used to manage powershell.
+
+        https://learn.microsoft.com/en-us/powershell/module/psreadline/set-psreadlineoption?view=powershell-7.4
+        Learn about all the different parameters that can be used to configure the module.
+
     #>
 
 
