@@ -11,7 +11,7 @@ inputs:
   script-path:
     description: 'Path to the main PowerShell script to package'
     required: true
-    default: 'pwsh/script/main.ps1'
+    default: 'pwsh/scripts/main.ps1'
   config-file:
     description: 'Path to the GitVersion configuration file'
     required: false
