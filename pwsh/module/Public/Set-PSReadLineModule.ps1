@@ -37,12 +37,12 @@ function Set-PSReadLineModule {
     #>
 
 
-    # TODO: Make this function more general by not hardcoding the values and just making this function about adding some to profile of all users.
 $commands = @"
 Import-Module -Name PSReadLine
 Invoke-Expression (&starship init powershell)
 Set-PSReadLineOption -PredictionViewStyle ListView
 "@
+
 
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {

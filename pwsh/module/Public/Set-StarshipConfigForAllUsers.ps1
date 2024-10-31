@@ -37,6 +37,9 @@ function Set-StarshipConfigForAllUsers {
     Author: MKTHEPLUGG
     This function requires administrative privileges to access other user profiles.
 #>
+
+    # TODO: add a step that checks if starship is already installed installed, if not install it with choco
+
     [CmdletBinding()]
     param (
         # Define a string parameter for the starship configuration content
