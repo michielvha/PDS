@@ -35,7 +35,7 @@ function Set-PSReadLineModule {
 
     #TODO: Make this function more general by not hardcoding the values and just making this function about adding some to profile of all users.
 $commands = @"
-Install-Module -Name PSReadLine -Force -SkipPublisherCheck
+Install-Module -Name PSReadLine -Force -SkipPublisherCheck -Scope CurrentUser
 Import-Module -Name PSReadLine
 Invoke-Expression (&starship init powershell)
 Set-PSReadLineOption -PredictionViewStyle ListView

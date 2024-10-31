@@ -7,7 +7,7 @@ here we need to create the docs for the module we created, define all the functi
 
 - Do some research about useful modules
 - take inspiration from past works. => Go Through/Cleanup all old scripts, add to github, ... **CLEANUP**
-- 
+- I want to create a pipeline that will test the functions in the module.
 
 ### TODO: Implement these useful functions into module
 
