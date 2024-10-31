@@ -21,6 +21,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Package PowerShell Script
         uses: ./.github/actions/package-pwsh-script
         with:
