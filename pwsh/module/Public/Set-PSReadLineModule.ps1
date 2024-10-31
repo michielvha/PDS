@@ -37,13 +37,21 @@ function Set-PSReadLineModule {
     #>
 
 
-    #TODO: Make this function more general by not hardcoding the values and just making this function about adding some to profile of all users.
+    # TODO: Make this function more general by not hardcoding the values and just making this function about adding some to profile of all users.
 $commands = @"
-Install-Module -Name PSReadLine -Force -SkipPublisherCheck -Scope CurrentUser
 Import-Module -Name PSReadLine
 Invoke-Expression (&starship init powershell)
 Set-PSReadLineOption -PredictionViewStyle ListView
 "@
+
+
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Output "This function needs to be ran as admin please rerun it with the proper rights."
+    exit
+} else {
+    Write-Output "PSReadLine Module will be installed"
+    Install-Module -Name PSReadLine -Force -SkipPublisherCheck
+}
 
 # Append the commands to the global profile using tee
 $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
