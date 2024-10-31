@@ -38,7 +38,8 @@ $packagesToInstall = @(
     "grep",
     "bginfo",
     "gh",
-    "docker"
+    "docker",
+    "Firefox"
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 

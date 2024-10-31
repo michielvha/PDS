@@ -16,6 +16,8 @@ here we need to create the docs for the module we created, define all the functi
 - **File explorer options**, Adjust settings to show hidden files and extensions.
 - Taskbar Customization
 - Privacy Settings
+- Auto enable numlock
+- Firefox deployed with extension ( containers / Simple Tabs Groups / Adblock plus) => with Firefox account or in script ... ?
 
 ## Done
 

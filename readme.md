@@ -73,5 +73,6 @@ to add:
 ````shell
 bginfo / neofetch
 gh cli
-docker (desktop)
+docker
+Firefox (with extensions)
 ````
