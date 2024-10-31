@@ -47,6 +47,7 @@ Set-PSReadLineOption -PredictionViewStyle ListView
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Output "This function needs to be ran as admin please rerun it with the proper rights."
+    start-sleep 10
     exit
 } else {
     Write-Output "PSReadLine Module will be installed"
