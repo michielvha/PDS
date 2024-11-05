@@ -29,20 +29,30 @@ $installedVersion = argocd version --client | out-null
    Write-Output "Fetching latest version"
    $version = (Invoke-RestMethod https://api.github.com/repos/argoproj/argo-cd/releases/latest).tag_name
    $url = "https://github.com/argoproj/argo-cd/releases/download/" + $version + "/argocd-windows-amd64.exe"
-   $output = "C:\tools\argocd.exe"
+   $output = "$env:USERPROFILE\sys"
 
    if (!(Test-Path $output)) {
-            Write-Output "Tools directory doesn't yet exist on C:\, Creating..."
+            Write-Output "sys directory doesn't yet exist in user's profile, creating..."
             New-Item -ItemType Directory -Path $output # | Out-Null
    }
 
    Invoke-WebRequest -Uri $url -OutFile $output
 
-    # Add to system PATH if not already present
-    $path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-    if ($path -notlike "*$output*") {
-        [System.Environment]::SetEnvironmentVariable("Path", "$path;$output", [System.EnvironmentVariableTarget]::Machine)
-        Write-Output "ArgoCD CLI path added to system PATH. Please restart your terminal or log off for changes to take effect."
+    # Determine which PATH to modify (User or System) based on admin rights
+    if ([System.Security.Principal.WindowsIdentity]::GetCurrent().Groups -match "S-1-5-32-544") {
+        # User is an Administrator - modify System PATH
+        $path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+        if ($path -notlike "*$output*") {
+            [System.Environment]::SetEnvironmentVariable("Path", "$path;$output", [System.EnvironmentVariableTarget]::Machine)
+            Write-Output "Added $output to the System PATH. Please restart your terminal or log off for changes to take effect."
+        }
+    } else {
+        # User is not an Administrator - modify User PATH
+        $userPath = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::User)
+        if ($userPath -notlike "*$output*") {
+            [System.Environment]::SetEnvironmentVariable("Path", "$userPath;$output", [System.EnvironmentVariableTarget]::User)
+            Write-Output "Added $output to the User PATH. Please restart your terminal for changes to take effect."
+        }
     }
 
   } else {
