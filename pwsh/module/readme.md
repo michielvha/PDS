@@ -11,6 +11,7 @@ here we need to create the docs for the module we created, define all the functi
 
 ### TODO: Implement these useful functions into module
 
+- set aliases, docker compose up -d (dcu) & docker compose down (dcd)
 - **Power setting configuration**, take parameters to set the mode.
 - Enable developer mode
 - **File explorer options**, Adjust settings to show hidden files and extensions.
