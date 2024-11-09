@@ -1,14 +1,14 @@
 function Set-DockerAlias {
     <#
     .SYNOPSIS
-    Sets aliases for the Docker commands if they are not already set.
+    Sets functions for common Docker commands in the PowerShell profile for persistence.
 
     .DESCRIPTION
-    The `Set-DockerAlias` function sets aliases for common Docker commands to simplify their usage. The function checks if the aliases are already set and only sets them if they are not defined.
+    The `Set-DockerAlias` function creates functions for common Docker commands and writes them to the PowerShell profile to ensure they persist across sessions. The function checks if they are already set and only sets them if they are not defined. This is the same as adding aliasses in linux.
 
-    The aliases set by this function are:
+    The functions created by this script are:
     - `dcu` for `docker compose up -d`
-    - `dc` for `docker compose`
+    - `d` for `docker`
     - `dcd` for `docker compose down`
 
     .EXAMPLE
@@ -17,24 +17,28 @@ function Set-DockerAlias {
     .author: itmvha
     #>
 
+    $profilePath = $PROFILE
 
-$aliases =  @(
-                @{Name="dc"; Command="docker compose"}
-                @{Name="dcu"; Command="docker compose up -d"}
-                @{Name="dcd"; Command="docker compose down"}
-            )
+    $aliases = @(
+        @{Name="d"; Command="docker"}
+        @{Name="dcu"; Command="docker compose up -d"}
+        @{Name="dcd"; Command="docker compose down"}
+    )
 
     foreach ($alias in $aliases) {
         $aliasName = $alias.Name
         $aliasCommand = $alias.Command
-            # Check if the alias is already set
-        if (!(Get-Alias -Name $aliasName -ErrorAction SilentlyContinue)) {
-            # Set the alias for the Docker command
-            Set-Alias -Name $aliasName -Value $aliasCommand
-            Write-Output "Alias for $aliasCommand command set to $aliasName successfully."
+
+        # Check if the function is already defined in the profile
+        if (!(Get-Content $profilePath -ErrorAction SilentlyContinue | Select-String -Pattern "function $aliasName")) {
+            # Add the function to the profile
+            $functionDefinition = "function $aliasName { $aliasCommand }"
+            Add-Content -Path $profilePath -Value $functionDefinition
+            Write-Output "Function $aliasName added to profile successfully."
         } else {
-            Write-Output "Alias for $aliasName command is already set."
+            Write-Output "Function $aliasName is already defined in the profile."
         }
     }
 
+    Write-Output "Reload your profile or restart PowerShell for changes to take effect."
 }
