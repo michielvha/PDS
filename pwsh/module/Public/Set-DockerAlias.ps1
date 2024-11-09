@@ -31,7 +31,7 @@ $aliases =  @(
         if (!(Get-Alias -Name $aliasName -ErrorAction SilentlyContinue)) {
             # Set the alias for the Docker command
             Set-Alias -Name $aliasName -Value $aliasCommand
-            Write-Output "Alias for $aliasName command set successfully."
+            Write-Output "Alias for $aliasCommand command set to $aliasName successfully."
         } else {
             Write-Output "Alias for $aliasName command is already set."
         }
