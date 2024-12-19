@@ -4,3 +4,4 @@
 
 # install software
 
+# Configure ZSH
