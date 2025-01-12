@@ -8,9 +8,16 @@ I'd like to support both fedora and debian based distro's. I won't be doing arch
 
 ## Future enhancements
 
+### Windows 
 
+- [ ] add proper testing / linting to the pipelines
+- [ ] Pin items to the task bar
+- [ ] add custom logging / proper error handling to script
+- [ ] function for aliasses Kubectl
+- [ ] function to run system diagnostic
+- [ ] function to fetch relevant information about machine (check old scripts for example)
 
-
+check notes on phone for more idea's.
 
 ## windows specific
 
@@ -30,10 +37,6 @@ various tweaks in registry
 - numlock on by default
 - long path support in registry
 - backlit keyboard on by default if available => seems to be controlled by bios
-
-### Feature list (TO DO)
-
-Look into the main script to find the specific features.
 
 ## Linux Specific
 
