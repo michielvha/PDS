@@ -36,6 +36,6 @@ function New-Branch {
     git checkout -b $newBranchName
     Write-Host "New branch '$newBranchName' created and checked out." -ForegroundColor Green
 }
-New-Branch
+# New-Branch
 # To make it available in the current session, dot source the script or add it to your profile:
 # . .\New-Branch.ps1
