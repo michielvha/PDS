@@ -24,7 +24,8 @@ Function Install-KubeCLI {
         https://github.com/Azure/kubelogin
         Learn more about `kubelogin`, a tool for Azure Kubernetes Service (AKS) authentication.
     #>
-
+    
+    # TODO: Check if `az` is installed before proceeding
     $KubectlVer = kubectl version 2>$null
     $KubeloginVer = kubelogin --version  2>$null
     if (!$KubectlVer -or !$KubeloginVer) {
