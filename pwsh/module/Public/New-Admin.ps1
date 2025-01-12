@@ -10,7 +10,11 @@ Function New-Admin {
     .PARAMETER Credential
 
     .EXAMPLE
-    Create-Admin -Credential (Get-Credential)
+    # Create a credential object
+    $Credential = Get-Credential
+
+    # Call the function
+    New-Admin -Credential $Credential -FullName "Test User" -Description "Test admin account"
 
     .NOTES
     This function is compatible with every version of powershell due to the use of System.DirectoryServices.AccountManagement .NET Core API for user creation.
@@ -68,10 +72,3 @@ Function New-Admin {
         Write-Error "Failed to create user $Username : $($_.Exception.Message)"
     }
 }
-
-
-# Create a credential object
-$Credential = Get-Credential
-
-# Call the function
-New-Admin -Credential $Credential -FullName "Test User" -Description "Test admin account"

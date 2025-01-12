@@ -10,7 +10,7 @@ Function New-AdminLegacy {
     .PARAMETER Credential
 
     .EXAMPLE
-    Create-Admin -Credential (Get-Credential)
+    Create-Admin -Credential (Get-Credential)  -FullName "Example" -Description "Example admin account"
 
     .NOTES
     This function only work in PS 5.1 and below.
@@ -49,4 +49,3 @@ Function New-AdminLegacy {
         Write-Error "Failed to create user $($Credential.Username) : $($_.Exception.Message)"
     }
 }
-Create-Admin -Credential (Get-Credential)
