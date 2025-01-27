@@ -43,7 +43,3 @@ Function Install-KubeCLI {
         $KubeloginVer
     }
 }
-
-
-
-Install-KubeCLI 
