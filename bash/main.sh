@@ -14,3 +14,11 @@ function update_system_cron_entry() {
 }
 
 update_system_cron_entry
+
+# Function: full upgrade with one command
+
+function full_upgrade() {
+    sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y # && sudo apt dist-upgrade -y
+}
+
+full_upgrade
