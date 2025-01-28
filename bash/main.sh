@@ -14,6 +14,9 @@ sudo apt install zsh git curl -y
 sudo chsh -s $(which zsh) $(whoami)
 # Install oh-my-zsh: https://ohmyz.sh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+}
+
+function Configure_ZSH() {
 # Install Powerlevel10k: https://github.com/romkatv/powerlevel10k
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 
@@ -25,9 +28,13 @@ else
     echo 'ZSH_THEME="powerlevel10k/powerlevel10k"' | sudo tee -a ~/.zshrc > /dev/null
 fi
 
+# Install extra plugins, if not installed you cannot add zsh-syntax-highlighting and zsh-autosuggestions to plugins.
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
 # Enable Extensions: https://github.com/ohmyzsh/ohmyzsh/wiki/Plugins
 # Define the list of plugins
-PLUGINS_LIST="git history z docker"
+PLUGINS_LIST="git history z docker zsh-syntax-highlighting zsh-autosuggestions"
 # Update PLUGINS in ~/.zshrc
 if grep -q '^plugins=' ~/.zshrc; then
     # Replace the existing plugins line
@@ -38,6 +45,7 @@ else
 fi
 
 # find some way to automate the configuration of powerlevel10k by copying the .p10k.zsh file from the repo to the home directory
+# seems like you can't just copy the config file, you have to run the p10k configure command
 source ~/.zshrc
 }
 
