@@ -31,7 +31,7 @@ Function New-AwsSession {
         [Parameter(Mandatory=$true)]
         [string]$sso_start_url,
         [Parameter(Mandatory=$true)]
-        [string]$sso_region,
+        [string]$sso_region
     )
 
     # Define the path to the AWS config file

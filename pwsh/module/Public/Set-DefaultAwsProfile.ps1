@@ -28,7 +28,7 @@ Function New-DefaultAwsProfile {
         [Parameter(Mandatory=$true)]
         [string]$profile,
         [Parameter()]
-        [string]$caBundle = "$HOME\.aws\cacert.pem",
+        [string]$caBundle = "$HOME\.aws\cacert.pem"
     )
 
     # Define the path to the AWS config file
