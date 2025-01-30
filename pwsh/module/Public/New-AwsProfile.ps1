@@ -19,7 +19,7 @@ Function New-AwsProfile {
     The role name for SSO.
 
     .EXAMPLE
-    Net-AwsProfile  -sso_session "example" -sso_account_id "123456789012" -sso_role_name "MyRole"
+    Net-AwsProfile -sso_profile "example"  -sso_session "example" -sso_account_id "123456789012" -sso_role_name "MyRole"
 
     .NOTES
     Ensure that the AWS CLI is installed and configured on your system.
@@ -43,7 +43,7 @@ Function New-AwsProfile {
     $awsConfigPath = "$HOME\.aws\config"
 
     # Create the config content
-    $configContent = @"
+    $configContent = "`n`n" + @"
 [profile $sso_profile]
 sso_session = $sso_session
 sso_account_id = $sso_account_id
@@ -58,5 +58,5 @@ sso_role_name = $sso_role_name
     # Write the config content to the file
     $configContent | Out-File -FilePath $awsConfigPath -Append -Encoding utf8
 
-    Write-Host "AWS config for profile '$awsProfile' has been created/updated." -ForegroundColor Green
+    Write-Host "AWS config for profile '$sso_profile' has been created/updated." -ForegroundColor Green
 }

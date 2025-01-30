@@ -38,8 +38,7 @@ Function New-AwsSession {
     $awsConfigPath = "$HOME\.aws\config"
 
     # Create the config content
-    $configContent = @"
-
+    $configContent = "`n`n" + @"
 [sso-session $sso_session]
 sso_start_url = $sso_start_url
 sso_region = $sso_region
