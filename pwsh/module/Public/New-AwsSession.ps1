@@ -16,7 +16,7 @@ Function New-AwsSession {
     The AWS region where the SSO is configured.
 
     .EXAMPLE
-    Net-AwsSession  -sso_session "us-west-2" -sso_start_url "https://d-93672f1b5f.awsapps.com/start" -sso_region "eu-west-1"
+    Net-AwsSession  -sso_session "example" -sso_start_url "https://d-93672f1b5f.awsapps.com/start" -sso_region "eu-west-1"
 
     .NOTES
     Ensure that the AWS CLI is installed and configured on your system.
@@ -53,5 +53,5 @@ sso_registration_scopes=sso:account:access
     # Write the config content to the file
     $configContent | Out-File -FilePath $awsConfigPath -Append -Encoding utf8
 
-    Write-Host "AWS config for profile '$awsProfile' has been created/updated." -ForegroundColor Green
+    Write-Host "New sso session '$sso_session' has been added to the aws config file: $configContent" -ForegroundColor Green
 }

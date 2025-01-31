@@ -58,5 +58,5 @@ sso_role_name = $sso_role_name
     # Write the config content to the file
     $configContent | Out-File -FilePath $awsConfigPath -Append -Encoding utf8
 
-    Write-Host "AWS config for profile '$sso_profile' has been created/updated." -ForegroundColor Green
+    Write-Host "New profile '$sso_profile' has been added to the aws config file: $configContent" -ForegroundColor Green
 }

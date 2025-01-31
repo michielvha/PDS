@@ -1,4 +1,4 @@
-Function New-DefaultAwsProfile {
+Function Set-DefaultAwsProfile {
     <#
     .SYNOPSIS
     Generates or modifies a default entry in the AWS configuration file using the provided parameters.
@@ -12,8 +12,14 @@ Function New-DefaultAwsProfile {
     .PARAMETER profile
     The name of your preferred profile.
 
+    .PARAMETER sso_start_url
+    The SSO start URL for AWS SSO.
+
+    .PARAMETER sso_region
+    The AWS region where the SSO is configured. If not specified it will default to the region parameter.
+
     .EXAMPLE
-    ew-DefaultAwsProfile  -region "ue-west-1" -profile "default"
+    ew-DefaultAwsProfile  -region "eu-west-1" -profile "main" -sso_start_url "https://d-93672f1b5f.awsapps.com/start" -sso_region "eu-west-1"
 
     .NOTES
     Ensure that the AWS CLI is installed and configured on your system.
@@ -28,7 +34,9 @@ Function New-DefaultAwsProfile {
         [Parameter(Mandatory=$true)]
         [string]$profile,
         [Parameter()]
-        [string]$caBundle = "$HOME\.aws\cacert.pem"
+        [string]$sso_region = "$region",
+        [Parameter()]
+        [string]$sso_start_url = "https://d-93672f1b5f.awsapps.com/start"
     )
 
     # Define the path to the AWS config file
@@ -51,23 +59,34 @@ Function New-DefaultAwsProfile {
 [default]
 region = $region
 profile = $profile
+sso_region = $sso_region
+sso_start_url= $sso_start_url
 output = json
-s3 =
-    max_concurrent_requests = 20
-ca_bundle = $caBundle
 "@
 
-    # Check if the `[default]` section exists
-    if ($configContent -match "(?ms)\[default\].*?(?=\[\w+\]|\Z)") {
-        # Replace the existing `[default]` section
-        $configContent = $configContent -replace "(?ms)\[default\].*?(?=\[\w+\]|\Z)", $defaultConfig
+    # Match and replace the entire `[default]` section, including its header
+    $regex = "(?s)(\[default\].*?)(?=\n\[|\z)"
+
+    if ($configContent -match "\[default\]") {
+        # Replace only the `[default]` section, preserving everything else
+        $configContent = $configContent -replace $regex, "$defaultConfig`n"
+        Write-Output "Existing default profile found, replacing with new profile..."
     } else {
-        # Append `[default]` if it doesn't exist
+        # Append `[default]` section if not found
         $configContent = $configContent.Trim() + "`n`n" + $defaultConfig
+        Write-Output "No existing default profile found, creating new profile..."
     }
 
-    # Write updated content back to the file
-    Set-Content -Path $awsConfigPath -Value $configContent -Encoding utf8
+    try
+    {
+        # Write updated content back to the file
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)  # Disable BOM
+        [System.IO.File]::WriteAllBytes($awsConfigPath, $utf8NoBom.GetBytes($configContent))
+        Write-Host "the default AWS config has been set to: `n$defaultConfig" -ForegroundColor Green
+    }
+    catch
+    {
+        Write-Output "An error occurred while trying to write to the AWS config file: $_" -ForegroundColor Red
+    }
 
-    Write-Host "AWS config for profile '$profile' has been updated." -ForegroundColor Green
 }
