@@ -21,11 +21,11 @@ Function Remove-ArgoCLI {
     #>
 
     # function definiton
-    $binDir = "$env:USERPROFILE\AppData\Local\bin"
-    if (Test-Path $binDir) {
-        Remove-Item -Path $binDir -Recurse -Force
+    $Argo = "$env:USERPROFILE\AppData\Local\bin\argocd.exe"
+    if (Test-Path $Argo) {
+        Remove-Item -Path $Argo -Recurse -Force
     }
     else {
-        Write-Output "$binDir directory doesn't exist. ArgoCD CLI was not installed via PDS Module."
+        Write-Output "$Argo directory doesn't exist. ArgoCD CLI was not installed via PDS Module."
     }
 }
