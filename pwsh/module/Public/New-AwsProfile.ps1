@@ -19,7 +19,7 @@ Function New-AwsProfile {
     The role name for SSO.
 
     .EXAMPLE
-    Net-AwsProfile -sso_profile "example"  -sso_session "example" -sso_account_id "123456789012" -sso_role_name "MyRole"
+    New-AwsProfile -sso_profile "example"  -sso_session "example" -sso_account_id "123456789012" -sso_role_name "MyRole"
 
     .NOTES
     Ensure that the AWS CLI is installed and configured on your system.

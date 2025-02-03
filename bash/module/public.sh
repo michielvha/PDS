@@ -56,3 +56,25 @@ function update_system_cron_entry() {
 function full_upgrade() {
     sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y # && sudo apt dist-upgrade -y
 }
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# Function: full upgrade with one command
+function install_awscli() {
+
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+
+    # Detect the shell and update the respective config file with path addition
+#    case "$0" in
+#        *zsh) echo 'export PATH=$PATH:/usr/local/bin/' >> ~/.zshrc ;;
+#        *bash) echo 'export PATH=$PATH:/usr/local/bin/' >> ~/.bashrc ;;
+#        *) echo "Unknown shell: $0. Please add AWS CLI path manually." ;;
+#    esac
+
+    # Clean up
+    rm -rf awscliv2.zip aws/
+
+    # Verify AWS CLI installation
+    aws --version
+}

@@ -16,7 +16,7 @@ Function New-AwsSession {
     The AWS region where the SSO is configured.
 
     .EXAMPLE
-    Net-AwsSession  -sso_session "example" -sso_start_url "https://d-93672f1b5f.awsapps.com/start" -sso_region "eu-west-1"
+    New-AwsSession  -sso_session "example" -sso_start_url "https://d-93672f1b5f.awsapps.com/start" -sso_region "eu-west-1"
 
     .NOTES
     Ensure that the AWS CLI is installed and configured on your system.
