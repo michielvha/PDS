@@ -96,6 +96,11 @@ format = 'on [$symbol($subscription)]($style) '
 symbol = '󰠅 '
 style = 'blue bold'
 
+[aws]
+format = 'on [$symbol($profile )(\($region\) )]($style)'
+style = 'bold blue'
+symbol = '🅰 '
+
 [git_branch]
 symbol = '🌱 '
 truncation_length = 4
