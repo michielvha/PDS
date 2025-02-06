@@ -34,12 +34,13 @@ $packagesToInstall = @(
     "mobaxterm",
     "starship",
     "rpi-imager",
-    "openlens",
+    "lens",
     "grep",
     "bginfo",
     "gh",
     "docker",
-    "Firefox"
+    "Firefox",
+    "awscli"	
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 

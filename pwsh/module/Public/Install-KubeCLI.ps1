@@ -24,6 +24,13 @@ Function Install-KubeCLI {
         https://github.com/Azure/kubelogin
         Learn more about `kubelogin`, a tool for Azure Kubernetes Service (AKS) authentication.
     #>
+    
+    # TODO: Auto install az cli if not installed
+    $azVer = az --version 2>$null
+    if (!$azVer) {
+        Write-Host "Azure CLI is not installed. Please install Azure CLI before proceeding."
+        return
+    }
 
     $KubectlVer = kubectl version 2>$null
     $KubeloginVer = kubelogin --version  2>$null
@@ -36,7 +43,3 @@ Function Install-KubeCLI {
         $KubeloginVer
     }
 }
-
-
-
-
