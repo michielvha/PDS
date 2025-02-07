@@ -49,6 +49,23 @@ function install_zsh_extensions() {
     git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
     echo "source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ~/.zshrc
 
+    # git clone https://github.com/zsh-users/fast-syntax-highlighting.git ~/.zsh/fast-syntax-highlighting
+    # TODO: Promote this to main configure function
+    git clone https://github.com/marlonrichert/zsh-autocomplete.git ~/.zsh/zsh-autocomplete
+    cat <<EOF | sudo tee -a ~/.zshrc > /dev/null
+
+        # Enable history substring search (like PSReadLine)
+        if [ -f ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh ]; then
+            zstyle ':autocomplete:*' default-context history-incremental-search-backward
+            zstyle ':autocomplete:*' min-input 1
+            setopt HIST_FIND_NO_DUPS
+            source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+
+
+        fi
+EOF
+
+
     git clone https://github.com/zsh-users/zsh-history-substring-search.git ~/.zsh/zsh-history-substring-search
 
     cat <<EOF | sudo tee -a ~/.zshrc > /dev/null
