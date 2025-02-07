@@ -43,6 +43,13 @@ function configure_zsh() {
     source ~/.zshrc
 }
 
+function install_zsh_extensions() {
+    # raw install no package manager
+    # Install zsh-syntax-highlighting
+    git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
+    echo "source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ~/.zshrc
+}
+
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Function: Create system-wide Crontab to auto update system every night at midnight.
 # first check with grep to see if entry doesn't already exist. We use logical || (or) operator to only append if the grep command returns false(1). if it returns true(0) it means the entry already exists and no action will be taken.
