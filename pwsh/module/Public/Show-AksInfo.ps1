@@ -61,20 +61,30 @@ Function Show-AksInfo {
     # Get all AKS clusters in the specified or current subscription
     $aksClusters = az aks list @subscriptionArg --query "[].{name:name, resourceGroup:resourceGroup, agentPoolProfiles:agentPoolProfiles}" --output json | ConvertFrom-Json
 
+    if (-not $aksClusters) {
+        Write-Host "No AKS clusters found in the subscription." -ForegroundColor Red
+        return
+    }
+
     # Create an array to store results
     $results = @()
+    $totalClusters = $aksClusters.Count
+    $counter = 0
 
     foreach ($aks in $aksClusters) {
-        # Ensure agentPoolProfiles exists and has at least one pool
+        $counter++
+        $progressPercent = [math]::Round(($counter / $totalClusters) * 100)
+
+        # Update progress bar
+        Write-Progress -Activity "Gathering AKS Cluster Information" -Status "Processing: $($aks.name) ($counter of $totalClusters)" -PercentComplete $progressPercent
+
         if ($aks.agentPoolProfiles -and $aks.agentPoolProfiles.Count -gt 0) {
             $subnetId = $aks.agentPoolProfiles[0].vnetSubnetId
 
             if ($subnetId) {
                 $vnetDetails = Get-VNetSubnetDetails -subnetId $subnetId
 
-                # Ensure VNet details exist before proceeding
                 if ($vnetDetails) {
-                    # Get subnet details (address prefix) with the correct subscription parameter
                     $subnetDetails = az network vnet subnet show --resource-group $vnetDetails.VNetResourceGroup --vnet-name $vnetDetails.VNetName --name $vnetDetails.SubnetName @subscriptionArg --query "{addressPrefix:addressPrefix}" --output json | ConvertFrom-Json
 
                     # Add to results
@@ -90,6 +100,9 @@ Function Show-AksInfo {
             }
         }
     }
+
+    # Clear the progress bar once done
+    Write-Progress -Activity "Gathering AKS Cluster Information" -Status "Completed" -Completed
 
     # Display the table
     if ($results.Count -gt 0) {
@@ -113,3 +126,5 @@ function Get-VNetSubnetDetails {
     }
     return $null
 }
+
+Show-AksInfo
