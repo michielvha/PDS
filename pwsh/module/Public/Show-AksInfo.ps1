@@ -126,5 +126,3 @@ function Get-VNetSubnetDetails {
     }
     return $null
 }
-
-Show-AksInfo
