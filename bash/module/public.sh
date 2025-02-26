@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# The functions in this module serve as helper function to other modules.
+
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Function: Install & Configure ZSH
 function install_zsh() {
