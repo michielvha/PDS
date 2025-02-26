@@ -1,6 +1,6 @@
 #!/bin/bash
 # Dependencies:
-source module/public.sh
+source module/main.sh
 
 # upgrade system
 full_upgrade

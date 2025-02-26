@@ -89,38 +89,8 @@ EOF
 
 }
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# Function: Create system-wide Crontab to auto update system every night at midnight.
-# first check with grep to see if entry doesn't already exist. We use logical || (or) operator to only append if the grep command returns false(1). if it returns true(0) it means the entry already exists and no action will be taken.
-function update_system_cron_entry() {
-    sudo grep -q "apt update -y && apt upgrade -y" /etc/crontab || \
-    echo "0 0 * * * root apt update -y && apt upgrade -y" | sudo tee -a /etc/crontab > /dev/null
-}
+#TODO: Rework with ZI instead of ohmyzsh, check edge cloud ubuntu live image install script for info.
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# Function: full upgrade with one command
-function full_upgrade() {
-    sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y # && sudo apt dist-upgrade -y
-}
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# Function: full upgrade with one command
-function install_awscli() {
 
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    unzip awscliv2.zip
-    sudo ./aws/install
 
-    # Detect the shell and update the respective config file with path addition
-#    case "$0" in
-#        *zsh) echo 'export PATH=$PATH:/usr/local/bin/' >> ~/.zshrc ;;
-#        *bash) echo 'export PATH=$PATH:/usr/local/bin/' >> ~/.bashrc ;;
-#        *) echo "Unknown shell: $0. Please add AWS CLI path manually." ;;
-#    esac
-
-    # Clean up
-    rm -rf awscliv2.zip aws/
-
-    # Verify AWS CLI installation
-    aws --version
-}
