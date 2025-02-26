@@ -38,6 +38,7 @@ function install_kubectl() {
     sudo apt install -y kubectl
 }
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------
 # Function: Install azure cli on any supported linux system
 function install_azcli() {
   # quick and easy script maintained by microsoft. Do not use in production.
