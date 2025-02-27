@@ -3,8 +3,8 @@
 # The functions in this module serve as helper function to other modules.
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# Function: Install & Configure ZSH
-function install_zsh() {
+# Function: Install & Configure OhMyZSH
+function install_ohmyzsh() {
     # install dependencies
     sudo apt install zsh git curl -y
     # Set the default shell to zsh
@@ -13,7 +13,7 @@ function install_zsh() {
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 }
 
-function configure_zsh() {
+function configure_ohmyzsh() {
     # Install Powerlevel10k: https://github.com/romkatv/powerlevel10k
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 
@@ -91,8 +91,6 @@ EOF
 
 
 }
-
-#TODO: Rework with ZI instead of ohmyzsh, check edge cloud ubuntu live image install script for info.
 
 
 
