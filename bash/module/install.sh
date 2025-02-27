@@ -115,19 +115,18 @@ zi light marlonrichert/zsh-autocomplete
 zstyle ':autocomplete:*' default-context history-incremental-search-backward
 zstyle ':autocomplete:*' min-input 1
 setopt HIST_FIND_NO_DUPS
-# --- Enable kubectl autocompletion ---
+
+# --- Enable kubectl autocompletion for zsh ---
 autoload -Uz compinit && compinit
 source <(kubectl completion zsh)
 
-# Alias for kubectl
+# alias + auto complete for alias
 alias k='kubectl'
-
-# Enable completion for alias 'k'
 compdef __start_kubectl k
+
 # --- Various ---
 neofetch
 alias knr='kubectl get pods --field-selector=status.phase!=Running'
-
 EOF
 
   # this configures zsh for all new users, first create this config then create the new user. Point it to global config.
