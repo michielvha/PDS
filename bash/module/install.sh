@@ -117,7 +117,7 @@ zstyle ':autocomplete:*' min-input 1
 setopt HIST_FIND_NO_DUPS
 
 # --- Enable kubectl autocompletion for zsh ---
-autoload -Uz compinit && compinit
+#autoload -Uz compinit && compinit # zi enables this automatically.
 source <(kubectl completion zsh)
 
 # alias + auto complete for alias
