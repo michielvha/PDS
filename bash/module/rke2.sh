@@ -1,5 +1,6 @@
 # RKE2 module for RKE2 installation and configuration
 # purpose: bootstrap RKE2 nodes.
+# usage: quickly source this module with the following command: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/rke2.sh)`
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
 install_rke2_server() {
