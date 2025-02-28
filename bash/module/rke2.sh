@@ -3,6 +3,8 @@
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
 install_rke2_server() {
+  # purpose: bootstrap a RKE2 server node
+  # usage: install_rke2_server [-l <loadbalancer-hostname>]
   echo "🚀 Configuring RKE2 Server Node..."
 
   # Default parameter values
@@ -50,6 +52,8 @@ EOF
 
 
 install_rke2_agent() {
+  # purpose: bootstrap a RKE2 agent node
+  # usage: install_rke2_agent [-l <loadbalancer-hostname>]
   echo "🚀 Configuring RKE2 Agent Node..."
 
   # Default parameter values
@@ -98,7 +102,7 @@ EOF
 }
 
 configure_rke2_bash() {
-  # Configure the shell on an RKE2 bootstrapped node for administration
+  # purpose: configure the shell for administration on an RKE2 bootstrapped node
   local profile_file="/etc/profile.d/rke2.sh"
 
   # Ensure the file exists
@@ -115,7 +119,7 @@ configure_rke2_bash() {
 }
 
 configure_rke2_host() {
-  # Perform default bootstrap configurations required on each RKE2 node.
+  # purpose: perform default bootstrap configurations required on each RKE2 node.
   echo "🚀 Default RKE2 Node Config..."
 
   # Disable swap if not already disabled
@@ -143,6 +147,7 @@ EOF
 }
 
 configure_ufw_rke2_server() {
+  # purpose: configure the firewall for a RKE2 server node
   # Allow Kubernetes API (6443) from agent nodes
   sudo ufw allow proto tcp from any to any port 6443 comment "RKE2 API Server"
 
@@ -168,6 +173,7 @@ configure_ufw_rke2_server() {
 }
 
 configure_ufw_rke2_agent() {
+  # purpose: configure the firewall for a RKE2 agent node
   # Allow kubelet metrics (10250) from all nodes
   sudo ufw allow proto tcp from any to any port 10250 comment "kubelet metrics"
 
