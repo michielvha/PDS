@@ -98,6 +98,7 @@ EOF
 }
 
 configure_rke2_bash() {
+  # Configure the shell on an RKE2 bootstrapped node for administration
   local profile_file="/etc/profile.d/rke2.sh"
 
   # Ensure the file exists
@@ -114,6 +115,7 @@ configure_rke2_bash() {
 }
 
 configure_rke2_host() {
+  # Perform default bootstrap configurations required on each RKE2 node.
   echo "🚀 Default RKE2 Node Config..."
 
   # Disable swap if not already disabled
