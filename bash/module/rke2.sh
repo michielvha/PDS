@@ -4,6 +4,22 @@
 
 install_rke2_server() {
   echo "🚀 Configuring RKE2 Server Node..."
+
+  # Default parameter values
+  local LB_HOSTNAME="loadbalancer.example.com"
+
+  # Parse options using getopts
+  while getopts "l:" opt; do
+    case "$opt" in
+      l) LB_HOSTNAME="$OPTARG" ;;  # -l <loadbalancer-hostname>
+      \?)
+        echo "❌ Invalid option: -$OPTARG"
+        echo "Usage: install_rke2_server [-l <loadbalancer-hostname>]"
+        return 1
+        ;;
+    esac
+  done
+
   # environment
   local ARCH=$(uname -m | cut -c1-3)
   local FQDN=$(hostname -f)
@@ -24,7 +40,7 @@ node-label:
 cni: cilium
 tls-san:
   - $FQDN
-  - "loadbalancer.example.com"
+  - "$LB_HOSTNAME"
 EOF
 
   # Enable and start RKE2 server
@@ -35,6 +51,22 @@ EOF
 
 install_rke2_agent() {
   echo "🚀 Configuring RKE2 Agent Node..."
+
+  # Default parameter values
+  local LB_HOSTNAME="loadbalancer.example.com"
+
+  # Parse options using getopts
+  while getopts "l:" opt; do
+    case "$opt" in
+      l) LB_HOSTNAME="$OPTARG" ;;  # -l <loadbalancer-hostname>
+      \?)
+        echo "❌ Invalid option: -$OPTARG"
+        echo "Usage: install_rke2_server [-l <loadbalancer-hostname>]"
+        return 1
+        ;;
+    esac
+  done
+
   # environment
   local ARCH=$(uname -m | cut -c1-3)
   local FQDN=$(hostname -f)
@@ -57,7 +89,7 @@ node-label:
 cni: cilium
 tls-san:
   - $FQDN
-  - "loadbalancer.example.com"
+  - "$LB_HOSTNAME"
 EOF
 
   # Enable and start RKE2 agent
