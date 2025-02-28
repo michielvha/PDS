@@ -89,6 +89,18 @@ EOF
 
 EOF
 
+# enable persistent History
+## Persistent Zsh History Settings
+#export HISTFILE="$HOME/.zsh_history"    # File to store history
+#export HISTSIZE=100000                  # Max lines kept in memory
+#export SAVEHIST=100000                   # Max lines stored in $HISTFILE
+#setopt INC_APPEND_HISTORY                # Save each command as you enter it
+#setopt SHARE_HISTORY                     # Share history across multiple sessions
+#setopt HIST_IGNORE_ALL_DUPS              # Remove duplicate entries
+#setopt HIST_REDUCE_BLANKS                # Trim unnecessary spaces
+#setopt HIST_SAVE_NO_DUPS                 # Don't save duplicate commands
+#setopt HIST_VERIFY                       # Let you edit before running history commands
+#setopt HIST_IGNORE_SPACE                 # Ignore commands that start with a space
 
 }
 
