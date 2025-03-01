@@ -4,6 +4,7 @@
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
 # TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality.
+# TODO: Look into harding the RKE2 installation with CIS benchmarks. SEL linux etc etc.
 install_rke2_server() {
   # purpose: bootstrap a RKE2 server node
   # usage: install_rke2_server [-l <loadbalancer-hostname>]
@@ -42,11 +43,17 @@ node-label:
   - "environment=production"
   - "arch=${ARCH}"
   - "purpose=system"
+
 cni: cilium
-tls-san:
-  - $FQDN
-  - "$LB_HOSTNAME"
+disable-kube-proxy: true    # Disable kube-proxy (since eBPF replaces it)
+
+tls-san: ["$FQDN", "$LB_HOSTNAME"]
+
+
 EOF
+
+  # Cilium Config
+  bpftool feature # check if bpf is enabled | zgrep CONFIG_BPF /proc/config.gz if available.
 
 
   # Enable and start RKE2 server
@@ -95,10 +102,7 @@ node-label:
   - "environment=production"
   - "arch=${ARCH}"
   - "purpose=$PURPOSE"
-cni: cilium
-tls-san:
-  - $FQDN
-  - "$LB_HOSTNAME"
+tls-san: ["$FQDN", "$LB_HOSTNAME"]
 EOF
 
   # Enable and start RKE2 agent
