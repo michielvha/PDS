@@ -29,14 +29,14 @@ install_rke2_server() {
 
  # Install RKE2
   echo "⬇️  Downloading and installing RKE2..."
-  sudo curl -sfL https://get.rke2.io | sh - || { echo "❌ Failed to download RKE2. Exiting."; return 1; }
+  curl -sfL https://get.rke2.io | sudo sh - || { echo "❌ Failed to download RKE2. Exiting."; return 1; }
 
   # Ensure the config directory exists
-  mkdir -p /etc/rancher/rke2
+  sudo mkdir -p /etc/rancher/rke2
 
   # Write configuration to /etc/rancher/rke2/config.yaml
   # https://docs.rke2.io/reference/server_config
-  cat <<EOF > /etc/rancher/rke2/config.yaml
+  cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 node-label:
   - "environment=production"
   - "arch=${ARCH}"
@@ -46,6 +46,11 @@ tls-san:
   - $FQDN
   - "$LB_HOSTNAME"
 EOF
+
+  # prevent non-root access to Kubernetes admin credentials.
+  sudo chmod 600 /etc/rancher/rke2/rke2.yaml
+  sudo chown root:root /etc/rancher/rke2/rke2.yaml
+
 
   # Enable and start RKE2 server
   echo "⚙️  Starting RKE2 server..."
@@ -79,14 +84,14 @@ install_rke2_agent() {
 
   # Install RKE2
   echo "⬇️  Downloading and installing RKE2..."
-  curl -sfL https://get.rke2.io | sh - || { echo "❌ Failed to download RKE2. Exiting."; return 1; }
+  curl -sfL https://get.rke2.io | sudo sh - || { echo "❌ Failed to download RKE2. Exiting."; return 1; }
 
   # Ensure the config directory exists
-  mkdir -p /etc/rancher/rke2
+  sudo mkdir -p /etc/rancher/rke2
 
   # Write configuration to /etc/rancher/rke2/config.yaml
   # https://docs.rke2.io/reference/linux_agent_config
-  cat <<EOF > /etc/rancher/rke2/config.yaml
+  cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
 server: "https://loadbalancer.example.com:9345"
 token:
 node-label:
@@ -98,6 +103,10 @@ tls-san:
   - $FQDN
   - "$LB_HOSTNAME"
 EOF
+
+  # prevent non-root access to Kubernetes admin credentials.
+  sudo chmod 600 /etc/rancher/rke2/rke2.yaml
+  sudo chown root:root /etc/rancher/rke2/rke2.yaml
 
   # Enable and start RKE2 agent
   echo "⚙️  Starting RKE2 agent..."
