@@ -3,6 +3,7 @@
 # usage: quickly source this module with the following command: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/rke2.sh)`
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
+# TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality.
 install_rke2_server() {
   # purpose: bootstrap a RKE2 server node
   # usage: install_rke2_server [-l <loadbalancer-hostname>]
@@ -46,10 +47,6 @@ tls-san:
   - $FQDN
   - "$LB_HOSTNAME"
 EOF
-
-  # prevent non-root access to Kubernetes admin credentials.
-  sudo chmod 600 /etc/rancher/rke2/rke2.yaml
-  sudo chown root:root /etc/rancher/rke2/rke2.yaml
 
 
   # Enable and start RKE2 server
@@ -103,10 +100,6 @@ tls-san:
   - $FQDN
   - "$LB_HOSTNAME"
 EOF
-
-  # prevent non-root access to Kubernetes admin credentials.
-  sudo chmod 600 /etc/rancher/rke2/rke2.yaml
-  sudo chown root:root /etc/rancher/rke2/rke2.yaml
 
   # Enable and start RKE2 agent
   echo "⚙️  Starting RKE2 agent..."
