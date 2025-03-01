@@ -29,7 +29,7 @@ install_rke2_server() {
 
  # Install RKE2
   echo "⬇️  Downloading and installing RKE2..."
-  curl -sfL https://get.rke2.io | sh - || { echo "❌ Failed to download RKE2. Exiting."; return 1; }
+  sudo curl -sfL https://get.rke2.io | sh - || { echo "❌ Failed to download RKE2. Exiting."; return 1; }
 
   # Ensure the config directory exists
   mkdir -p /etc/rancher/rke2
