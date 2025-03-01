@@ -52,9 +52,34 @@ tls-san: ["$FQDN", "$LB_HOSTNAME"]
 
 EOF
 
-  # Cilium Config
-  bpftool feature # check if bpf is enabled | zgrep CONFIG_BPF /proc/config.gz if available.
+  # Cilium debug
+  # check if bpf is enabled
+  # bpftool feature  | zgrep CONFIG_BPF /proc/config.gz if available.
+  # verify cilium ebpf config is enabled:
+  # kubectl -n kube-system exec -it ds/cilium -- cilium status --verbose
+  # check cilium status
+  # kubectl -n kube-system exec -it ds/cilium -- cilium status
+  # show existing BPF tunnels
+  # kubectl -n kube-system exec -it ds/cilium -- cilium-dbg bpf tunnel list
 
+  cat <<EOF | sudo tee /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-cilium
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    kubeProxyReplacement: true
+    k8sServiceHost: "localhost"
+    k8sServicePort: "6443"
+    hubble:
+      enabled: true
+      relay:
+        enabled: true
+      ui:
+        enabled: true
+EOF
 
   # Enable and start RKE2 server
   echo "⚙️  Starting RKE2 server..."
@@ -190,4 +215,24 @@ configure_ufw_rke2_agent() {
   sudo ufw allow proto tcp from any to any port 30000:32767 comment "Kubernetes NodePort range"
 
   echo "✅ UFW rules configured for RKE2 Agent Node."
+}
+
+purge_rke2(){
+  # Remove everything related to RKE2
+  # TODO: check here what is running
+  sudo systemctl stop rke2-server
+  sudo systemctl disable rke2-server
+  sudo systemctl stop rke2-agent
+  sudo systemctl disable rke2-agent
+  # remove binary
+  sudo rm -rf /usr/local/bin/rke2* /var/lib/rancher/rke2
+  # remove systemd unit files
+  sudo rm -f /etc/systemd/system/rke2*.service
+  sudo rm -f /etc/systemd/system/rke2*.env
+  # remove kubernetes data
+  sudo rm -rf /etc/rancher /var/lib/kubelet /var/lib/etcd
+  # reload systemd and cleanup
+  sudo systemctl daemon-reload
+  sudo systemctl reset-failed
+  # verify : which rke2 | rke2 --version
 }
