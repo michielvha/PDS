@@ -15,3 +15,11 @@ function update_system_cron_entry() {
 function full_upgrade() {
     sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y # && sudo apt dist-upgrade -y
 }
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# Function: configure passwordless sudo
+set_pwless_sudo() {
+    # purpose: configure passwordless sudo for the current user
+    # first check with grep to see if entry doesn't already exist. We use logical || (or) operator to only append if the grep command returns false(1). if it returns true(0) it means the entry already exists and no action will be taken.
+    sudo grep -q "^$(whoami) ALL=(ALL) NOPASSWD:ALL" /etc/sudoers || echo "$(whoami) ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers > /dev/null
+}
