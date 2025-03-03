@@ -18,6 +18,7 @@ here we need to create the docs for the module we created, define all the functi
 - Taskbar Customization
 - Privacy Settings
 - Auto enable numlock
+- Enable sudo on windows ( currently via dev settings), set terminal as default terminal
 - Firefox deployed with extension ( containers / Simple Tabs Groups / Adblock plus) => with Firefox account or in script ... ?
 
 ## Done
