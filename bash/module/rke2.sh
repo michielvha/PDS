@@ -46,7 +46,7 @@ node-label:
 
 cni: cilium
 disable-kube-proxy: true    # Disable kube-proxy (since eBPF replaces it)
-
+disable-cloud-controller: true # disable cloud controller since we are onprem.
 tls-san: ["$FQDN", "$LB_HOSTNAME"]
 
 
