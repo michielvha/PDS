@@ -1,6 +1,7 @@
 # RKE2 module for RKE2 installation and configuration
 # purpose: bootstrap RKE2 nodes.
-# usage: quickly source this module with the following command: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/rke2.sh)`
+# usage: quickly source this module with the following command:
+# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/rke2.sh) ` 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
 # TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality. We could check for the existance of these folders /etc/rancher /var/lib/kubelet /var/lib/etcd
@@ -171,6 +172,12 @@ configure_rke2_host() {
 
   # TODO: add check if cilium ebpf is enabled, this config is only needed in kube-proxy mode.
   local sysctl_file="/etc/sysctl.d/k8s.conf"
+
+  # Load br_netfilter kernel module
+  echo "🛠️  Loading br_netfilter kernel module..."
+  sudo modprobe br_netfilter || { echo "❌ Failed to load br_netfilter kernel module. Exiting."; return 1; }
+  # make the config persistent
+  echo "br_netfilter" | sudo tee /etc/modules-load.d/br_netfilter.conf
 
   echo "🛠️  Applying sysctl settings for Kubernetes (kube-proxy) networking..."
   cat <<EOF | sudo tee "$sysctl_file" > /dev/null
