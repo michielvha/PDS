@@ -4,6 +4,7 @@
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Function: full upgrade with one command
+# tested: ✅
 function install_awscli() {
 
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -27,6 +28,7 @@ function install_awscli() {
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Function: Install kubernetes on debian based systems
 # Currently only supports ubuntu using either zsh & bash
+# tested: ⚠️
 function install_kubectl() {
     sudo apt update -y
     sudo apt install -y apt-transport-https ca-certificates curl gnupg
