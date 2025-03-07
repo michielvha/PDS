@@ -26,6 +26,7 @@ function install_awscli() {
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Function: Install kubernetes on debian based systems
+# Currently only supports ubuntu using either zsh & bash
 function install_kubectl() {
     sudo apt update -y
     sudo apt install -y apt-transport-https ca-certificates curl gnupg
@@ -37,6 +38,26 @@ function install_kubectl() {
     sudo apt update
     sudo apt install -y kubectl
     # TODO: add extensions like ´stern´ & `view-secrets`
+    
+    # auto completion configuration
+    # Detect shell and set file to update
+    SHELL_NAME=$(basename "$SHELL")
+    [[ "$SHELL_NAME" == "zsh" ]] && PROFILE_FILE="$HOME/.zshrc" || PROFILE_FILE="$HOME/.bashrc"
+
+    # Ensure autocompletion is set
+    grep -qxF "source <(kubectl completion $SHELL_NAME)" "$PROFILE_FILE" || echo "source <(kubectl completion $SHELL_NAME)" >> "$PROFILE_FILE"
+
+    # Ensure alias 'k=kubectl' is set
+    grep -qxF "alias k=kubectl" "$PROFILE_FILE" || echo "alias k=kubectl" >> "$PROFILE_FILE"
+
+    # Ensure completion for alias 'k'
+    if [[ "$SHELL_NAME" == "zsh" ]]; then
+        grep -qxF "compdef __start_kubectl k" "$PROFILE_FILE" || echo "compdef __start_kubectl k" >> "$PROFILE_FILE"
+    else
+        grep -qxF "complete -F __start_kubectl k" "$PROFILE_FILE" || echo "complete -F __start_kubectl k" >> "$PROFILE_FILE"
+    fi
+
+    echo "Installation complete. Restart your terminal or run 'source $PROFILE_FILE' to apply changes."
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
