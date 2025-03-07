@@ -216,7 +216,8 @@ configure_ufw_rke2_server() {
   sudo ufw allow proto tcp from any to any port 30000:32767 comment "Kubernetes NodePort range"
 
   echo "✅ UFW rules configured for RKE2 Server Node."
-}
+  # TODO: enable ufw with ``sudo ufw enable`` wait until config is refined and add port 22.
+ }
 
 configure_ufw_rke2_agent() {
   # purpose: configure the firewall for a RKE2 agent node
