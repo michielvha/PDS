@@ -176,6 +176,7 @@ configure_rke2_host() {
   # Load br_netfilter kernel module
   echo "🛠️  Loading br_netfilter kernel module..."
   sudo modprobe br_netfilter || { echo "❌ Failed to load br_netfilter kernel module. Exiting."; return 1; }
+  lsmod | grep br_netfilter
   # make the config persistent
   echo "br_netfilter" | sudo tee /etc/modules-load.d/br_netfilter.conf
 
