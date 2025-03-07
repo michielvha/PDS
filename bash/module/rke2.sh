@@ -120,7 +120,7 @@ install_rke2_agent() {
   # Write configuration to /etc/rancher/rke2/config.yaml
   # https://docs.rke2.io/reference/linux_agent_config
   cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
-server: "https://loadbalancer.example.com:9345"
+server: "https://$LB_HOSTNAME:9345"
 token:
 node-label:
   - "environment=production"
