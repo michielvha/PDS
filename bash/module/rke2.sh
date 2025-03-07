@@ -29,6 +29,9 @@ install_rke2_server() {
   local ARCH=$(uname -m | cut -c1-3)
   local FQDN=$(hostname -f)
 
+  # perform default bootstrap configurations required on each RKE2 node.
+  configure_rke2_host
+
  # Install RKE2
   echo "⬇️  Downloading and installing RKE2..."
   curl -sfL https://get.rke2.io | sudo sh - || { echo "❌ Failed to download RKE2. Exiting."; return 1; }
@@ -154,6 +157,7 @@ configure_rke2_bash() {
 
 configure_rke2_host() {
   # purpose: perform default bootstrap configurations required on each RKE2 node.
+  # TODO: maybe write to a file after config to check if already configured. When running another command that calls this command.
   echo "🚀 Default RKE2 Node Config..."
 
   # Disable swap if not already disabled
