@@ -48,8 +48,6 @@ cni: cilium
 disable-kube-proxy: true    # Disable kube-proxy (since eBPF replaces it)
 disable-cloud-controller: true # disable cloud controller since we are onprem.
 tls-san: ["$FQDN", "$LB_HOSTNAME"]
-
-
 EOF
 
   # Cilium debug
@@ -83,10 +81,11 @@ EOF
 
   # Enable and start RKE2 server
   echo "⚙️  Starting RKE2 server..."
-  sudo systemctl enable --now rke2-server && echo "✅ RKE2 Server node bootstrapped."
+  sudo systemctl enable --now rke2-server || { echo "❌ RKE2 Server node bootstrap failed."; return 1; }
+  echo "✅ RKE2 Server node bootstrapped."
 }
 
-
+# TODO: After server is fully tested refactor this function.
 install_rke2_agent() {
   # purpose: bootstrap a RKE2 agent node
   # usage: install_rke2_agent [-l <loadbalancer-hostname>]
@@ -132,7 +131,8 @@ EOF
 
   # Enable and start RKE2 agent
   echo "⚙️  Starting RKE2 agent..."
-  sudo systemctl enable --now rke2-agent && echo "✅ RKE2 Agent node bootstrapped."
+  sudo systemctl enable --now rke2-agent || { echo "❌ RKE2 Agent node bootstrap failed."; return 1; }
+  echo "✅ RKE2 Agent node bootstrapped."
 }
 
 configure_rke2_bash() {
