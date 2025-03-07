@@ -3,7 +3,7 @@
 # usage: quickly source this module with the following command: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/rke2.sh)`
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
-# TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality.
+# TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality. We could check for the existance of these folders /etc/rancher /var/lib/kubelet /var/lib/etcd
 # TODO: Look into harding the RKE2 installation with CIS benchmarks. SEL linux etc etc.
 install_rke2_server() {
   # purpose: bootstrap a RKE2 server node
