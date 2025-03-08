@@ -65,6 +65,7 @@ EOF
   # show existing BPF tunnels
   # kubectl -n kube-system exec -it ds/cilium -- cilium-dbg bpf tunnel list
 
+  sudo mkdir -p /var/lib/rancher/rke2/server/manifests/
   cat <<EOF | sudo tee /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
@@ -82,6 +83,8 @@ spec:
         enabled: true
       ui:
         enabled: true
+    operator:
+      replicas: 1
 EOF
 
   # Enable and start RKE2 server
