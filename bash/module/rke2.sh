@@ -29,9 +29,8 @@ install_rke2_server() {
   # environment
   local ARCH=$(uname -m | cut -c1-3)
   local FQDN=$(hostname -f)
-  # get hostname & tailscale domain for internal management interface, will be needed to add to SAN.
-  local HOST=$(hostname -a)
-  local TS="$HOST.tail6948f.ts.net"
+  local HOST=$(hostname -s) # hostname without domain
+  local TS="$HOST.tail6948f.ts.net" # get tailscale domain for internal management interface, will be needed to add to SAN.
 
   # perform default bootstrap configurations required on each RKE2 node.
   configure_rke2_host
