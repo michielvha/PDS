@@ -1,7 +1,7 @@
 #!/bin/bash
-
-# This module contains functions used for installing various tools / software.
-
+# Purpose: This module contains functions used for installing various tools / software.
+# Usage: quickly source this module with the following command:
+# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/install.sh) ` 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Function: full upgrade with one command
 # tested: ✅
@@ -59,6 +59,7 @@ function install_kubectl() {
         grep -qxF "complete -F __start_kubectl k" "$PROFILE_FILE" || echo "complete -F __start_kubectl k" >> "$PROFILE_FILE"
     fi
 
+    # source $PROFILE_FILE
     echo "Installation complete. Restart your terminal or run 'source $PROFILE_FILE' to apply changes."
 }
 
