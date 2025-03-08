@@ -29,6 +29,9 @@ install_rke2_server() {
   # environment
   local ARCH=$(uname -m | cut -c1-3)
   local FQDN=$(hostname -f)
+  # get hostname & tailscale domain for internal management interface, will be needed to add to SAN.
+  local HOST=$(hostname -a)
+  local TS="$HOST.tail6948f.ts.net"
 
   # perform default bootstrap configurations required on each RKE2 node.
   configure_rke2_host
@@ -53,8 +56,8 @@ cni: cilium
 disable-kube-proxy: true    # Disable kube-proxy (since eBPF replaces it)
 disable-cloud-controller: true # disable cloud controller since we are onprem.
 
-tls-san: ["$FQDN", "$LB_HOSTNAME"]  # https://docs.rke2.io/reference/server_config#listener
-node-ip: 192.168.1.241 # we should not have to hardcode this, change tailscale from hostname and use internal dns.
+tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]  # https://docs.rke2.io/reference/server_config#listener
+# node-ip: 192.168.1.241 # we should not have to hardcode this, change tailscale from hostname and use internal dns.
 # node-external-ip: tailnet ip ?
 
 EOF
