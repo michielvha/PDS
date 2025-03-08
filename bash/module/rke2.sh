@@ -43,6 +43,7 @@ install_rke2_server() {
   # Write configuration to /etc/rancher/rke2/config.yaml
   # https://docs.rke2.io/reference/server_config
   cat <<EOF | sudo tee /etc/rancher/rke2/config.yaml
+write-kubeconfig-mode: "0644"
 node-label:
   - "environment=production"
   - "arch=${ARCH}"
