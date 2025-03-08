@@ -85,6 +85,10 @@ spec:
         enabled: true
     operator:
       replicas: 1
+    dns:
+      servers:
+        - "195.130.131.1"
+        - "195.130.130.1"
 EOF
 
   # Enable and start RKE2 server
