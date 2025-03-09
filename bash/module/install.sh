@@ -31,7 +31,7 @@ function install_awscli() {
 # tested: ⚠️
 function install_kubectl() {
     local VERSION="${1:-1.32}"
-
+    # ✅
     sudo apt update -y
     sudo apt install -y apt-transport-https ca-certificates curl gnupg
     sudo mkdir -p -m 755 /etc/apt/keyrings
@@ -42,7 +42,7 @@ function install_kubectl() {
     sudo apt update
     sudo apt install -y kubectl
     
-    # auto completion configuration
+    # auto completion configuration ⚠️
     # Detect shell and set file to update
     SHELL_NAME=$(basename "$SHELL")
     [[ "$SHELL_NAME" == "zsh" ]] && PROFILE_FILE="$HOME/.zshrc" || PROFILE_FILE="$HOME/.bashrc"
@@ -60,7 +60,7 @@ function install_kubectl() {
         grep -qxF "complete -F __start_kubectl k" "$PROFILE_FILE" || echo "complete -F __start_kubectl k" >> "$PROFILE_FILE"
     fi
 
-    # install krew (kubectl plugin manager)
+    # install krew (kubectl plugin manager) ✅
     (
     set -x; cd "$(mktemp -d)" &&
     OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
