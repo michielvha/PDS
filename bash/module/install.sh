@@ -71,7 +71,8 @@ function install_kubectl() {
     ./"${KREW}" install krew
     )
     # Ensure binary is added to $PATH
-    grep -qxF "export PATH=\"${KREW_ROOT:-$HOME/.krew}/bin:$PATH\"" "$PROFILE_FILE" || echo "export PATH=\"${KREW_ROOT:-$HOME/.krew}/bin:$PATH\"" >> "$PROFILE_FILE"
+    grep -qxF 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' "$PROFILE_FILE" || echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> "$PROFILE_FILE"
+
     # apply changes
     source $PROFILE_FILE
 
