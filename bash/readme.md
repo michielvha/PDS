@@ -13,12 +13,12 @@ use the following function in the module directory to generate a list of functio
 
 ```bash
 echo -e "| Function | Description |\n|---|---|" > readme.md
-awk '/^#/{c=$0} /^function [a-zA-Z0-9_-]+\(\)/{print "| " $2 " | " substr(c, 3) " |"}' *.sh >> readme.md
+awk '/^#/{c=$0} /^[a-zA-Z0-9_-]+ *\(\) *\{/ || /^function [a-zA-Z0-9_-]+ *\(\) *\{/ {print "| " $1 " | " substr(c, 3) " |"}' *.sh >> readme.md
 ````
 
 Make sure to always use the same format for the function definition, e.g.:
 
-``function function_name() {}``
+``function_name() {}``
 
 and write the description/purpose of the function above it.
 
@@ -26,40 +26,59 @@ and write the description/purpose of the function above it.
 
 you can use the following function to import the modules
 
+### Ephemeral
+
+- multiple functions at once
+    ```bash
+    function fetch_functions {
+        local repo_base="https://raw.githubusercontent.com/michielvha/PDS/main/bash/module"
+        local tmp_dir="/tmp/PDS/module"
+    
+        # Create a temporary directory if it doesn't exist
+        mkdir -p "$tmp_dir"
+    
+        # List of function files to fetch
+        local files=("install.sh" "sysadmin.sh")
+    
+        # Download each file and source it
+        for file in "${files[@]}"; do
+            local url="$repo_base/$file"
+            local local_file="$tmp_dir/$file"
+    
+            echo "Fetching $url..."
+            curl -fsSL "$url" -o "$local_file"
+    
+            # Check if the file was downloaded successfully
+            if [[ -s "$local_file" ]]; then
+                source "$local_file"
+                echo "Sourced: $local_file"
+            else
+                echo "Failed to fetch: $url"
+            fi
+        done
+    }
+    ```
+- single file:
+
+    ```bash
+    source <(curl -fsSL "https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/install.sh")
+    ```
+
+### Persistent
+
+this is the way we do it in our [bootstrap script](bootstrap.sh).
+
 ```bash
-function fetch_functions {
-    local repo_base="https://raw.githubusercontent.com/michielvha/PDS/main/bash/module"
-    local tmp_dir="/tmp/PDS/module"
+MODULE_PATH="$HOME/.bash_modules"
+REPO_URL="https://raw.githubusercontent.com/michielvha/PDS/main/bash/module"
+MODULES=("install.sh" "sysadmin.sh" "rke2.sh" "public.sh" "utils.sh")
 
-    # Create a temporary directory if it doesn't exist
-    mkdir -p "$tmp_dir"
+mkdir -p "$MODULE_PATH"
 
-    # List of function files to fetch
-    local files=("install.sh" "sysadmin.sh")
-
-    # Download each file and source it
-    for file in "${files[@]}"; do
-        local url="$repo_base/$file"
-        local local_file="$tmp_dir/$file"
-
-        echo "Fetching $url..."
-        curl -fsSL "$url" -o "$local_file"
-
-        # Check if the file was downloaded successfully
-        if [[ -s "$local_file" ]]; then
-            source "$local_file"
-            echo "Sourced: $local_file"
-        else
-            echo "Failed to fetch: $url"
-        fi
-    done
-}
-```
-
-or just use a one liner if you do not want to persist the scripts locally
-
-```bash
-source <(curl -fsSL "https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/install.sh")
+for module in "${MODULES[@]}"; do
+    curl -fsSL "$REPO_URL/$module" -o "$MODULE_PATH/$module" || { echo "Failed to download $module"; exit 1; }
+    source "$MODULE_PATH/$module"
+done
 ```
 
 <!--

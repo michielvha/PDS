@@ -1,6 +1,6 @@
 | Function | Description |
 |---|---|
-| install_awscli() | install the AWS CLI on any officially supported linux system |
+| function | install the AWS CLI on any officially supported linux system |
 | install_kubectl() | Install kubernetes on debian based systems |
 | install_azcli() | Install azure cli on any supported linux system |
 | install_azcli_safe() | Install azure cli using local export of install script, safer then using curl | bash |
@@ -19,3 +19,7 @@
 | purge_rke2(){ | purge rke2 install from the current system |
 | update_system_cron_entry() | Create system-wide Crontab to auto update system every night at midnight. |
 | full_upgrade() | full upgrade with one command |
+| set_pwless_sudo() | configure passwordless sudo for the current user |
+| log_info() | configure passwordless sudo for the current user |
+| log_warn() | configure passwordless sudo for the current user |
+| log_error() | configure passwordless sudo for the current user |

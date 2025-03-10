@@ -1,10 +1,10 @@
 #!/bin/bash
-# purpose:  The functions in this module serve as helper function to other modules.
+# purpose:  The functions in this module serve as helper to other modules.
 # usage: quickly source this module with the following command:
 # ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/public.sh) `
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Install OhMyZSH
-function install_ohmyzsh() {
+install_ohmyzsh() {
     # install dependencies
     sudo apt install zsh git curl -y
     # Set the default shell to zsh
@@ -14,7 +14,7 @@ function install_ohmyzsh() {
 }
 
 # Configure OhMyZSH
-function configure_ohmyzsh() {
+configure_ohmyzsh() {
     # Install Powerlevel10k: https://github.com/romkatv/powerlevel10k
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 
@@ -48,7 +48,7 @@ function configure_ohmyzsh() {
 }
 
 # install zsh extensions
-function install_zsh_extensions() {
+install_zsh_extensions() {
     # raw install no package manager
     # Install zsh-syntax-highlighting
     git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions

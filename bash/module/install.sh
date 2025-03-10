@@ -26,7 +26,7 @@ function install_awscli() {
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Install kubernetes on debian based systems
-function install_kubectl() {
+install_kubectl() {
 # Currently only supports ubuntu using either zsh & bash
     local VERSION="${1:-1.32}"
     # ✅
@@ -87,13 +87,13 @@ function install_kubectl() {
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Install azure cli on any supported linux system
-function install_azcli() {
+install_azcli() {
   # quick and easy script maintained by microsoft. Do not use in production.
   curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 }
 
 # Install azure cli using local export of install script, safer then using curl | bash
-function install_azcli_safe() {
+install_azcli_safe() {
   sudo apt-get update -y
   sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release -y
 
@@ -116,7 +116,7 @@ function install_azcli_safe() {
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Install & Configure Zi, a package manager for ZSH
-function install_zi() {
+install_zi() {
     # Check if git is installed
     if ! command -v git &> /dev/null; then
         read -p "Git is not installed. Install it now? (y/n): " choice
@@ -132,7 +132,7 @@ function install_zi() {
 }
 
 # Configure ZSH using Zi
-function configure_zsh() {
+configure_zsh() {
   cat <<EOF | sudo tee /etc/zshrc
 source /usr/local/share/zi/zi.zsh
 
@@ -186,6 +186,6 @@ EOF
 
 
 # Set ZSH as the default shell for the current user
-function set_default_zsh() {
+set_default_zsh() {
     sudo chsh -s $(which zsh) $(whoami)
 }

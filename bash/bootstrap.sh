@@ -17,6 +17,7 @@ done
 
 
 show_help() {
+  # descriptions are currently not working.
     echo "Available Commands:"
 
     declare -F | awk '{print $3}' | while read -r cmd; do
