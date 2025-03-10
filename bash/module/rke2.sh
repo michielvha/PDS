@@ -56,8 +56,8 @@ disable-kube-proxy: true    # Disable kube-proxy (since eBPF replaces it)
 disable-cloud-controller: true # disable cloud controller since we are onprem.
 
 tls-san: ["$FQDN", "$LB_HOSTNAME", "$TS"]  # https://docs.rke2.io/reference/server_config#listener
-# node-ip: 192.168.1.241 # we should not have to hardcode this, change tailscale from hostname and use internal dns.
-# node-external-ip: tailnet ip ? NOT NEEDED.
+  # node-ip: 192.168.1.241 # we should not have to hardcode this, change tailscale from hostname and use internal dns.
+  # node-external-ip: tailnet ip ? NOT NEEDED.
 
 EOF
 # TODO: we should not be using tailnet dns as first tls san because we'll have to set node internal ip manually to lan it will auto set to tailnet. Probably best just to add tailscale as a secondary and maybe external ip but that is only really used by load balancer.
@@ -104,6 +104,7 @@ EOF
 # TODO: After server is fully tested refactor this function.
 # bootstrap a RKE2 agent node
 function install_rke2_agent() {
+# bootstrap a RKE2 agent node
   # usage: install_rke2_agent [-l <loadbalancer-hostname>]
   echo "🚀 Configuring RKE2 Agent Node..."
 
