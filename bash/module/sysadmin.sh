@@ -1,7 +1,7 @@
 #!/bin/bash
-
-# This module contains functions used in system administration.
-
+# purpose:  This module contains functions used in system administration.
+# usage: quickly source this module with the following command:
+# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/sysadmin.sh) `
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Create system-wide Crontab to auto update system every night at midnight.
 function update_system_cron_entry() {

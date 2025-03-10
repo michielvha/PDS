@@ -1,7 +1,7 @@
 #!/bin/bash
-
-# The functions in this module serve as helper function to other modules.
-
+# purpose:  The functions in this module serve as helper function to other modules.
+# usage: quickly source this module with the following command:
+# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/public.sh) `
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Install OhMyZSH
 function install_ohmyzsh() {
