@@ -104,7 +104,7 @@ EOF
 # TODO: After server is fully tested refactor this function.
 # bootstrap a RKE2 agent node
 function install_rke2_agent() {
-# bootstrap a RKE2 agent node
+  # description: Bootstrap an RKE2 agent node.
   # usage: install_rke2_agent [-l <loadbalancer-hostname>]
   echo "🚀 Configuring RKE2 Agent Node..."
 

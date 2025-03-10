@@ -1,5 +1,9 @@
 #!/bin/bash
-# bootstrap.sh: Download and source all modules
+# Download and source all modules
+# usage: quickly source this module with the following command:
+# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/bootstrap.sh) `
+# ------------------------------------------------------------------------------------------------
+
 MODULE_PATH="$HOME/.bash_modules"
 REPO_URL="https://raw.githubusercontent.com/michielvha/PDS/main/bash/module"
 MODULES=("install.sh" "sysadmin.sh" "rke2.sh" "public.sh" "utils.sh")
@@ -21,8 +25,8 @@ show_help() {
             _*|__*|show_help|log_*|gawk*|*quote*) continue ;;  # Ignore functions starting with "_" or "__" + logging helpers
         esac
 
-        # Extract function description from comment above the function
-        desc=$(type "$cmd" | grep -E '^# ' | sed 's/# //')
+        # Extract function description from function body
+        desc=$(declare -f "$cmd" | grep -m1 -E '^\s*# description:' | sed 's/# description: //')
 
         # Print with or without description
         if [[ -n "$desc" ]]; then
