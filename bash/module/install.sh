@@ -92,6 +92,7 @@ function install_azcli() {
   curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 }
 
+# Install azure cli using local export of install script, safer then using curl | bash
 function install_azcli_safe() {
   sudo apt-get update -y
   sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release -y
@@ -129,6 +130,7 @@ function install_zi() {
     sudo git clone --depth=1 https://github.com/z-shell/zi /usr/local/share/zi
     echo "Zi installed successfully."
 }
+
 # Configure ZSH using Zi
 function configure_zsh() {
   cat <<EOF | sudo tee /etc/zshrc
@@ -185,6 +187,5 @@ EOF
 
 # Set ZSH as the default shell for the current user
 function set_default_zsh() {
-    # Set the default shell to zsh
     sudo chsh -s $(which zsh) $(whoami)
 }
