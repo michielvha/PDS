@@ -3,7 +3,7 @@
 # The functions in this module serve as helper function to other modules.
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# Function: Install & Configure OhMyZSH
+# Install OhMyZSH
 function install_ohmyzsh() {
     # install dependencies
     sudo apt install zsh git curl -y
@@ -13,6 +13,7 @@ function install_ohmyzsh() {
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 }
 
+# Configure OhMyZSH
 function configure_ohmyzsh() {
     # Install Powerlevel10k: https://github.com/romkatv/powerlevel10k
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
@@ -46,6 +47,7 @@ function configure_ohmyzsh() {
     source ~/.zshrc
 }
 
+# install zsh extensions
 function install_zsh_extensions() {
     # raw install no package manager
     # Install zsh-syntax-highlighting
