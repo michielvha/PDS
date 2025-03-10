@@ -6,8 +6,8 @@
 
 # TODO: add logic if already installed, skip installation and proceed with configuration. or provide some kind of update functionality. We could check for the existance of these folders /etc/rancher /var/lib/kubelet /var/lib/etcd
 # TODO: Look into harding the RKE2 installation with CIS benchmarks. SEL linux etc etc.
-install_rke2_server() {
-  # purpose: bootstrap a RKE2 server node
+# bootstrap a RKE2 server node
+function install_rke2_server() {
   # usage: install_rke2_server [-l <loadbalancer-hostname>]
   echo "🚀 Configuring RKE2 Server Node..."
 
@@ -102,8 +102,8 @@ EOF
 }
 
 # TODO: After server is fully tested refactor this function.
-install_rke2_agent() {
-  # purpose: bootstrap a RKE2 agent node
+# bootstrap a RKE2 agent node
+function install_rke2_agent() {
   # usage: install_rke2_agent [-l <loadbalancer-hostname>]
   echo "🚀 Configuring RKE2 Agent Node..."
 
@@ -151,8 +151,8 @@ EOF
   echo "✅ RKE2 Agent node bootstrapped."
 }
 
-configure_rke2_bash() {
-  # purpose: configure the shell for administration on an RKE2 bootstrapped node
+# configure the shell for administration on an RKE2 bootstrapped node
+function configure_rke2_bash() {
   local profile_file="/etc/profile.d/rke2.sh"
 
   # Ensure the file exists
@@ -168,8 +168,8 @@ configure_rke2_bash() {
   source "$profile_file"
 }
 
-configure_rke2_host() {
-  # purpose: perform default bootstrap configurations required on each RKE2 node.
+# perform default bootstrap configurations required on each RKE2 node.
+function configure_rke2_host() {
   # TODO: maybe write to a file after config to check if already configured. When running another command that calls this command.
   echo "🚀 Default RKE2 Node Config..."
 
@@ -204,8 +204,8 @@ EOF
   sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
 }
 
-configure_ufw_rke2_server() {
-  # purpose: configure the firewall for a RKE2 server node
+# configure the firewall for a RKE2 server node
+function configure_ufw_rke2_server() {
   # Allow Kubernetes API (6443) from agent nodes
   sudo ufw allow proto tcp from any to any port 6443 comment "RKE2 API Server"
 
@@ -231,8 +231,8 @@ configure_ufw_rke2_server() {
   # TODO: enable ufw with ``sudo ufw enable`` wait until config is refined and add port 22.
  }
 
-configure_ufw_rke2_agent() {
-  # purpose: configure the firewall for a RKE2 agent node
+# configure the firewall for a RKE2 agent node
+function configure_ufw_rke2_agent() {
   # Allow kubelet metrics (10250) from all nodes
   sudo ufw allow proto tcp from any to any port 10250 comment "kubelet metrics"
 
@@ -242,7 +242,8 @@ configure_ufw_rke2_agent() {
   echo "✅ UFW rules configured for RKE2 Agent Node."
 }
 
-purge_rke2(){
+# purge rke2 install from the current system
+function purge_rke2(){
   # Remove everything related to RKE2
   # TODO: check here what is running
   sudo systemctl stop rke2-server

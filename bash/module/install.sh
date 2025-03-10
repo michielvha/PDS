@@ -3,10 +3,9 @@
 # Usage: quickly source this module with the following command:
 # ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/install.sh) ` 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# Function: full upgrade with one command
-# tested: ✅
+# install the AWS CLI on any officially supported linux system
 function install_awscli() {
-
+# tested: ✅
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     unzip awscliv2.zip
     sudo ./aws/install
@@ -26,10 +25,9 @@ function install_awscli() {
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# Function: Install kubernetes on debian based systems
-# Currently only supports ubuntu using either zsh & bash
-# tested: ⚠️
+# Install kubernetes on debian based systems
 function install_kubectl() {
+# Currently only supports ubuntu using either zsh & bash
     local VERSION="${1:-1.32}"
     # ✅
     sudo apt update -y
@@ -88,7 +86,7 @@ function install_kubectl() {
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# Function: Install azure cli on any supported linux system
+# Install azure cli on any supported linux system
 function install_azcli() {
   # quick and easy script maintained by microsoft. Do not use in production.
   curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -116,8 +114,8 @@ function install_azcli_safe() {
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# Function: Install & Configure Zi
-install_zi() {
+# Install & Configure Zi, a package manager for ZSH
+function install_zi() {
     # Check if git is installed
     if ! command -v git &> /dev/null; then
         read -p "Git is not installed. Install it now? (y/n): " choice
@@ -131,8 +129,8 @@ install_zi() {
     sudo git clone --depth=1 https://github.com/z-shell/zi /usr/local/share/zi
     echo "Zi installed successfully."
 }
-
-configure_zsh() {
+# Configure ZSH using Zi
+function configure_zsh() {
   cat <<EOF | sudo tee /etc/zshrc
 source /usr/local/share/zi/zi.zsh
 
@@ -184,7 +182,9 @@ source /etc/zshrc
 EOF
 }
 
-set_default_zsh() {
+
+# Set ZSH as the default shell for the current user
+function set_default_zsh() {
     # Set the default shell to zsh
     sudo chsh -s $(which zsh) $(whoami)
 }

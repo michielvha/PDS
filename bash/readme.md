@@ -6,7 +6,21 @@ todo: auto gen
 
 ## List of functions
 
-todo: auto gen
+**TODO: Further refine the generating of this list. Make more clear which sub category of module etc.**
+
+use the following function in the module directory to generate a list of functions.
+
+
+```bash
+echo -e "| Function | Description |\n|---|---|" > readme.md
+awk '/^#/{c=$0} /^function [a-zA-Z0-9_-]+\(\)/{print "| " $2 " | " substr(c, 3) " |"}' *.sh >> readme.md
+````
+
+Make sure to always use the same format for the function definition, e.g.:
+
+``function function_name() {}``
+
+and write the description/purpose of the function above it.
 
 ## Import the modules
 
@@ -48,218 +62,219 @@ or just use a one liner if you do not want to persist the scripts locally
 source <(curl -fsSL "https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/install.sh")
 ```
 
+<!--
+# Architecture
 
-[//]: # (# Architecture)
 
-[//]: # ()
-[//]: # (looking into a package manager like nuget for bash, seeing if there is any added value instead of just using 1 script or a seperate file for functions and script and just sourcing it.)
+looking into a package manager like nuget for bash, seeing if there is any added value instead of just using 1 script or a seperate file for functions and script and just sourcing it.
 
-[//]: # ()
-[//]: # (`bpkg` &#40;Bash Package Manager&#41; is a lightweight package manager designed specifically for Bash scripts and utilities. It aims to provide a simple way to manage Bash packages and reusable scripts, much like how `npm` works for Node.js or `NuGet` works for PowerShell.)
 
-[//]: # ()
-[//]: # (### Key Features of `bpkg`:)
+`bpkg` (Bash Package Manager) is a lightweight package manager designed specifically for Bash scripts and utilities. It aims to provide a simple way to manage Bash packages and reusable scripts, much like how `npm` works for Node.js or `NuGet` works for PowerShell.
 
-[//]: # ()
-[//]: # (1. **Install Bash Packages**: )
 
-[//]: # (   `bpkg` allows you to install Bash packages hosted in Git repositories &#40;usually on GitHub&#41;. It clones the repository and makes the package available on your system.)
+### Key Features of `bpkg`:
 
-[//]: # ()
-[//]: # (2. **Manage Dependencies**:)
 
-[//]: # (   Bash scripts or utilities can specify dependencies, which `bpkg` will resolve and install automatically.)
+1. **Install Bash Packages**: 
 
-[//]: # ()
-[//]: # (3. **Version Control**:)
+   `bpkg` allows you to install Bash packages hosted in Git repositories (usually on GitHub). It clones the repository and makes the package available on your system.
 
-[//]: # (   Each package can specify its version, and you can install specific versions of packages.)
 
-[//]: # ()
-[//]: # (4. **Works from Git**:)
+2. **Manage Dependencies**:
 
-[//]: # (   `bpkg` uses Git as its backend. When you install a package, `bpkg` will clone the repository &#40;or a specific branch/tag&#41; and handle the installation of the scripts.)
+   Bash scripts or utilities can specify dependencies, which `bpkg` will resolve and install automatically.
 
-[//]: # ()
-[//]: # (5. **Simple Installation**:)
 
-[//]: # (   `bpkg` makes it easy to install new Bash utilities with a single command.)
+3. **Version Control**:
 
-[//]: # ()
-[//]: # (6. **Cross-platform**:)
+   Each package can specify its version, and you can install specific versions of packages.
 
-[//]: # (   Since it is just a Bash utility, `bpkg` can be used across different Unix-based systems &#40;Linux, macOS, etc.&#41;.)
 
-[//]: # ()
-[//]: # (---)
+4. **Works from Git**:
 
-[//]: # ()
-[//]: # (### Installing `bpkg`:)
+   `bpkg` uses Git as its backend. When you install a package, `bpkg` will clone the repository (or a specific branch/tag) and handle the installation of the scripts.
 
-[//]: # ()
-[//]: # (`bpkg` itself is a Bash script, so installing it is straightforward.)
 
-[//]: # ()
-[//]: # (```bash)
+5. **Simple Installation**:
 
-[//]: # (git clone https://github.com/bpkg/bpkg.git ~/.bpkg)
+   `bpkg` makes it easy to install new Bash utilities with a single command.
 
-[//]: # (echo 'export PATH="$HOME/.bpkg/bin:$PATH"' >> ~/.bashrc)
 
-[//]: # (source ~/.bashrc)
+6. **Cross-platform**:
 
-[//]: # (```)
+   Since it is just a Bash utility, `bpkg` can be used across different Unix-based systems (Linux, macOS, etc.).
 
-[//]: # ()
-[//]: # (This will clone the `bpkg` repository into your home directory and add it to your `PATH` so you can start using it immediately.)
 
-[//]: # ()
-[//]: # (---)
+---
 
-[//]: # ()
-[//]: # (### Using `bpkg`:)
 
-[//]: # ()
-[//]: # (#### 1. **Installing Packages**:)
+### Installing `bpkg`:
 
-[//]: # (Once `bpkg` is installed, you can install Bash packages from GitHub like this:)
 
-[//]: # ()
-[//]: # (```bash)
+`bpkg` itself is a Bash script, so installing it is straightforward.
 
-[//]: # (bpkg install <username>/<repository>)
 
-[//]: # (```)
+```bash
 
-[//]: # ()
-[//]: # (For example, installing a package called `json.sh` from the repository:)
+git clone https://github.com/bpkg/bpkg.git ~/.bpkg
 
-[//]: # ()
-[//]: # (```bash)
+echo 'export PATH="$HOME/.bpkg/bin:$PATH"' >> ~/.bashrc
 
-[//]: # (bpkg install dominictarr/json.sh)
+source ~/.bashrc
 
-[//]: # (```)
+```
 
-[//]: # ()
-[//]: # (This will download the Bash script, resolve any dependencies, and install it in your local environment.)
 
-[//]: # ()
-[//]: # (#### 2. **Running Installed Packages**:)
+This will clone the `bpkg` repository into your home directory and add it to your `PATH` so you can start using it immediately.
 
-[//]: # (The installed packages are placed in your `~/.bpkg/bin` folder, which is added to your `PATH`. This means you can run the installed scripts or utilities just like any other system command.)
 
-[//]: # ()
-[//]: # (#### 3. **Package Structure**:)
+---
 
-[//]: # (Bash packages that work with `bpkg` usually follow a simple structure. They typically have:)
 
-[//]: # ()
-[//]: # (- **`bpkg.json`**: A file that describes the package, including metadata such as version, dependencies, and description.)
+### Using `bpkg`:
 
-[//]: # (- **Executable Scripts**: The actual Bash scripts or utilities to be used.)
 
-[//]: # ()
-[//]: # (Here’s an example `bpkg.json`:)
+#### 1. **Installing Packages**:
 
-[//]: # ()
-[//]: # (```json)
+Once `bpkg` is installed, you can install Bash packages from GitHub like this:
 
-[//]: # ({)
 
-[//]: # (  "name": "my-bash-package",)
+```bash
 
-[//]: # (  "version": "1.0.0",)
+bpkg install <username>/<repository>
 
-[//]: # (  "description": "A simple bash utility",)
+```
 
-[//]: # (  "dependencies": {)
 
-[//]: # (    "user/dependency-repo": "1.0.0")
+For example, installing a package called `json.sh` from the repository:
 
-[//]: # (  })
 
-[//]: # (})
+```bash
 
-[//]: # (```)
+bpkg install dominictarr/json.sh
 
-[//]: # ()
-[//]: # (#### 4. **Listing Installed Packages**:)
+```
 
-[//]: # (You can list all the packages that you’ve installed with `bpkg`:)
 
-[//]: # ()
-[//]: # (```bash)
+This will download the Bash script, resolve any dependencies, and install it in your local environment.
 
-[//]: # (bpkg list)
 
-[//]: # (```)
+#### 2. **Running Installed Packages**:
 
-[//]: # ()
-[//]: # (#### 5. **Updating and Uninstalling Packages**:)
+The installed packages are placed in your `~/.bpkg/bin` folder, which is added to your `PATH`. This means you can run the installed scripts or utilities just like any other system command.
 
-[//]: # (To update an installed package to the latest version:)
 
-[//]: # ()
-[//]: # (```bash)
+#### 3. **Package Structure**:
 
-[//]: # (bpkg update <username>/<repository>)
+Bash packages that work with `bpkg` usually follow a simple structure. They typically have:
 
-[//]: # (```)
 
-[//]: # ()
-[//]: # (To uninstall a package:)
+- **`bpkg.json`**: A file that describes the package, including metadata such as version, dependencies, and description.
 
-[//]: # ()
-[//]: # (```bash)
+- **Executable Scripts**: The actual Bash scripts or utilities to be used.
 
-[//]: # (bpkg remove <username>/<repository>)
 
-[//]: # (```)
+Here’s an example `bpkg.json`:
 
-[//]: # ()
-[//]: # (---)
 
-[//]: # ()
-[//]: # (### Publishing Your Own Bash Package:)
+```json
 
-[//]: # ()
-[//]: # (If you want to create your own package and publish it for use with `bpkg`, the process is simple:)
+{
 
-[//]: # ()
-[//]: # (1. Create a GitHub repository.)
+  "name": "my-bash-package",
 
-[//]: # (2. Write your Bash script&#40;s&#41;.)
+  "version": "1.0.0",
 
-[//]: # (3. Create a `bpkg.json` file with metadata about your package.)
+  "description": "A simple bash utility",
 
-[//]: # (4. Add your GitHub repository to the bpkg ecosystem by making it publicly available.)
+  "dependencies": {
 
-[//]: # ()
-[//]: # (Once your package is ready, others can install it directly from your GitHub repo using `bpkg install`.)
+    "user/dependency-repo": "1.0.0"
 
-[//]: # ()
-[//]: # (---)
+  }
 
-[//]: # ()
-[//]: # (### Limitations of `bpkg`:)
+}
 
-[//]: # ()
-[//]: # (- **Smaller Ecosystem**: Since `bpkg` is a niche tool for Bash scripts, it doesn't have as large a package repository as other package managers like `npm` or `pip`.)
+```
 
-[//]: # (- **GitHub Dependency**: It relies heavily on Git and GitHub, so you need Git installed and a stable internet connection to use it.)
 
-[//]: # (- **No Central Registry**: Unlike `NuGet` or `npm`, there’s no central repository or registry for `bpkg`. Instead, it pulls directly from GitHub repositories, which can make it harder to discover new packages.)
+#### 4. **Listing Installed Packages**:
 
-[//]: # ()
-[//]: # (---)
+You can list all the packages that you’ve installed with `bpkg`:
 
-[//]: # ()
-[//]: # (### Alternatives to `bpkg`:)
 
-[//]: # (- **Homebrew**: While Homebrew is not specific to Bash scripts, it’s a popular package manager for macOS and Linux. It can install binaries and some shell scripts.)
+```bash
 
-[//]: # (- **APT/YUM/PKG**: The native package managers for Linux distributions can also manage scripts or utilities that are part of the system repositories.)
+bpkg list
 
-[//]: # ()
-[//]: # ()
+```
+
+
+#### 5. **Updating and Uninstalling Packages**:
+
+To update an installed package to the latest version:
+
+
+```bash
+
+bpkg update <username>/<repository>
+
+```
+
+
+To uninstall a package:
+
+
+```bash
+
+bpkg remove <username>/<repository>
+
+```
+
+
+---
+
+
+### Publishing Your Own Bash Package:
+
+
+If you want to create your own package and publish it for use with `bpkg`, the process is simple:
+
+
+1. Create a GitHub repository.
+
+2. Write your Bash script(s).
+
+3. Create a `bpkg.json` file with metadata about your package.
+
+4. Add your GitHub repository to the bpkg ecosystem by making it publicly available.
+
+
+Once your package is ready, others can install it directly from your GitHub repo using `bpkg install`.
+
+
+---
+
+
+### Limitations of `bpkg`:
+
+
+- **Smaller Ecosystem**: Since `bpkg` is a niche tool for Bash scripts, it doesn't have as large a package repository as other package managers like `npm` or `pip`.
+
+- **GitHub Dependency**: It relies heavily on Git and GitHub, so you need Git installed and a stable internet connection to use it.
+
+- **No Central Registry**: Unlike `NuGet` or `npm`, there’s no central repository or registry for `bpkg`. Instead, it pulls directly from GitHub repositories, which can make it harder to discover new packages.
+
+
+---
+
+
+### Alternatives to `bpkg`:
+
+- **Homebrew**: While Homebrew is not specific to Bash scripts, it’s a popular package manager for macOS and Linux. It can install binaries and some shell scripts.
+
+- **APT/YUM/PKG**: The native package managers for Linux distributions can also manage scripts or utilities that are part of the system repositories.
+
+
+
+-->
