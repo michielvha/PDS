@@ -265,3 +265,8 @@ purge_rke2() {
   sudo systemctl reset-failed
   # verify : which rke2 | rke2 --version
 }
+
+rke2_status() {
+  # Check the status of RKE2 services
+  systemctl status rke2-server || systemctl status rke2-agent
+}
