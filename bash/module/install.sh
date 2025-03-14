@@ -191,7 +191,6 @@ set_default_zsh() {
 }
 
 # Install Go
-#!/bin/bash
 install_go () {
   echo "🚀 Fetching the latest Go version..."
 
