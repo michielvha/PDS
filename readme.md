@@ -31,20 +31,20 @@ check notes on phone for more idea's.
 
 **Step 1: debloat windows by using this [script](https://github.com/Raphire/Win11Debloat/tree/master) define which options and settings you want to set or use tiny11 on standard image to create custom trimmed image.**
 
-binaries installed in sys directory and added to path => handeld by unxutils package in choco
+binaries installed in sys directory and added to path => handeld if installed via choco
 
-- grep on windows
-- cat on windows
+- [x] grep on windows
+- [x] cat on windows, via unxutils
 
 shell config
-- starship + ps readline config
+- [x] starship + ps readline config
 
 
 various tweaks in registry
 
 - numlock on by default
-- long path support in registry
-- backlit keyboard on by default if available => seems to be controlled by bios
+- [x] long path support in registry
+<!-- - backlit keyboard on by default if available => seems to be controlled by bios -->
 
 ## Linux Specific ( check edgecloud for more ideas)
 
