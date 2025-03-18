@@ -40,7 +40,7 @@ auto_pull_cron_entry() {
 
     # Check if the cron job already exists
     sudo grep -q "cd $repo_path && git pull" /etc/crontab || \
-    echo "* * * * * root cd $repo_path && git pull" | sudo tee -a /etc/crontab > /dev/null
+    echo "* * * * * $USER cd $repo_path && git pull" | sudo tee -a /etc/crontab > /dev/null
 }
 
 # Usage
