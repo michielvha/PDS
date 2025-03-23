@@ -190,7 +190,7 @@ set_default_zsh() {
     sudo chsh -s $(which zsh) $(whoami)
 }
 
-# Install Go
+# Install the latest Golang version & make available in current user's $PATH
 install_go () {
   echo "🚀 Fetching the latest Go version..."
 
