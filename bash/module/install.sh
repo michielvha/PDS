@@ -191,13 +191,14 @@ set_default_zsh() {
 }
 
 # Install the latest Golang version & make available in current user's $PATH
+# TODO: allow to manually specify which version ?
 install_go () {
   echo "🚀 Fetching the latest Go version..."
 
-  # Get the latest Go version dynamically from the official site
+  # 
   LATEST_GO_VERSION=$(curl -s https://go.dev/VERSION?m=text)
 
-  # Extract just the version number (e.g., go1.21.5 -> 1.21.5)
+  # Get the latest Go version dynamically from the official site + Extract just the version number (e.g., go1.21.5 -> 1.21.5)
   GO_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -n 1 | awk '{print $1}' | sed 's/go//')
 
   # Validate version extraction
