@@ -12,7 +12,7 @@ else {
 }
 
 # Import the required Functions from powershell gallery
-Install-Module -Name PDS
+# Install-Module -Name PDS
 Import-Module -Name PDS
 
 # insert step here for cleaning up w11 build.
