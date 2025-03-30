@@ -195,9 +195,6 @@ set_default_zsh() {
 install_go () {
   echo "🚀 Fetching the latest Go version..."
 
-  # 
-  LATEST_GO_VERSION=$(curl -s https://go.dev/VERSION?m=text)
-
   # Get the latest Go version dynamically from the official site + Extract just the version number (e.g., go1.21.5 -> 1.21.5)
   GO_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -n 1 | awk '{print $1}' | sed 's/go//')
 
@@ -230,5 +227,26 @@ install_go () {
   source ~/.bashrc  # Apply changes
 
   echo "🚀 Go installed! Run 'go version' to check."
+}
+
+set_go_env () {
+  echo "🔧 Setting Go environment variables for user: $USER"
+
+  {
+    echo ''
+    echo '# Go environment setup'
+    echo 'export GOPATH=$HOME/go'
+    echo 'export GOBIN=$GOPATH/bin'
+    echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH'
+  } >> ~/.bashrc
+
+  # Apply it immediately
+  export GOPATH=$HOME/go
+  export GOBIN=$GOPATH/bin
+  export PATH=$GOBIN:/usr/local/go/bin:$PATH
+
+  mkdir -p "$GOBIN"
+
+  echo "✅ Go environment set up. Run 'go version' to check."
 }
 
