@@ -3,8 +3,8 @@ source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/darwin
 
 # Install Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-echo >> /Users/michielvh/.zprofile\
-    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/michielvh/.zprofile\
+echo >> $HOME/.zprofile\
+    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile\
     eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Install Xcode command line tools
