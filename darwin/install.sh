@@ -27,6 +27,7 @@ brew install arc \
 brew install --cask visual-studio-code \
      chatgpt
 
+# ZSH setup
 install_zi (){
     sh -c "$(curl -fsSL https://git.io/zi-install)"
 }
@@ -68,11 +69,8 @@ EOF
 }
 
 setup_zsh (){
-    # Install zsh
-    brew install zsh
-
-    # Set zsh as default shell
-    chsh -s $(which zsh)
+    # Install zsh, included by default in macOS
+    # brew install zsh@$VERSION
 
     # Install zi
     install_zi
