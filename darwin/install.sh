@@ -6,7 +6,7 @@ echo >> /Users/michielvh/.zprofile\
     echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/michielvh/.zprofile\
     eval "$(/opt/homebrew/bin/brew shellenv)"
 # Install CLI Homebrew packages
-brew install arc warp iterm2
+brew install arc warp iterm2 gh
 
 
 # Install Xcode command line tools
