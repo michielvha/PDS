@@ -41,19 +41,6 @@ This section provides references to the specific `readme.md` files in the respec
 
 check notes on phone for more idea's.
 
-## Linux Specific ( check edgecloud for more ideas)
-
-configure zsh
-set locale
-
-### future enhancements:
-
-- sync shell history across all devices => Create a seperate project in Go for this.
-- unifi server local host?
-- atlstore or other sideload tool localhost
-
-
-
 
 # Features and Enhancements
 
