@@ -21,7 +21,7 @@ We use [Homebrew](https://brew.sh) as the primary package manager. The [`install
 
 ## Functions
 
-Available setup functions:
+Available setup [functions](functions.sh):
 
 - `setup_go_env` – Configures Go-related environment variables and paths.
 - `setup_zsh` – Sets up the Zsh shell. This includes:
