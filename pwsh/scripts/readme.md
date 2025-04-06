@@ -27,10 +27,3 @@ I'm trailing this out to see what it's like since I've never used it but seems t
 ### Portable version
 
 This version can be ran without an active internet connection. Created by merging the module file with some execution commands to pack them all in one file.
-
-
-
----
-
-[//]: # (**to be merged with above docs**)
-
