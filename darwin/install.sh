@@ -45,10 +45,8 @@ zi light zsh-users/zsh-history-substring-search
 zi light agkozak/zsh-z
 
 # Installs stuff in ~/zi/plugins that needs to be manually sourced.
-zi light ohmyzsh/ohmyzsh
 zi snippet OMZP::docker
 zi snippet OMZP::history
-source "$HOME/.zi/plugins/ohmyzsh---ohmyzsh/plugins/git/git.plugin.zsh"
 
 zi light marlonrichert/zsh-autocomplete
 zstyle ':autocomplete:*' default-context history-incremental-search-backward
@@ -56,7 +54,8 @@ zstyle ':autocomplete:*' min-input 1
 setopt HIST_FIND_NO_DUPS
 
 # --- Enable kubectl autocompletion for zsh ---
-#autoload -Uz compinit && compinit # zi enables this automatically.
+autoload -Uz compinit
+compinit
 source <(kubectl completion zsh)
 
 # alias + auto complete for alias
