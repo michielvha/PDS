@@ -23,7 +23,7 @@ The goal of this project is to create a personal deployment repository that simp
 - [ ] function for aliasses Kubectl
 - [ ] function to run system diagnostic
 - [ ] function to fetch relevant information about machine (check old scripts for example)
-- [ ] Modify `Install-KubeCLI` to check if az cli is install before using it to install ``kubectl`` & ``kubelogin``
+- [ ] Modify `Install-KubeCLI-Azure` to check if az cli is install before using it to install ``kubectl`` & ``kubelogin``
 
 check notes on phone for more idea's.
 
