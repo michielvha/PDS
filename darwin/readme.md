@@ -34,6 +34,8 @@ Available setup [functions](functions.sh):
 - `command + q` - actually quit apps (red cross doesn't behave like on windows).
 - ` Ctrl + `` (backtick) ` -  quickly open a terminal in VSCode.
 - `Ctrl + d` - delete to the right (mimic delete key behaviour)
+- `Command (⌘) + Shift + 4 (+ spacebar)` - capture a selection (or a specific windows)
+- `Command (⌘) + Shift + 3` - capture the entire screen
 
 ### VSCode
 - `Option (⌥) + Shift (⇧) + A` - Block Comment Shortcut
