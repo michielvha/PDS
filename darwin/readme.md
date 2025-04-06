@@ -1,53 +1,61 @@
-# Darwin based systems
+# Darwin-Based Systems Setup Guide
 
-This section of the documentation includes all the Darwin-specific documentation.
+This guide provides instructions and utilities specific to Darwin (macOS) environments.
 
 ## Software Packages
 
-We'll ofcourse be using brew as a package manager. The following package installations are handled by the [script](install.sh)
+We use [Homebrew](https://brew.sh) as the primary package manager. The [`install.sh`](install.sh) script installs the following applications:
 
-- arc
-- warp
-- iterm2
-- gh
-- go
-- neofetch
+- Arc Browser
+- Warp Terminal
+- iTerm2
+- GitHub CLI (`gh`)
+- Go
+- Neofetch
 - kubectl
-- helm
-- kustomize
-- visual-studio-code
-- chatgpt
-- tailscale
+- Helm
+- Kustomize
+- Visual Studio Code
+- ChatGPT
+- Tailscale
 
-## List of functions
+## Functions
 
-- `setup_go_env`
-- `setup_zsh` ( includes `install_zi` & `configure_zsh` )
+Available setup functions:
+
+- `setup_go_env` – Configures Go-related environment variables and paths.
+- `setup_zsh` – Sets up the Zsh shell. This includes:
+  - `install_zi` – Installs the ZI plugin manager.
+  - `configure_zsh` – Applies the Zsh configuration.
 
 ## Shortcuts
 
 - `command + q` - actually quit apps (red cross doesn't behave like on windows).
 - ` Ctrl + `` (backtick) ` -  quickly open a terminal in VSCode.
-- `Option (⌥) + Shift (⇧) + A` - Block Comment Shortcut (vscode)
 
-## Missing keyboard keys
+### VSCode
+- `Option (⌥) + Shift (⇧) + A` - Block Comment Shortcut
+- `Option (⌥) + space` - call chatGPT from vscode
 
-- `Option (⌥) + n` → **Tilde ~**
-- `Option (⌥) + Shift (⇧) + /` → **Backslash \\**
--	`Option (⌥) + Shift (⇧) + L` → **Pipe |**
--	`Option (⌥) + Shift (⇧) + (` → **Left Square Bracket [**
--	`Option (⌥) + Shift (⇧) + )` → **Right Square Bracket: ]**
--	`Option (⌥) + (` → **Left Curly Brace: {**
--	`Option (⌥) + )` → **Right Curly Brace: }**
+## Special Characters (macOS Shortcuts)
 
+- `Option (⌥) + n` → **~ (Tilde)**
+- `Option (⌥) + Shift (⇧) + /` → **\\ (Backslash)**
+- `Option (⌥) + Shift (⇧) + L` → **| (Pipe)**
+- `Option (⌥) + Shift (⇧) + (` → **[ (Left Square Bracket)**
+- `Option (⌥) + Shift (⇧) + )` → **] (Right Square Bracket)**
+- `Option (⌥) + (` → **{ (Left Curly Brace)**
+- `Option (⌥) + )` → **} (Right Curly Brace)**
 
 ## ZSH Setup
 
-1. install the [font](https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#manual-font-installation)
+1. Install a compatible font for the Powerlevel10k prompt:
+   [Manual Font Installation Guide](https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#manual-font-installation)
 
-2. run the function `setup_zsh`
+2. Run the `setup_zsh` function to configure Zsh and apply prompt settings.
 
-## VSCode extension
+## Recommended VSCode Extensions
 
-- markdown all-in-one
-- todo tree / highlight
+- Markdown All-in-One
+- TODO Tree / TODO Highlight
+- Go (Official Extension)
