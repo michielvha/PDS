@@ -19,13 +19,14 @@ brew install arc \
      neofetch \
      kubectl \
      helm \
-     kustomize
+     kustomize \
 
 
 # Install GUI Homebrew packages
 # make sure the font is installed: https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#manual-font-installation
 brew install --cask visual-studio-code \
-     chatgpt
+     chatgpt \
+     tailscale
 
 # ZSH setup
 install_zi (){
