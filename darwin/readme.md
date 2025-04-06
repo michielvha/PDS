@@ -21,6 +21,9 @@ We'll ofcourse be using brew as a package manager. The following package install
 
 ## List of functions
 
+- `setup_go_env`
+- `setup_zsh` ( includes `install_zi` & `configure_zsh` )
+
 ## Shortcuts
 
 - `command + q` - actually quit apps (red cross doesn't behave like on windows).

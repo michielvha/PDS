@@ -78,3 +78,11 @@ setup_zsh (){
     # Configure zsh
     configure_zsh
 }
+
+setup_go_env (){
+    # Setup go env
+    echo 'export GOPATH=$HOME/go' >> ~/.zshrc
+    echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.zshrc
+    echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH' >> ~/.zshrc
+    source ~/.zshrc
+}
