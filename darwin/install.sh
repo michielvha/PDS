@@ -26,7 +26,8 @@ brew install arc \
 # make sure the font is installed: https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#manual-font-installation
 brew install --cask visual-studio-code \
      chatgpt \
-     tailscale
+     tailscale \
+     microsoft-teams
 
 setup_zsh
 

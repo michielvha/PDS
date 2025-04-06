@@ -18,6 +18,7 @@ We use [Homebrew](https://brew.sh) as the primary package manager. The [`install
 - Visual Studio Code
 - ChatGPT
 - Tailscale
+- Microsoft Teams
 
 ## Functions
 
