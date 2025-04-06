@@ -2,7 +2,7 @@
 
 This guide provides instructions and utilities specific to Darwin (macOS) environments.
 
-## Software Packages
+## 📦 Software Packages
 
 We use [Homebrew](https://brew.sh) as the primary package manager. The [`install.sh`](install.sh) script installs the following applications:
 
@@ -28,7 +28,7 @@ Available setup functions:
   - `install_zi` – Installs the ZI plugin manager.
   - `configure_zsh` – Applies the Zsh configuration.
 
-## Shortcuts
+## ⌨️ Shortcuts
 
 - `command + q` - actually quit apps (red cross doesn't behave like on windows).
 - ` Ctrl + `` (backtick) ` -  quickly open a terminal in VSCode.
@@ -37,7 +37,7 @@ Available setup functions:
 - `Option (⌥) + Shift (⇧) + A` - Block Comment Shortcut
 - `Option (⌥) + space` - call chatGPT from vscode
 
-## Special Characters (macOS Shortcuts)
+## 🔣 Special Characters (macOS Shortcuts)
 
 - `Option (⌥) + n` → **~ (Tilde)**
 - `Option (⌥) + Shift (⇧) + /` → **\\ (Backslash)**
@@ -59,3 +59,4 @@ Available setup functions:
 - Markdown All-in-One
 - TODO Tree / TODO Highlight
 - Go (Official Extension)
+
