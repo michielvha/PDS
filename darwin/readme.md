@@ -25,6 +25,7 @@ We'll ofcourse be using brew as a package manager. The following package install
 
 - `command + q` - actually quit apps (red cross doesn't behave like on windows).
 - ` Ctrl + `` (backtick) ` -  quickly open a terminal in VSCode.
+- `Option (⌥) + Shift (⇧) + A` - Block Comment Shortcut (vscode)
 
 ## Missing keyboard keys
 
@@ -46,3 +47,4 @@ We'll ofcourse be using brew as a package manager. The following package install
 ## VSCode extension
 
 - markdown all-in-one
+- todo tree / highlight

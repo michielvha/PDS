@@ -33,9 +33,12 @@ Below is a list of software and tools supported by the custom PowerShell functio
 5. **Shell Customizations**:
    - Configures `starship` prompt with a custom `starship.toml` file.
    - Includes settings for Azure, Git branches, and Git commits.
+6. **numlock on by default**: 
+7. **longpath support**: `Enable-LongPaths` allows support for longerfile paths.  
+**TODO: expand with all functions**
 
 ### Additional Notes
-- The scripts also include steps for debloating Windows using tools like `tiny11builder` and `Win11Debloat`.
+- The scripts also include steps for debloating Windows using tools like `tiny11builder` and [`Win11Debloat`](https://github.com/Raphire/Win11Debloat/tree/master) .
 - The `starship` prompt is customized with specific settings for Azure and Git workflows.
 - The `PSReadLine` module is configured to enhance the PowerShell command-line experience with features like prediction view styles.
 
