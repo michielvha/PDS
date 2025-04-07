@@ -22,14 +22,14 @@ brew install arc \
      helm \
      kustomize \
      blackhole-2ch
-
 # Install GUI Homebrew packages
 # make sure the font is installed: https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#manual-font-installation
 brew install --cask visual-studio-code \
      chatgpt \
      tailscale \
      microsoft-teams \
-     obs
+     obs \
+     zen-browser
 
 setup_zsh
 
