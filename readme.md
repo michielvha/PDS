@@ -27,21 +27,6 @@ This section provides references to the specific `readme.md` files in the respec
 - **[Darwin (macOS)](darwin/readme.md)**  
   - Planned support for macOS with specific tools and configurations.
 
-## Future enhancements
-
-### Windows 
-
-- [ ] add proper testing / linting to the pipelines
-- [ ] Pin items to the task bar
-- [ ] add custom logging / proper error handling to script
-- [ ] function for aliasses Kubectl
-- [ ] function to run system diagnostic
-- [ ] function to fetch relevant information about machine (check old scripts for example)
-- [ ] Modify `Install-KubeCLI-Azure` to check if az cli is install before using it to install ``kubectl`` & ``kubelogin``
-
-check notes on phone for more idea's.
-
-
 # Features and Enhancements
 
 ## Current Features
@@ -64,8 +49,12 @@ check notes on phone for more idea's.
 
 ### Windows
 - [ ] Pin frequently used applications to the taskbar.
-- [ ] Add functions for system diagnostics and machine information retrieval.
+- [ ] Add functions for system diagnostics and machine information retrieval. (check old scripts for example)
 - [ ] Enhance `Install-KubeCLI` to check for dependencies like Azure CLI.
+- [ ] add custom logging / proper error handling to script. (check old scripts)
+- [ ] function for aliasses Kubectl
+
+check notes on phone for more idea's.
 
 ### Linux
 - [ ] Sync shell history across devices (consider creating a separate project in Go).
