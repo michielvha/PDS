@@ -30,7 +30,8 @@ brew install --cask visual-studio-code \
      tailscale \
      microsoft-teams \
      obs \
-     zen-browser
+     zen-browser \
+     lens
 
 setup_zsh
 
