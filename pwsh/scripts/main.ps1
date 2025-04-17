@@ -43,7 +43,9 @@ $packagesToInstall = @(
     "awscli",
     "golang",
     "kubernetes-helm",
+    "kubectl",
     "kustomize",
+    "golangci-lint"
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 
