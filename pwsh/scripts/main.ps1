@@ -41,7 +41,9 @@ $packagesToInstall = @(
     "docker",
     "Firefox",
     "awscli",
-    "golang"	
+    "golang",
+    "kubernetes-helm",
+    "kustomize",
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 
