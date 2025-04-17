@@ -46,6 +46,7 @@ $packagesToInstall = @(
     "kubectl",
     "kustomize",
     "nodejs",
+    "make",
     "golangci-lint"
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
