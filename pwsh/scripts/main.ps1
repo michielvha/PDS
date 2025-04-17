@@ -40,7 +40,8 @@ $packagesToInstall = @(
     "gh",
     "docker",
     "Firefox",
-    "awscli"	
+    "awscli",
+    "golang"	
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 
