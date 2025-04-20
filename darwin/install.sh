@@ -26,13 +26,16 @@ brew install arc \
      goreleaser
 # Install GUI Homebrew packages
 # make sure the font is installed: https://github.com/romkatv/powerlevel10k?tab=readme-ov-file#manual-font-installation
+brew tap microsoft/git
+
 brew install --cask visual-studio-code \
      chatgpt \
      tailscale \
      microsoft-teams \
      obs \
      zen-browser \
-     lens
+     lens \
+     git-credential-manager-core
 
 setup_zsh
 
