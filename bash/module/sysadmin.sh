@@ -43,5 +43,14 @@ auto_pull_cron_entry() {
     echo "* * * * * $USER cd $repo_path && git pull" | sudo tee -a /etc/crontab > /dev/null
 }
 
+set_fractional_scaling () {
+    # Check if the system is running Wayland
+    if [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
+        gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
+    else
+        echo "This script is intended for Wayland sessions only."
+    fi
+}
+
 # Usage
 # auto_pull_cron_entry "/path/to/repo"
