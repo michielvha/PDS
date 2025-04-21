@@ -1,11 +1,8 @@
 #!/bin/bash
-
 # Function: install_zen
 # Description: Installs Zen Browser
-# Usage: install_zen
-# Arguments: none
-# Returns:
-#   0 - Success
+# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_vscode.sh)`
+
 install_zen() {
   echo "🌐 Installing Zen Browser..."
 

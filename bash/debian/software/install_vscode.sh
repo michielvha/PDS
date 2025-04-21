@@ -1,12 +1,7 @@
 #!/bin/bash
 # Function: install_vscode
 # Description: Installs Visual Studio Code on a Debian-based system by adding the Microsoft repository and installing the package.
-# Usage: install_vscode
-# Arguments: none
-# Returns:
-#   0 - Success
-#   1 - Failure (e.g., missing dependencies, repository issues, or installation errors)
-# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/system/install_vscode.sh)`
+# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_vscode.sh)`
 
 function install_vscode () {
     sudo apt install wget gpg apt-transport-https
