@@ -12,37 +12,51 @@ setup_gnome_extras() {
   sudo apt update
   sudo apt install -y gnome-tweaks gnome-shell-extensions gnome-shell-extension-prefs curl jq
 
-  # Create temp dir
+  # TODO: add just-perfection
+  declare -A extensions=(
+    ["dash-to-dock@micxgx.gmail.com"]=307
+    ["blur-my-shell@aunetx"]=3193
+    ["appindicatorsupport@rgcjonas.gmail.com"]=615
+  )
+
+  GNOME_VERSION=$(gnome-shell --version | awk '{print $3}' | cut -d '.' -f1)
+
   tmp_dir=$(mktemp -d)
   cd "$tmp_dir" || exit 1
 
-  # Helper to install extensions by UUID from extensions.gnome.org
-  install_extension() {
-    local uuid=$1
-    local name=$2
-    local version
-    version=$(gnome-shell --version | awk '{print $3}' | cut -d '.' -f1-2)
-    echo "⬇️  Installing $name ($uuid)"
-    curl -s "https://extensions.gnome.org/extension-data/${uuid}.shell-extension.zip" \
-      -o "${uuid}.zip"
-    mkdir -p "$HOME/.local/share/gnome-shell/extensions/${uuid}"
-    unzip -qo "${uuid}.zip" -d "$HOME/.local/share/gnome-shell/extensions/${uuid}"
-  }
+  for uuid in "${!extensions[@]}"; do
+    ext_id=${extensions[$uuid]}
+    echo "⬇️  Installing $uuid (ID: $ext_id)"
 
-  # Install these extensions
-  install_extension "dash-to-dock@micxgx.gmail.com" "Dash to Dock"
-  install_extension "blur-my-shell@aunetx" "Blur My Shell"
-  install_extension "appindicatorsupport@rgcjonas.gmail.com" "AppIndicator Support"
-  # TODO: add just-perfection
+    ext_info=$(wget -qO- "https://extensions.gnome.org/extension-info/?pk=$ext_id")
+    version_tag=$(echo "$ext_info" | jq -r --arg ver "$GNOME_VERSION" '.shell_version_map[$ver].pk')
 
+    if [[ -z "$version_tag" || "$version_tag" == "null" ]]; then
+      echo "⚠️  No compatible version found for GNOME Shell $GNOME_VERSION and $uuid"
+      continue
+    fi
+
+    zip_file="${uuid}.zip"
+    wget -q --show-progress -O "$zip_file" "https://extensions.gnome.org/download-extension/${uuid}.shell-extension.zip?version_tag=$version_tag"
+
+    if [[ $? -ne 0 || ! -s "$zip_file" ]]; then
+      echo "❌ Failed to download $uuid"
+      continue
+    fi
+
+    install_dir="$HOME/.local/share/gnome-shell/extensions/$uuid"
+    rm -rf "$install_dir"
+    mkdir -p "$install_dir"
+    unzip -qqo "$zip_file" -d "$install_dir"
+
+    gnome-extensions enable "$uuid" && echo "✅ Installed and enabled $uuid"
+  done
+
+  rm -rf "$tmp_dir"
+  echo "🎉 All extensions installed. Restart GNOME Shell (Alt+F2 → r or logout) to apply them."
   
-  # Enable them
-  echo "✅ Enabling extensions..."
-  gnome-extensions enable dash-to-dock@micxgx.gmail.com
-  gnome-extensions enable blur-my-shell@aunetx
-  gnome-extensions enable appindicatorsupport@rgcjonas.gmail.com
-
-  echo "🎉 GNOME customization complete. You may need to log out and back in for some changes to fully apply."
+  # verify
+  # gsettings get org.gnome.shell enabled-extensions
 }
 
 install_juno_theme() {
