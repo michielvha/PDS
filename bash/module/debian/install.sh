@@ -33,7 +33,9 @@ setup_gnome_extras() {
   install_extension "dash-to-dock@micxgx.gmail.com" "Dash to Dock"
   install_extension "blur-my-shell@aunetx" "Blur My Shell"
   install_extension "appindicatorsupport@rgcjonas.gmail.com" "AppIndicator Support"
+  # TODO: add just-perfection
 
+  
   # Enable them
   echo "✅ Enabling extensions..."
   gnome-extensions enable dash-to-dock@micxgx.gmail.com
