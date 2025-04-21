@@ -18,7 +18,7 @@ setup_gnome_extras() {
     ["appindicatorsupport@rgcjonas.gmail.com"]=615
     ["clipboard-history@alexsaveau.dev"]=4839
     ["just-perfection-desktop@just-perfection"]=3843
-    ["top-bar-organizer@julian.gse.jg@gmail.com"]=5172
+    ["top-bar-organizer@julian.gse.jsts.xyz"]=4356
   )
 
   GNOME_VERSION=$(gnome-shell --version | awk '{print $3}' | cut -d '.' -f1)
