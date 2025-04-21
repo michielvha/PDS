@@ -62,6 +62,4 @@ source_github_shell_files() {
     echo -e "${GREEN}All files have been sourced successfully.${NC}"
 }
 
-# Call the main function regardless of how the script is executed
-# This works both when sourced and when executed directly
 source_github_shell_files "$@"
