@@ -52,7 +52,7 @@ source_github_shell_files() {
     source_from_github "bash/common/software/packer.sh"
 
     # Source other utility functions
-    source_from_github "bash/common/utils/get_latest_github_binary"
+    source_from_github "bash/common/utils/get_latest_github_binary.sh"
 
     # Source module files
     source_from_github "bash/module/public.sh"
@@ -62,16 +62,6 @@ source_github_shell_files() {
     echo -e "${GREEN}All files have been sourced successfully.${NC}"
 }
 
+# Call the main function regardless of how the script is executed
+# This works both when sourced and when executed directly
 source_github_shell_files "$@"
-
-# # Execute the function with provided arguments
-# if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-#     # Script is being executed directly
-#     source_github_shell_files "$@"
-# else
-#     # Script is being sourced
-#     # Make the function available in the current shell
-#     export -f source_github_shell_files
-#     echo -e "\033[0;34mThe function 'source_github_shell_files' is now available.\033[0m"
-#     echo -e "\033[0;34mUsage: source_github_shell_files [branch_or_tag]\033[0m"
-# fi
