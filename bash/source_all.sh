@@ -42,22 +42,24 @@ source_github_shell_files() {
 
     # Source common shell utilities
     source_from_github "bash/common/shell/zsh.sh"
-
-    # Source cloud utilities
     source_from_github "bash/common/cloud/aws.sh"
     source_from_github "bash/common/cloud/azure.sh"
-
-    # Source software utilities
     source_from_github "bash/common/software/go.sh"
     source_from_github "bash/common/software/packer.sh"
-
-    # Source other utility functions
     source_from_github "bash/common/utils/get_latest_github_binary.sh"
 
-    # Source module files
-    source_from_github "bash/module/public.sh"
-    source_from_github "bash/module/utils.sh"
-    source_from_github "bash/module/sysadmin.sh"
+    source_from_github "bash/debian/software/install_azcli.sh"
+    source_from_github "bash/debian/software/install_kubectl.sh"
+    source_from_github "bash/debian/software/install_librewolf.sh"
+    source_from_github "bash/debian/software/install_vscode.sh"
+    source_from_github "bash/debian/software/install_zen.sh"
+
+    source_from_github "bash/debian/ui/install_jetbrains_font.sh"
+    source_from_github "bash/debian/ui/install_juno_theme.sh"
+    source_from_github "bash/debian/ui/install_tokyonight_theme.sh"
+    source_from_github "bash/debian/software/set_gnome_fonts.sh"
+    source_from_github "bash/debian/software/setup_gnome_extras.sh"
+
 
     echo -e "${GREEN}All files have been sourced successfully.${NC}"
 }

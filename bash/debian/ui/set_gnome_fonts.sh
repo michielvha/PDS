@@ -9,11 +9,11 @@
 # Returns:
 #   0 - Success
 set_gnome_fonts() {
-  echo "🎨 Setting GNOME fonts and rendering..."
+	echo "🎨 Setting GNOME fonts and rendering..."
 
-  gsettings set org.gnome.desktop.interface font-name 'JetBrains Mono 11'
-  gsettings set org.gnome.desktop.interface document-font-name 'JetBrains Mono 11'
-  gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrains Mono 13'
+	gsettings set org.gnome.desktop.interface font-name 'JetBrains Mono 11'
+	gsettings set org.gnome.desktop.interface document-font-name 'JetBrains Mono 11'
+	gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrains Mono 13'
 
-  echo "✅ Font configuration applied."
+	echo "✅ Font configuration applied."
 }
