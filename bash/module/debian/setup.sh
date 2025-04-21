@@ -12,11 +12,13 @@ setup_gnome_extras() {
   sudo apt update
   sudo apt install -y gnome-tweaks gnome-shell-extensions gnome-shell-extension-prefs curl jq
 
-  # TODO: add just-perfection
   declare -A extensions=(
     ["dash-to-dock@micxgx.gmail.com"]=307
     ["blur-my-shell@aunetx"]=3193
     ["appindicatorsupport@rgcjonas.gmail.com"]=615
+    ["clipboard-history@alexsaveau.dev"]=4839
+    ["just-perfection-desktop@just-perfection"]=3843
+    ["top-bar-organizer@julian.gse.jg@gmail.com"]=5172
   )
 
   GNOME_VERSION=$(gnome-shell --version | awk '{print $3}' | cut -d '.' -f1)
@@ -96,4 +98,45 @@ install_juno_theme() {
 
   # Clean up
   rm -rf "$tmp_dir"
+}
+
+jetbrains_font() {
+  echo "🔤 Installing JetBrains Mono font system-wide..."
+
+  FONT_URL="https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip"
+  FONT_DIR="/usr/local/share/fonts/JetBrainsMono"
+
+  # Create temp directory
+  tmp_dir=$(mktemp -d)
+  echo "⬇️  Downloading JetBrains Mono font..."
+  wget -q --show-progress -O "$tmp_dir/jetbrains-mono.zip" "$FONT_URL"
+
+  echo "📦 Extracting to $FONT_DIR..."
+  unzip -q "$tmp_dir/jetbrains-mono.zip" -d "$tmp_dir"
+
+  # Ensure font directory exists
+  sudo mkdir -p "$FONT_DIR"
+
+  # Copy all .ttf files (skip docs or licenses)
+  sudo cp -v "$tmp_dir/fonts/ttf/"*.ttf "$FONT_DIR/"
+
+  # Clean up
+  rm -rf "$tmp_dir"
+
+  # Update font cache system-wide
+  echo "🔄 Updating font cache..."
+  sudo fc-cache -f -v
+  echo "✅ JetBrains Mono font installed system-wide!"
+
+}
+
+# look into: SF Pro / SF UI / Inter for mac like fonts
+set_gnome_fonts() {
+  echo "🎨 Setting GNOME fonts and rendering..."
+
+  gsettings set org.gnome.desktop.interface font-name 'JetBrains Mono 11'
+  gsettings set org.gnome.desktop.interface document-font-name 'JetBrains Mono 11'
+  gsettings set org.gnome.desktop.interface monospace-font-name 'JetBrains Mono 13'
+
+  echo "✅ Font configuration applied."
 }
