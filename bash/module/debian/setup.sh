@@ -158,7 +158,7 @@ install_tokyonight_gtk_theme() {
   echo "⚙️  Running install script..."
   cd "$tmp_dir/themes" || exit 1
   chmod +x ./install.sh
-  ./install.sh -l
+  ./install.sh --color dark --tweaks storm --libadwaita
 
   # Apply the theme via gsettings
   echo "🎛️  Applying theme settings..."
