@@ -84,6 +84,13 @@ install_juno_theme() {
   gsettings set org.gnome.desktop.interface gtk-theme "$THEME_NAME"
   gsettings set org.gnome.desktop.wm.preferences theme "$THEME_NAME"
 
+  # Workaround to Apply Juno Theme to Libadwaita Apps
+  mkdir -p ~/.config/gtk-4.0-backup
+  cp -r ~/.config/gtk-4.0/* ~/.config/gtk-4.0-backup/ 2>/dev/null || true
+  mkdir -p ~/.config/gtk-4.0
+  cp -r ~/.themes/Juno/gtk-4.0/* ~/.config/gtk-4.0/
+
+
   echo "✅ Juno theme installed and applied!"
   echo "💡 You can also tweak more in GNOME Tweaks if needed."
 
