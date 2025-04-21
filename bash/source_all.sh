@@ -62,14 +62,16 @@ source_github_shell_files() {
     echo -e "${GREEN}All files have been sourced successfully.${NC}"
 }
 
-# Execute the function with provided arguments
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # Script is being executed directly
-    source_github_shell_files "$@"
-else
-    # Script is being sourced
-    # Make the function available in the current shell
-    export -f source_github_shell_files
-    echo -e "\033[0;34mThe function 'source_github_shell_files' is now available.\033[0m"
-    echo -e "\033[0;34mUsage: source_github_shell_files [branch_or_tag]\033[0m"
-fi
+source_github_shell_files "$@"
+
+# # Execute the function with provided arguments
+# if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+#     # Script is being executed directly
+#     source_github_shell_files "$@"
+# else
+#     # Script is being sourced
+#     # Make the function available in the current shell
+#     export -f source_github_shell_files
+#     echo -e "\033[0;34mThe function 'source_github_shell_files' is now available.\033[0m"
+#     echo -e "\033[0;34mUsage: source_github_shell_files [branch_or_tag]\033[0m"
+# fi
