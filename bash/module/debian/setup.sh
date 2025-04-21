@@ -75,7 +75,7 @@ install_juno_theme() {
   # Download and extract
   tmp_dir=$(mktemp -d)
   echo "⬇️  Downloading theme..."
- wget -q --show-progress -O "$tmp_dir/juno.zip" "$THEME_URL"
+  wget -q --show-progress -O "$tmp_dir/juno.zip" "$THEME_URL"
 
   echo "📦 Extracting theme to $THEME_DIR..."
   unzip -q "$tmp_dir/juno.zip" -d "$tmp_dir"
