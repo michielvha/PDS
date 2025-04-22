@@ -78,14 +78,14 @@ add_hashicorp_repository() {
 
 # Function: install_hashicorp_product
 # Description: Installs a HashiCorp product after verifying the GPG key and adding the repository
-# Usage: install_hashicorp_product "terraform" or install_hashicorp_product "vault" "-v"
+# Usage: install_hashicorp_product "terraform" or install_hashicorp_product "terraform" "1.5.0"
 # Parameters:
 #   - $1: Product name (e.g., terraform, vault, consul, nomad, packer)
-#   - $2: Optional version command flag (default: "--version")
+#   - $2: Optional specific version to install (e.g., "1.5.0")
 # Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/hashicorp.sh)`
 install_hashicorp_product() {
     local product_name="$1"
-    local version_command="${2:-"--version"}"
+    local specific_version="$2"
     
     if [ -z "$product_name" ]; then
         echo "❌ Error: No product name provided"
@@ -103,13 +103,18 @@ install_hashicorp_product() {
     # Add HashiCorp repository
     add_hashicorp_repository
     
-    # Install the product
+    # Install the product with specific version if provided
     echo "📥 Installing $product_name..."
-    sudo apt install -y "$product_name"
+    if [ -n "$specific_version" ]; then
+        echo "   Using specific version: $specific_version"
+        sudo apt install -y "${product_name}=${specific_version}"
+    else
+        sudo apt install -y "$product_name"
+    fi
     
     # Verify installation
     if command -v "$product_name" &> /dev/null; then
-        local version_output=$("$product_name" $version_command | head -n 1)
+        local version_output=$("$product_name" --version | head -n 1)
         echo "✅ $product_name installed successfully: $version_output"
         return 0
     else
