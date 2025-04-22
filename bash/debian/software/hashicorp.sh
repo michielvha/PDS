@@ -25,8 +25,8 @@ verify_hashicorp_gpg_key() {
     local hashicorp_security_page=$(wget -q -O - "https://www.hashicorp.com/en/trust/security")
     
     if [ -n "$hashicorp_security_page" ]; then
+        # expected_fingerprint=$(echo "$hashicorp_security_page" | grep -A 2 "Linux package.*verification" | grep -o "[0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\}" | tr -d " ") # this gets to much
         # Extract the Linux package fingerprint - specifically look for the line with apt.releases.hashicorp.com
-        # expected_fingerprint=$(echo "$hashicorp_security_page" | grep -A 2 "Linux package.*verification" | grep -o "[0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\}" | tr -d " ")
         # and get the fingerprint mentioned right after that line
         expected_fingerprint=$(echo "$hashicorp_security_page" | 
                               grep -A 3 "apt.releases.hashicorp.com/gpg" | 
