@@ -1,13 +1,7 @@
 #!/bin/bash
 # Function: install_packer
 # Description: Installs HashiCorp's Packer and configures the system as a Packer build host.
-# Usage: install_packer
-# Arguments: none
-# Returns:
-#   0 - Success
-#   1 - Failure (e.g., unsupported architecture, missing dependencies, or installation issues)
 
-# install hashicorps packer to create a packer build host
 install_packer() {
 	# Add HashiCorp GPG key and repository
 	wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg

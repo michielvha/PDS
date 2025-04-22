@@ -1,13 +1,8 @@
 #!/bin/bash
-# Debian-specific UI configuration functions
-# This module contains functions for configuring the desktop environment, themes, and fonts on Debian systems
-
 # Function: install_juno_theme
 # Description: Installs and applies the Juno GTK theme
-# Usage: install_juno_theme
-# Arguments: none
-# Returns:
-#   0 - Success
+# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/install_juno_themes.sh)`
+
 install_juno_theme() {
 	echo "🎨 Installing Juno GTK Theme..."
 

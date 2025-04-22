@@ -1,13 +1,8 @@
 #!/bin/bash
-# Debian-specific UI configuration functions
-# This module contains functions for configuring the desktop environment, themes, and fonts on Debian systems
-
 # Function: setup_gnome_extras
 # Description: Installs GNOME Tweaks and useful shell extensions
-# Usage: setup_gnome_extras
-# Arguments: none
-# Returns:
-#   0 - Success
+# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/setup_gnome_extras)`
+
 setup_gnome_extras() {
 	echo "🔧 Installing GNOME Tweaks and useful shell extensions..."
 

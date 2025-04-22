@@ -1,14 +1,9 @@
 #!/bin/bash
-# Debian-specific UI configuration functions
-# This module contains functions for configuring the desktop environment, themes, and fonts on Debian systems
-
 # Function: jetbrains_font
 # Description: Installs the JetBrains Mono font system-wide
-# Usage: jetbrains_font
-# Arguments: none
-# Returns:
-#   0 - Success
-jetbrains_font() {
+# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/install_jetbrains_font.sh)`
+
+install_jetbrains_font() {
 	echo "🔤 Installing JetBrains Mono font system-wide..."
 
 	FONT_URL="https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip"

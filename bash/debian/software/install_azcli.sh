@@ -1,7 +1,6 @@
 #!/bin/bash
 # Function: install_azcli
 # Description: Installs and configures the Azure CLI
-# Usage: install_azcli
 # Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/system/install_azcli.sh)`
 
 install_azcli() {

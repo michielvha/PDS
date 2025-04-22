@@ -1,11 +1,6 @@
 #!/bin/bash
 # Function: get_latest_github_binary
 # Description: Downloads and installs the latest release of a binary from a specified GitHub repository.
-# Usage: get_latest_github_binary
-# Arguments: none
-# Returns:
-#   0 - Success
-#   1 - Failure (e.g., unsupported architecture, missing binary, or download issues)
 
 # Get a binary from github
 get_latest_github_binary() {

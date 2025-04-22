@@ -1,13 +1,9 @@
 #!/bin/bash
-# Debian-specific UI configuration functions
-# This module contains functions for configuring the desktop environment, themes, and fonts on Debian systems
-
 # Function: set_gnome_fonts
 # Description: Configures GNOME fonts and rendering settings
-# Usage: set_gnome_fonts
-# Arguments: none
-# Returns:
-#   0 - Success
+# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/set_gnome_fonts.sh)`
+
+
 set_gnome_fonts() {
 	echo "🎨 Setting GNOME fonts and rendering..."
 
