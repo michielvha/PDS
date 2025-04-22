@@ -8,4 +8,5 @@ install_git_credman() {
     wget https://github.com/GitCredentialManager/git-credential-manager/releases/latest/download/gcm-linux_amd64.2.6.1.deb
     sudo dpkg -i gcm-linux_amd64.2.6.1.deb
     git config --global credential.helper manager-core
+    git config --global credential.credentialStore secretservice
 }
