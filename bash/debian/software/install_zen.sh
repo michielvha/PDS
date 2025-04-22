@@ -91,4 +91,45 @@ StartupNotify=true
 EOF
 
 	echo "✅ Zen Browser installed! You can now find it in your application launcher."
+
+	# Create AppArmor profile to fix sandbox security warnings
+	echo "🛡️ Creating AppArmor profile for Zen Browser..."
+	
+	APPARMOR_DIR="/etc/apparmor.d"
+	APPARMOR_FILE="$APPARMOR_DIR/zen-browser"
+	
+	# Check if AppArmor is installed
+	if command -v apparmor_parser > /dev/null; then
+		sudo mkdir -p "$APPARMOR_DIR"
+		
+		# Create the AppArmor profile for Zen Browser
+		sudo tee "$APPARMOR_FILE" > /dev/null <<EOF
+# This profile allows Zen Browser to use sandboxing features safely
+# It exists to give the application a name instead of having the label "unconfined"
+abi <abi/4.0>,
+include <tunables/global>
+profile zen-browser
+$INSTALL_DIR/zen/{zen,browser/chrome-sandbox}
+flags=(unconfined) {
+	userns,
+	# Site-specific additions and overrides
+	include if exists <local/zen-browser>
+}
+EOF
+		
+		echo "🔄 Reloading AppArmor service..."
+		# Reload the AppArmor service to apply the new profile
+		if command -v systemctl > /dev/null; then
+			sudo systemctl restart apparmor.service
+			sudo systemctl daemon-reload
+		else
+			sudo service apparmor restart
+		fi
+		
+		echo "✅ AppArmor profile created and applied for Zen Browser."
+		echo "🔒 This should fix sandbox security warnings that may appear on Linux."
+	else
+		echo "⚠️ AppArmor is not installed. Sandbox security warnings may still appear."
+		echo "📝 Consider installing AppArmor for enhanced security."
+	fi
 }
