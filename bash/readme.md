@@ -6,25 +6,56 @@ todo: auto gen
 
 ## List of functions
 
-**TODO: Further refine the generating of this list. Make more clear which sub category of module etc.**
-
 use the following function in the module directory to generate a list of functions.
 
-
 ```bash
-echo -e "| Function | Description |\n|---|---|" > readme.md
-awk '/^#/{c=$0} /^[a-zA-Z0-9_-]+ *\(\) *\{/ || /^function [a-zA-Z0-9_-]+ *\(\) *\{/ {print "| " $1 " | " substr(c, 3) " |"}' *.sh >> readme.md
-````
+# Function to process files in a directory and append to function_list.md
+process_directory() {
+    local dir_name=$1
+    local dir_path=$2
+    
+    # Add section header for the directory
+    echo -e "\n## ${dir_name} Functions\n" >> function_list.md
+    echo -e "| Function | Description |\n|---|---|" >> function_list.md
+    
+    # Find all .sh files in the directory and process them
+    find "${dir_path}" -type f -name "*.sh" | while read file; do
+        awk '
+        /# Function:/ {function_name=$3}
+        /# Description:/ && function_name {
+            # Extract the description text
+            description=substr($0, index($0, ":") + 1)
+            # Remove leading spaces
+            gsub(/^[ \t]+/, "", description)
+            # Print the function and description in table format
+            printf "| %s | %s |\n", function_name, description
+            function_name=""
+        }' "$file" >> function_list.md
+    done
+}
+
+# Process each directory
+process_directory "Debian" "./debian"
+process_directory "Common" "./common"
+process_directory "Fedora" "./fedora"
+
+# Display the result
+cat function_list.md
+```
 
 Make sure to always use the same format for the function definition, e.g.:
 
-``function_name() {}``
+```bash
+# Function: function_name
+# Description: This is what the function does
+# usage: if any
+# source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/path/file.sh)`
+function_name() {}
+```
 
-and write the description/purpose of the function above it.
+
 
 ## Import the modules
-
-you can use the following function to import the modules
 
 ### Ephemeral
 
@@ -38,7 +69,7 @@ you can use the following function to import the modules
         mkdir -p "$tmp_dir"
     
         # List of function files to fetch
-        local files=("install.sh" "sysadmin.sh")
+        local files=("sysadmin.sh")
     
         # Download each file and source it
         for file in "${files[@]}"; do

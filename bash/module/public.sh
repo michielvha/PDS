@@ -8,7 +8,7 @@ install_ohmyzsh() {
     # install dependencies
     sudo apt install zsh git curl -y
     # Set the default shell to zsh
-    sudo chsh -s $(which zsh) $(whoami)
+    sudo chsh -s "$(which zsh)" "$(whoami)"
     # Install oh-my-zsh: https://ohmyz.sh
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 }
