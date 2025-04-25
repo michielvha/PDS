@@ -42,3 +42,9 @@ Below is a list of software and tools supported by the custom PowerShell functio
 - The `starship` prompt is customized with specific settings for Azure and Git workflows.
 - The `PSReadLine` module is configured to enhance the PowerShell command-line experience with features like prediction view styles.
 
+### Safely Activate every windows version
+
+Below links feature save ways to activate any windows distro & onprem office
+
+- [MassGrave](https://massgrave.dev/)
+- [Official MAS Github Repo](https://github.com/massgravel/Microsoft-Activation-Scripts)
