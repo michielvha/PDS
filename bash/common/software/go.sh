@@ -1,19 +1,7 @@
 #!/bin/bash
+
 # Function: install_go
 # Description: Installs the latest version of Golang and configures the environment for the current user.
-# Usage: install_go
-# Arguments: none
-# Returns:
-#   0 - Success
-#   1 - Failure (e.g., unable to fetch the latest version, download issues, or installation errors)
-
-# Function: set_go_env
-# Description: Configures the Go environment variables for the current user.
-# Usage: set_go_env
-# Arguments: none
-# Returns:
-#   0 - Success
-
 # TODO: allow to manually specify which version ?
 install_go() {
 	echo "🚀 Fetching the latest Go version..."
@@ -51,7 +39,8 @@ install_go() {
 
 	echo "🚀 Go installed! Run 'go version' to check."
 }
-
+# Function: set_go_env
+# Description: Configures the Go environment variables for the current user.
 set_go_env() {
 	echo "🔧 Setting Go environment variables for user: $USER"
 
@@ -71,4 +60,39 @@ set_go_env() {
 	mkdir -p "$GOBIN"
 
 	echo "✅ Go environment set up. Run 'go version' to check."
+}
+
+# Function: setup_edgectl_dev_env
+# Description: Sets up the development environment for edgectl with Go installed for the root user. Using root user because edgectl requires root privileges to run.
+setup_edgectl_dev_env() {
+	echo "🔧 Setting up edgectl development environment for root user..."
+	
+	# Install Go if not already installed
+	if ! command -v go &> /dev/null; then
+		echo "Installing Go for root user..."
+		sudo install_go
+	fi
+	
+	# Set up Go environment for root user
+	echo "Configuring Go environment for root user..."
+	sudo bash -c 'mkdir -p /root/go/bin'
+	
+	# Add Go environment variables to root's .bashrc if not already there
+	if ! sudo grep -q "GOPATH=/root/go" /root/.bashrc; then
+		sudo bash -c 'echo "" >> /root/.bashrc'
+		sudo bash -c 'echo "# Go environment setup" >> /root/.bashrc'
+		sudo bash -c 'echo "export GOPATH=/root/go" >> /root/.bashrc'
+		sudo bash -c 'echo "export GOBIN=\$GOPATH/bin" >> /root/.bashrc'
+		sudo bash -c 'echo "export PATH=\$GOBIN:/usr/local/go/bin:\$PATH" >> /root/.bashrc'
+	fi
+	
+	# Clone edgectl repository for root user if it doesn't exist
+	if [ ! -d "/root/go/src/github.com/michielvha/edgectl" ]; then
+		echo "Cloning edgectl repository for root user..."
+		sudo mkdir -p /root/go/src/github.com/michielvha
+		sudo git clone https://github.com/michielvha/edgectl.git /root/go/src/github.com/michielvha/edgectl
+	fi
+	
+	echo "✅ edgectl development environment set up for root user."
+	echo "Note: Root user can now run 'go version' to verify the installation."
 }
