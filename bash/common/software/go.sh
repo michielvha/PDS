@@ -70,7 +70,7 @@ setup_edgectl_dev_env() {
 	# Install Go if not already installed
 	if ! command -v go &> /dev/null; then
 		echo "Installing Go for root user..."
-		sudo install_go
+	    install_go
 	fi
 	
 	# Set up Go environment for root user
@@ -87,10 +87,9 @@ setup_edgectl_dev_env() {
 	fi
 	
 	# Clone edgectl repository for root user if it doesn't exist
-	if [ ! -d "/root/go/src/github.com/michielvha/edgectl" ]; then
+	if [ ! -d "/root/edgectl" ]; then
 		echo "Cloning edgectl repository for root user..."
-		sudo mkdir -p /root/go/src/github.com/michielvha
-		sudo git clone https://github.com/michielvha/edgectl.git /root/go/src/github.com/michielvha/edgectl
+		sudo git clone https://github.com/michielvha/edgectl.git /root/edgectl
 	fi
 	
 	echo "✅ edgectl development environment set up for root user."
