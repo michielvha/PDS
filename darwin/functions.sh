@@ -1,3 +1,4 @@
+#!/bin/bash
 # Purpose: This module contains functions used for installing various tools / software on macOS.
 # Usage: quickly source this module with the following command:
 # ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/darwin/functions.sh) ` 
@@ -64,4 +65,16 @@ setup_go_env (){
     echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.zshrc
     echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH' >> ~/.zshrc
     source ~/.zshrc
+}
+
+configure_finder(){
+    # Configure Finder
+    defaults write com.apple.finder ShowPathbar -bool true
+    defaults write com.apple.finder ShowStatusBar -bool true
+    defaults write com.apple.finder ShowToolbar -bool true
+    # Set default path for new Finder windows
+    defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/"
+    # Show hidden files
+    defaults write com.apple.finder AppleShowAllFiles -bool true
+    killall Finder
 }

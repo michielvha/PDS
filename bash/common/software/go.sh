@@ -36,6 +36,7 @@ install_go() {
 	echo 'export GOPATH=$HOME/go' >>~/.bashrc
 	echo 'export GOBIN=$GOPATH/bin' >>~/.bashrc
 	echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH' >>~/.bashrc
+	# shellcheck source=/dev/null
 	source ~/.bashrc # Apply changes
 
 	echo "🚀 Go installed! Run 'go version' to check."
