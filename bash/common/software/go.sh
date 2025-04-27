@@ -1,4 +1,5 @@
 #!/bin/bash
+# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/software/go.sh)`
 
 # Function: install_go
 # Description: Installs the latest version of Golang and configures the environment for the current user.
