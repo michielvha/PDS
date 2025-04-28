@@ -22,7 +22,8 @@ verify_hashicorp_gpg_key() {
     # Fetch expected fingerprint from HashiCorp's website
     echo "🌐 Fetching expected fingerprint from HashiCorp's website..."
     local expected_fingerprint=""
-    local hashicorp_security_page=$(wget -q -O - "https://www.hashicorp.com/en/trust/security")
+    local hashicorp_security_page
+    hashicorp_security_page=$(wget -q -O - "https://www.hashicorp.com/en/trust/security")
     
     if [ -n "$hashicorp_security_page" ]; then
         # expected_fingerprint=$(echo "$hashicorp_security_page" | grep -A 2 "Linux package.*verification" | grep -o "[0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\} [0-9A-F]\{4\}" | tr -d " ") # this gets to much
@@ -112,7 +113,8 @@ install_hashicorp_product() {
     
     # Verify installation
     if command -v "$product_name" &> /dev/null; then
-        local version_output=$("$product_name" --version | head -n 1)
+        local version_output
+        version_output=$("$product_name" --version | head -n 1)
         echo "✅ $product_name installed successfully: $version_output"
         return 0
     else

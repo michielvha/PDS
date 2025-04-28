@@ -10,7 +10,7 @@ process_directory() {
     echo -e "| Function | Description |\n|---|---|" >> function_list.md
     
     # Find all .sh files in the directory and process them
-    find "${dir_path}" -type f -name "*.sh" | while read file; do
+    find "${dir_path}" -type f -name "*.sh" | while read -r file; do
         awk '
         /# Function:/ {function_name=$3}
         /# Description:/ && function_name {
