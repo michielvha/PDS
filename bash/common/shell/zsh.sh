@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2296
 # Common shell configuration functions
 # This module contains functions for setting up and configuring ZSH shell environments
 # Usage: source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/shell/zsh.sh)
@@ -8,10 +9,10 @@
 install_zi() {
     # Check if git is installed
     if ! command -v git &> /dev/null; then
-        read -p "Git is not installed. Install it now? (y/n): " choice
+        read -rp "Git is not installed. Install it now? (y/n): " choice
         [[ "$choice" =~ ^[Yy]$ ]] || { echo "Git is required. Exiting."; return 1; }
 
-        sudo apt update -y && sudo apt install -y git || { echo "Failed to install Git. Install it manually."; return 1; }
+        { sudo apt update -y && sudo apt install -y git; } || { echo "Failed to install Git. Install it manually."; return 1; }
     fi
 
     # Install Zi
