@@ -1,8 +1,8 @@
 #!/bin/bash
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/get_latest_github_binary.sh) `
+
 # Function: get_latest_github_binary
 # Description: Downloads and installs the latest release of a binary from a specified GitHub repository.
-
-# Get a binary from github
 get_latest_github_binary() {
 	local repo="michielvha/edgectl"
 	local binary_name="edgectl"

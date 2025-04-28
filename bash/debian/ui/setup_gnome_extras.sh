@@ -1,8 +1,8 @@
 #!/bin/bash
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/setup_gnome_extras) `
+
 # Function: setup_gnome_extras
 # Description: Installs GNOME Tweaks and useful shell extensions
-# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/setup_gnome_extras)`
-
 setup_gnome_extras() {
 	echo "🔧 Installing GNOME Tweaks and useful shell extensions..."
 

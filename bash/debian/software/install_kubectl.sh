@@ -1,8 +1,8 @@
 #!/bin/bash
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_kubectl.sh) `
+
 # Function: install_kubectl
 # Description: Installs and configures kubectl
-# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_kubectl.sh)`
-
 install_kubectl() {
 	# Currently only supports ubuntu using either zsh & bash
 	local VERSION="${1:-1.32}"

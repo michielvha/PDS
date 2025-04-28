@@ -1,14 +1,11 @@
 #!/bin/bash
 # Common cloud-related functions for AWS
 # This module contains functions for managing AWS resources
-# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/cloud/aws.sh) `
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/cloud/aws.sh) `
 
 # Function: setup_aws_cli
 # Description: Installs and configures the AWS CLI
 # Usage: setup_aws_cli
-# Arguments: none
-# Returns:
-#   0 - Success
 setup_aws_cli() {
 	echo "🌩️ Setting up AWS CLI..."
 

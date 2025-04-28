@@ -5,13 +5,6 @@
 
 # Function: install_zi
 # Description: Installs and configures Zi, a package manager for ZSH
-
-# Function: configure_zsh
-# Description: Configures ZSH using Zi with plugins and settings for an enhanced shell experience
-
-# Function: set_default_zsh
-# Description: Sets ZSH as the default shell for the current user
-
 install_zi() {
     # Check if git is installed
     if ! command -v git &> /dev/null; then
@@ -27,6 +20,8 @@ install_zi() {
     echo "Zi installed successfully."
 }
 
+# Function: configure_zsh
+# Description: Configures ZSH using Zi with plugins and settings for an enhanced shell experience
 configure_zsh() {
   cat <<EOF | sudo tee /etc/zshrc
 source /usr/local/share/zi/zi.zsh
@@ -79,6 +74,8 @@ source /etc/zshrc
 EOF
 }
 
+# Function: set_default_zsh
+# Description: Sets ZSH as the default shell for the current user
 set_default_zsh() {
     sudo chsh -s "$(which zsh)" "$(whoami)"
 }

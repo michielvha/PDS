@@ -1,8 +1,8 @@
 #!/bin/bash
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/system/install_azcli.sh) `
+
 # Function: install_azcli
 # Description: Installs and configures the Azure CLI
-# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/system/install_azcli.sh)`
-
 install_azcli() {
 	sudo apt-get update -y
 	sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release -y

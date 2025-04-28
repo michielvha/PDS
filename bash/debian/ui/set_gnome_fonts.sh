@@ -1,9 +1,8 @@
 #!/bin/bash
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/set_gnome_fonts.sh) `
+
 # Function: set_gnome_fonts
 # Description: Configures GNOME fonts and rendering settings
-# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/set_gnome_fonts.sh)`
-
-
 set_gnome_fonts() {
 	echo "🎨 Setting GNOME fonts and rendering..."
 

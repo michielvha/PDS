@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 process_directory() {
     local dir_name=$1
     local dir_path=$2
