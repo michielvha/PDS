@@ -30,7 +30,8 @@ source_github_shell_files() {
         echo -e "${BLUE}Sourcing: ${file_path}${NC}"
         
         # Download and source the file
-        local content=$(curl -sSL "${full_url}")
+        local content
+        content=$(curl -sSL "${full_url}")
         if [ $? -eq 0 ] && [ -n "${content}" ]; then
             # Using eval to source the content directly
             eval "${content}"
