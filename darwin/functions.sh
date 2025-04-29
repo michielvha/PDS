@@ -1,7 +1,7 @@
 #!/bin/bash
+# shellcheck disable=SC2016
 # Purpose: This module contains functions used for installing various tools / software on macOS.
-# Usage: quickly source this module with the following command:
-# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/darwin/functions.sh) ` 
+# Usage: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/darwin/functions.sh) ` 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 
 # ZSH setup
@@ -61,10 +61,14 @@ setup_zsh (){
 # add go to path
 setup_go_env (){
     # Setup go env
-    echo 'export GOPATH=$HOME/go' >> ~/.zshrc
-    echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.zshrc
-    echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH' >> ~/.zshrc
-    source ~/.zshrc
+    echo "🔧 Setting Go environment variables for user: $USER"
+    {
+        echo 'export GOPATH=$HOME/go'
+        echo 'export GOBIN=$GOPATH/bin'
+        echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH'
+    } >> ~/.zshrc
+    # TODO: add error handling
+
 }
 
 configure_finder(){
