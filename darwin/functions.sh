@@ -121,4 +121,15 @@ install_clamav(){
     
     # run a full system scan with
     # clamscan -r -i / > ~/clamav-scan.log
+
+    # or something more scoped
+    # sudo clamscan -r --bell -i \
+    # /Applications \
+    # /Library \
+    # /System/Library \
+    # /usr \
+    # /opt \
+    # ~/Downloads \
+    # ~/Library/LaunchAgents \
+    # ~/Library/Application\ Support
 }
