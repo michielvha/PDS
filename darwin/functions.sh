@@ -3,6 +3,7 @@
 # Purpose: This module contains functions used for installing various tools / software on macOS.
 # Usage: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/darwin/functions.sh) ` 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
+# shellcheck disable=SC2296
 
 # ZSH setup
 install_zi (){
@@ -92,4 +93,32 @@ configure_finder(){
     # Show hidden files
     defaults write com.apple.finder AppleShowAllFiles -bool true
     killall Finder
+}
+
+install_clamav(){
+    #  TODO: Not properly tested, verify on a fresh machine
+    # Install ClamAV
+    brew install clamav
+
+    cp /opt/homebrew/etc/clamav/freshclam.conf.sample /opt/homebrew/etc/clamav/freshclam.conf
+    cp /opt/homebrew/etc/clamav/clamd.conf.sample /opt/homebrew/etc/clamav/clamd.conf
+    
+    # Comment out the Example line in both config files
+    sed -i '' 's/^Example/#Example/g' /opt/homebrew/etc/clamav/freshclam.conf
+    sed -i '' 's/^Example/#Example/g' /opt/homebrew/etc/clamav/clamd.conf
+    
+    # Uncomment and set the required configuration paths in freshclam.conf
+    sed -i '' 's/^#DatabaseDirectory/DatabaseDirectory/g' /opt/homebrew/etc/clamav/freshclam.conf
+    sed -i '' 's/^#UpdateLogFile/UpdateLogFile/g' /opt/homebrew/etc/clamav/freshclam.conf
+    sed -i '' 's/^#DatabaseOwner/DatabaseOwner/g' /opt/homebrew/etc/clamav/freshclam.conf    
+
+    sudo mkdir -p /opt/homebrew/var/lib/clamav
+    sudo mkdir -p /opt/homebrew/var/log/clamav
+    sudo chown -R clamav:clamav /opt/homebrew/var/lib/clamav /opt/homebrew/var/log/clamav || true
+
+    # Update the database
+    sudo freshclam
+    
+    # run a full system scan with
+    # clamscan -r -i / > ~/clamav-scan.log
 }
