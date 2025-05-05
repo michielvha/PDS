@@ -12,7 +12,18 @@ install_zi (){
 configure_zsh (){
     cat <<EOF | sudo tee ~/.zshrc
 source ~/.zi/bin/zi.zsh
+
+# --- Theme stuff ---
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 zi light romkatv/powerlevel10k
+
+[[ ! -f ~/.p10k.zsh ]] || source  ~/.p10k.zsh # import p10k config if exists
 
 ### --- Plugins ---
 zi light zsh-users/zsh-syntax-highlighting
