@@ -3,6 +3,7 @@
 
 # Function: install_kubectl
 # Description: Installs and configures kubectl
+# Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management
 install_kubectl() {
 	# Currently only supports ubuntu using either zsh & bash
 	local VERSION="${1:-1.32}"
