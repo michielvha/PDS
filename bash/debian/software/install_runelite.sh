@@ -1,5 +1,6 @@
 #!/bin/bash
 # Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_runelite.sh) `
+# Reference: https://osrsbox.com/blog/2018/10/05/installing-runelite-on-ubuntu-linux/
 
 # Description: Installs runelite on Debian-based systems
 # Function: install_runelite
