@@ -22,7 +22,6 @@ install_runelite() {
     echo "You can run RuneLite in the following ways:"
     echo "1. Using the desktop shortcut"
     echo "2. Using the 'runelite' command in terminal"
-    echo "3. Using the '~/run_runelite.sh' script"
 }
 
 # Description: Installs Java Runtime Environment (JRE) on Debian-based systems
