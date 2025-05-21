@@ -2,7 +2,7 @@
 # Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_nvidia_ctk.sh) `
 
 # Function: install_nvidia_ctk
-# Description: Installs Nvidia container support, needed for llm's
+# Description: Installs Nvidia container toolkit for container GPU support
 # Reference: https://github.com/Mintplex-Labs/anything-llm/blob/master/docker/HOW_TO_USE_DOCKER.md
 install_nvidia_ctk() {
 
