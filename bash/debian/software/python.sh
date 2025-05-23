@@ -6,7 +6,9 @@
 set_venv() {
     echo "🌐 Setting up Python virtual environment..."
     python3 -m venv .venv
-    source .venv/bin/activate
+    source .venv/bin/activate # this command ends the script..
+
+    # figure out how to handle this when the function gets interrupted
     pip install -r requirements.txt
     echo "✅ Python virtual environment set up successfully."
 }
