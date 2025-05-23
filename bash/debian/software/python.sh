@@ -7,4 +7,6 @@ set_venv() {
     echo "🌐 Setting up Python virtual environment..."
     python3 -m venv .venv
     source .venv/bin/activate
+    pip install -r requirements.txt
+    echo "✅ Python virtual environment set up successfully."
 }
