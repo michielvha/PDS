@@ -58,7 +58,10 @@ $packagesToInstall = @(
     "postman",
     "python3",
     "openssl",
-    "pandoc"
+    "pandoc",
+    "openshift-cli",
+    "argocd-cli",
+    "nano-win"
 )
 
 
