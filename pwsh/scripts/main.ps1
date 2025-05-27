@@ -72,8 +72,8 @@ Install-ChocoPackages -packagesToInstall $packagesToInstall
 # https://www.powershellgallery.com/packages/PSReadLine/2.2.6
 Set-PSReadLineModule
 
-# 4. Install & Configure kubectl/login
-Install-KubeCLI
+# 4. Install & Configure kubectl/login for K8S Cluster management
+Install-AzureKubeCLI
 
 # 5. shell customizations with the startship
 # Define the content of the starship.toml file (modify as needed)

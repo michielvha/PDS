@@ -42,4 +42,6 @@ function Install-ChocoPackages {
         Write-Host "`nAttempting to install $packageName..."
         choco install $packageName -y
     }
+
+    # TODO: Allow to restart if needed ? and restart the script afterwards..? or just at the end of the script...
 }

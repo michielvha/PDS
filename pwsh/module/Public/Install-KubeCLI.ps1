@@ -1,13 +1,13 @@
-Function Install-KubeCLI-Azure {
+Function Install-AzureKubeCLI {
     <#
     .SYNOPSIS
         Installs `kubectl` and `kubelogin` if they are not already installed on the system.
 
     .DESCRIPTION
-        The `Install-KubeCLI-Azure` function checks if both `kubectl` and `kubelogin` are installed on the system by attempting to retrieve their version information. If either tool is missing, the function uses the Azure CLI (`az`) to install both tools via `az aks install-cli`. If both tools are already installed, their version information is displayed.
+        The `Install-AzureKubeCLI` function checks if both `kubectl` and `kubelogin` are installed on the system by attempting to retrieve their version information. If either tool is missing, the function uses the Azure CLI (`az`) to install both tools via `az aks install-cli`. If both tools are already installed, their version information is displayed.
 
     .EXAMPLE
-        Install-KubeCLI-Azure
+        Install-AzureKubeCLI
 
         This command checks for the installation of both `kubectl` and `kubelogin`. If they are not found, it installs them using the Azure CLI. If they are already installed, it prints their current version.
 
