@@ -61,7 +61,8 @@ $packagesToInstall = @(
     "pandoc",
     "openshift-cli",
     "argocd-cli",
-    "nano-win"
+    "nano-win",
+    "pwsh"
 )
 
 
