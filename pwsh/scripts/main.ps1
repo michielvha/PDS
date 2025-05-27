@@ -12,7 +12,10 @@ else {
 }
 
 # Import the required Functions from powershell gallery
-# Install-Module -Name PDS
+if (-not (Get-Module -ListAvailable -Name PDS)) {
+    Write-Host "PDS module not found. Installing PDS module..."
+    Install-Module -Name PDS -Force
+}
 Import-Module -Name PDS
 
 # insert step here for cleaning up w11 build.
@@ -35,11 +38,12 @@ $packagesToInstall = @(
     "starship",
     "rpi-imager",
     "lens",
+    "freelens",
     "grep",
     "bginfo",
     "gh",
     "docker",
-    "Firefox",
+    "firefox",
     "awscli",
     "golang",
     "kubernetes-helm",
@@ -47,7 +51,10 @@ $packagesToInstall = @(
     "kustomize",
     "nodejs",
     "make",
-    "golangci-lint"
+    "golangci-lint",
+    "zen-browser",
+    "vscode",
+    "rancher-desktop"
 )
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 
@@ -58,7 +65,6 @@ Set-PSReadLineModule
 
 # 4. Install & Configure kubectl/login
 Install-KubeCLI
-
 
 # 5. shell customizations with the startship
 # Define the content of the starship.toml file (modify as needed)
