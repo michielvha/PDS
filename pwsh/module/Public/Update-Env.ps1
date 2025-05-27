@@ -1,4 +1,4 @@
-function Refresh-Env{
+function Update-Env{
     <#
     .SYNOPSIS
         Refreshes the current PowerShell session's environment variables from the Windows registry.
@@ -73,7 +73,7 @@ function Refresh-Env{
 }
 
 # Debug Version
-function Refresh-Env-Debug {
+function Update-EnvDebug {
     Write-Host "Refreshing environment variables from registry..." -ForegroundColor Cyan
 
     # Load System-wide environment variables
