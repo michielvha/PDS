@@ -54,8 +54,14 @@ $packagesToInstall = @(
     "golangci-lint",
     "zen-browser",
     "vscode",
-    "rancher-desktop"
+    "rancher-desktop",
+    "postman",
+    "python3",
+    "openssl",
+    "pandoc"
 )
+
+
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 
 
