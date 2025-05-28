@@ -26,20 +26,21 @@ Function Install-AzureKubeCLI {
     #>
     
     # TODO: Auto install az cli if not installed
-    $azVer = az --version 2>$null
-    if (!$azVer) {
+    # Check if az command is available without producing an error if not found
+    if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
         Write-Host "Azure CLI is not installed. Please install Azure CLI before proceeding."
         return
     }
 
-    $KubectlVer = kubectl version 2>$null
-    $KubeloginVer = kubelogin --version  2>$null
-    if (!$KubectlVer -or !$KubeloginVer) {
+    $kubectlCmdExists = Get-Command kubectl -ErrorAction SilentlyContinue
+    $kubeloginCmdExists = Get-Command kubelogin -ErrorAction SilentlyContinue
+
+    if (-not $kubectlCmdExists -or -not $kubeloginCmdExists) {
         Write-Host "kubectl & kubelogin will be installed via az cli"
         az aks install-cli
     } else {
         Write-Host "Kubectl and kubelogin are already installed:"
-        $KubectlVer
-        $KubeloginVer
+        kubectl version 2>$null
+        kubelogin --version 2>$null
     }
 }
