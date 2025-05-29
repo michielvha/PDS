@@ -82,7 +82,7 @@ $configContent = @"
 [azure]
 disabled = false
 format = 'on [$symbol($subscription)]($style) '
-symbol = '󰠅 '
+symbol = 'Azure ☁ '
 style = 'blue bold'
 
 [git_branch]
@@ -99,7 +99,7 @@ format = '[\($state( $progress_current of $progress_total)\)]($style) '
 cherry_pick = '[🍒 PICKING](bold red)'
 
 [kubernetes]
-format = 'on [⛵ ($user on )($cluster in )$context \($namespace\)](dimmed green) '
+# format = 'on [⛵ ($user on )($cluster in )$context \($namespace\)](dimmed green) '
 disabled = false
 contexts = [
   { context_pattern = "dev.local.cluster.k8s", style = "green", symbol = "💔 " },
