@@ -62,7 +62,9 @@ $packagesToInstall = @(
     "openshift-cli",
     "argocd-cli",
     "nano-win",
-    "pwsh"
+    "pwsh",
+    "jq",
+    "yq"
 )
 
 
