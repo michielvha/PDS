@@ -28,6 +28,7 @@ Function Get-Ports {
             Process      = $proc.ProcessName
         }
     }
+    
 
     $udp = Get-NetUDPEndpoint | ForEach-Object {
         $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
@@ -39,6 +40,8 @@ Function Get-Ports {
         }
     }
 
-    $tcp + $udp | Sort-Object Protocol, LocalAddress | Format-Table -AutoSize
+    $tcp + $udp | Sort-Object Protocol, LocalAddress | Format-Table -AutoSize 
+    # TODO: we might get better output from 
+    # Get-NetTCPConnection -State Listen | Where-Object { $_.OwningProcess -ne 4 } | Sort-Object LocalPort | Format-Table -AutoSize
 
 }
