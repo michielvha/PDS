@@ -28,7 +28,7 @@ install_docker() {
 
 	# Add the current user to the docker group
 	sudo groupadd docker
-	sudo usermod -aG docker $USER
+	sudo usermod -aG docker "$USER"
 	# Enable Docker to start on boot
 	sudo systemctl enable docker
 }
