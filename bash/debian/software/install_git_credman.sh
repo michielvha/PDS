@@ -3,6 +3,10 @@
 
 # Function: install_git_cm
 # Description: Downloads and installs the git-credential-manager (GCM) for Linux with proper setup for headless/TTY environments using GPG encryption.
+# Reference: [Backend] - https://github.com/git-ecosystem/git-credential-manager/blob/release/docs/credstores.md
+#            [Install] - https://github.com/git-ecosystem/git-credential-manager/blob/release/docs/install.md | https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-git
+#            [  WSL  ] - https://github.com/git-ecosystem/git-credential-manager/blob/main/docs/wsl.md
+#            [Various] - https://stackoverflow.com/questions/45925964/how-to-use-git-credential-store-on-wsl-ubuntu-on-windows
 install_git_credman() {
     # Install dependencies
     sudo apt update
@@ -31,25 +35,54 @@ install_git_credman() {
     wget "$download_url" -O gcm-linux_amd64.deb
     sudo dpkg -i gcm-linux_amd64.deb
     
-    # Configure Git to use GCM
-    git config --global credential.helper manager
-    
-    # Configure GCM to use GPG/pass for credential storage
-    git config --global credential.credentialStore gpg
-    
-    # Setup for headless/TTY environments
-    echo "export GPG_TTY=$(tty)" >> ~/.bashrc
-    
-    # Add to current session
-    GPG_TTY=$(tty)
-    export GPG_TTY
-    
-    # Cleanup
-    rm gcm-linux_amd64.deb
-    
-    echo ""
-    echo "Git Credential Manager installed with GPG credential store"
-    echo "-----------------------------------------------------------"
+    # Detect if running in WSL
+    if grep -q "microsoft" /proc/version || grep -q "Microsoft" /proc/version || grep -q "WSL" /proc/version; then
+        echo "WSL environment detected, configuring GCM for WSL..."
+        
+        # For WSL, use the Windows Git Credential Manager
+        git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/bin/git-credential-manager.exe"
+        
+        # Set necessary config for Azure DevOps
+        git config --global credential.https://dev.azure.com.useHttpPath true
+        
+        # Cleanup
+        rm gcm-linux_amd64.deb
+        
+        echo ""
+        echo "Git Credential Manager configured for WSL"
+        echo "----------------------------------------"
+        echo "Windows Git Credential Manager will be used for authentication."
+        echo "No GPG setup is required as credentials will be managed by Windows."
+        echo ""
+        
+        # Early return - no need for GPG setup in WSL mode
+        return 0
+    else
+        echo "Standard Linux environment detected, using native GCM..."
+        
+        # Configure Git to use GCM
+        git config --global credential.helper manager
+        
+        # Configure GCM to use GPG/pass for credential storage
+        git config --global credential.credentialStore gpg
+        
+        # Configure Git to properly handle Azure DevOps URLs
+        git config --global credential.useHttpPath true
+        
+        # Setup for headless/TTY environments
+        echo "export GPG_TTY=$(tty)" >> ~/.bashrc
+        
+        # Add to current session
+        GPG_TTY=$(tty)
+        export GPG_TTY
+        
+        # Cleanup
+        rm gcm-linux_amd64.deb
+        
+        echo ""
+        echo "Git Credential Manager installed with GPG credential store"
+        echo "-----------------------------------------------------------"
+    fi
     
     # Check if GPG key exists
     if ! gpg --list-secret-keys | grep -q "sec"; then

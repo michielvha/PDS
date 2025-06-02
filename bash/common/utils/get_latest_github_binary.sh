@@ -3,6 +3,8 @@
 
 # Function: get_latest_github_binary
 # Description: Downloads and installs the latest release of a binary from a specified GitHub repository.
+# TODO: Generalize this function to accept parameters for repository, binary name, and install path so it can be reused for other functions.
+# Check install_git_credman for inspiration but this also works
 get_latest_github_binary() {
 	local repo="michielvha/edgectl"
 	local binary_name="edgectl"
