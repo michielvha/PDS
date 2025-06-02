@@ -57,4 +57,5 @@ setup_gnome_extras() {
 
 	# verify
 	# gsettings get org.gnome.shell enabled-extensions
+	# After install you need to enable 'user themes' in 'extensions' if you want to use a custom theme.
 }

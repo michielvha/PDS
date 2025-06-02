@@ -24,7 +24,7 @@ install_zi() {
 # Function: configure_zsh
 # Description: Configures ZSH using Zi with plugins and settings for an enhanced shell experience
 configure_zsh() {
-  cat <<EOF | sudo tee /etc/zshrc
+  cat <<'EOF' | sudo tee /etc/zshrc
 source /usr/local/share/zi/zi.zsh
 
 # --- Theme stuff ---
@@ -70,7 +70,7 @@ alias knr='kubectl get pods --field-selector=status.phase!=Running'
 EOF
 
   # this configures zsh for all new users, first create this config then create the new user. Point it to global config.
-  cat <<EOF | sudo tee /etc/skel/.zshrc
+  cat <<'EOF' | sudo tee /etc/skel/.zshrc
 source /etc/zshrc
 EOF
 }

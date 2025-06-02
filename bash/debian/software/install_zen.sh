@@ -1,5 +1,5 @@
 #!/bin/bash
-# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_vscode.sh) `
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_zen.sh) `
 
 # Function: install_zen
 # Description: Installs Zen Browser
