@@ -43,6 +43,7 @@ zi light romkatv/powerlevel10k
 zi light zsh-users/zsh-syntax-highlighting
 zi light zsh-users/zsh-autosuggestions
 zi light zsh-users/zsh-history-substring-search
+# zi light zsh-users/zsh-completions # This plugin is not needed, as we use zsh-autocomplete instead.
 zi light agkozak/zsh-z
 
 # Installs stuff in ~/zi/plugins that needs to be manually sourced.
