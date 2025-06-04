@@ -1,4 +1,5 @@
 # -- Environment --
+# -- **Fully Deprecated - functions are not reflective of current module, retained for if we want to revisit the concept** --
 
 # Set $ScriptPath to current directory compatible with PS2EXE
 if ($MyInvocation.MyCommand.CommandType -eq "ExternalScript") {

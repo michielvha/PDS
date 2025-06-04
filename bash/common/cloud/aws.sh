@@ -3,10 +3,10 @@
 # This module contains functions for managing AWS resources
 # Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/cloud/aws.sh) `
 
-# Function: setup_aws_cli
+# Function: install_aws_cli
 # Description: Installs and configures the AWS CLI
-# Usage: setup_aws_cli
-setup_aws_cli() {
+# Usage: install_aws_cli
+install_aws_cli() {
 	echo "🌩️ Setting up AWS CLI..."
 
 	curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
