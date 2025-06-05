@@ -2,11 +2,12 @@
 
 source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/python.sh)
 
+# - aliases -
+# Python
 alias venv=set_venv
-# Python aliases
 alias python=python3
 alias pip=pip3
-# kubectl aliases
+# kubectl
 alias kgp='kubectl get pods'
 alias kga='kubectl get all'
 alias kgn='kubectl get nodes'
