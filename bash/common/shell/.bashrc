@@ -1,6 +1,7 @@
-# My personal .bashrc file
-
-source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/python.sh)
+#!/bin/bash
+# shellcheck disable=SC2296
+# Common bash shell settings
+# Usage: source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/shell/.bashrc)
 
 # - aliases -
 # Python
