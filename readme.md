@@ -49,6 +49,7 @@ This section provides references to the specific `readme.md` files in the respec
 
 ### Windows
 - [ ] Pin frequently used applications to the taskbar.
+- [ ] Wrap 'W11Debloat' to run on initial run of script
 - [ ] Add functions for system diagnostics and machine information retrieval. (check old scripts for example)
 - [ ] Enhance `Install-KubeCLI` to check for dependencies like Azure CLI.
 - [ ] add custom logging / proper error handling to script. (check old scripts)

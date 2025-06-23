@@ -1,8 +1,8 @@
 #!/bin/bash
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/install_juno_themes.sh) `
+
 # Function: install_juno_theme
 # Description: Installs and applies the Juno GTK theme
-# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/install_juno_themes.sh)`
-
 install_juno_theme() {
 	echo "🎨 Installing Juno GTK Theme..."
 

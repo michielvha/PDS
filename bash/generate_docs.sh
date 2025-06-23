@@ -1,13 +1,16 @@
+#!/bin/bash
+
+
 process_directory() {
     local dir_name=$1
     local dir_path=$2
     
     # Add section header for the directory
-    echo -e "\n## ${dir_name} Functions\n" >> function_list.md
-    echo -e "| Function | Description |\n|---|---|" >> function_list.md
+    echo -e "\n## ${dir_name} Functions\n" >> readme.md
+    echo -e "| Function | Description |\n|---|---|" >> readme.md
     
     # Find all .sh files in the directory and process them
-    find "${dir_path}" -type f -name "*.sh" | while read file; do
+    find "${dir_path}" -type f -name "*.sh" | while read -r file; do
         awk '
         /# Function:/ {function_name=$3}
         /# Description:/ && function_name {
@@ -18,7 +21,7 @@ process_directory() {
             # Print the function and description in table format
             printf "| %s | %s |\n", function_name, description
             function_name=""
-        }' "$file" >> function_list.md
+        }' "$file" >> readme.md
     done
 }
 
@@ -28,4 +31,4 @@ process_directory "Common" "./common"
 process_directory "Fedora" "./fedora"
 
 # Display the result
-cat function_list.md
+cat readme.md

@@ -1,7 +1,9 @@
+#!/bin/bash
+# shellcheck disable=SC2016
 # Purpose: This module contains functions used for installing various tools / software on macOS.
-# Usage: quickly source this module with the following command:
-# ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/darwin/functions.sh) ` 
+# Usage: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/darwin/functions.sh) ` 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
+# shellcheck disable=SC2296
 
 # ZSH setup
 install_zi (){
@@ -11,7 +13,18 @@ install_zi (){
 configure_zsh (){
     cat <<EOF | sudo tee ~/.zshrc
 source ~/.zi/bin/zi.zsh
+
+# --- Theme stuff ---
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 zi light romkatv/powerlevel10k
+
+[[ ! -f ~/.p10k.zsh ]] || source  ~/.p10k.zsh # import p10k config if exists
 
 ### --- Plugins ---
 zi light zsh-users/zsh-syntax-highlighting
@@ -60,8 +73,63 @@ setup_zsh (){
 # add go to path
 setup_go_env (){
     # Setup go env
-    echo 'export GOPATH=$HOME/go' >> ~/.zshrc
-    echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.zshrc
-    echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH' >> ~/.zshrc
-    source ~/.zshrc
+    echo "🔧 Setting Go environment variables for user: $USER"
+    {
+        echo 'export GOPATH=$HOME/go'
+        echo 'export GOBIN=$GOPATH/bin'
+        echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH'
+    } >> ~/.zshrc
+    # TODO: add error handling
+
+}
+
+configure_finder(){
+    # Configure Finder
+    defaults write com.apple.finder ShowPathbar -bool true
+    defaults write com.apple.finder ShowStatusBar -bool true
+    defaults write com.apple.finder ShowToolbar -bool true
+    # Set default path for new Finder windows
+    defaults write com.apple.finder NewWindowTargetPath -string "file://$HOME/"
+    # Show hidden files
+    defaults write com.apple.finder AppleShowAllFiles -bool true
+    killall Finder
+}
+
+install_clamav(){
+    #  TODO: Not properly tested, verify on a fresh machine
+    # Install ClamAV
+    brew install clamav
+
+    cp /opt/homebrew/etc/clamav/freshclam.conf.sample /opt/homebrew/etc/clamav/freshclam.conf
+    cp /opt/homebrew/etc/clamav/clamd.conf.sample /opt/homebrew/etc/clamav/clamd.conf
+    
+    # Comment out the Example line in both config files
+    sed -i '' 's/^Example/#Example/g' /opt/homebrew/etc/clamav/freshclam.conf
+    sed -i '' 's/^Example/#Example/g' /opt/homebrew/etc/clamav/clamd.conf
+    
+    # Uncomment and set the required configuration paths in freshclam.conf
+    sed -i '' 's/^#DatabaseDirectory/DatabaseDirectory/g' /opt/homebrew/etc/clamav/freshclam.conf
+    sed -i '' 's/^#UpdateLogFile/UpdateLogFile/g' /opt/homebrew/etc/clamav/freshclam.conf
+    sed -i '' 's/^#DatabaseOwner/DatabaseOwner/g' /opt/homebrew/etc/clamav/freshclam.conf    
+
+    sudo mkdir -p /opt/homebrew/var/lib/clamav
+    sudo mkdir -p /opt/homebrew/var/log/clamav
+    sudo chown -R clamav:clamav /opt/homebrew/var/lib/clamav /opt/homebrew/var/log/clamav || true
+
+    # Update the database
+    sudo freshclam
+    
+    # run a full system scan with
+    # clamscan -r -i / > ~/clamav-scan.log
+
+    # or something more scoped
+    # sudo clamscan -r --bell -i \
+    # /Applications \
+    # /Library \
+    # /System/Library \
+    # /usr \
+    # /opt \
+    # ~/Downloads \
+    # ~/Library/LaunchAgents \
+    # ~/Library/Application\ Support
 }

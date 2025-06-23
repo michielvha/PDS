@@ -1,8 +1,8 @@
 #!/bin/bash
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/install_jetbrains_font.sh) `
+
 # Function: jetbrains_font
 # Description: Installs the JetBrains Mono font system-wide
-# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/install_jetbrains_font.sh)`
-
 install_jetbrains_font() {
 	echo "🔤 Installing JetBrains Mono font system-wide..."
 

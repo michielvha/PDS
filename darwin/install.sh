@@ -1,11 +1,13 @@
+#!/bin/bash
 # import required functions from PDS github repository
+# shellcheck disable=SC1090
 source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/darwin/functions.sh)
 
 # Install Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-echo >> $HOME/.zprofile\
-    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile\
-    eval "$(/opt/homebrew/bin/brew shellenv)"
+echo >> "$HOME/.zprofile"
+echo "eval '$(/opt/homebrew/bin/brew shellenv)'" >> "$HOME/.zprofile"
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Install Xcode command line tools
 # This is required for Homebrew to work properly
@@ -40,3 +42,5 @@ brew install --cask visual-studio-code \
 setup_zsh
 
 setup_go_env
+
+configure_finder

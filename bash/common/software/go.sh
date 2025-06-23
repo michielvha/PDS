@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC2016
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/software/go.sh) `
 
 # Function: install_go
 # Description: Installs the latest version of Golang and configures the environment for the current user.
@@ -32,9 +34,12 @@ install_go() {
 	# Set up GOPATH and GOBIN
 	echo "🔧 Configuring Go environment variables..."
 
-	echo 'export GOPATH=$HOME/go' >>~/.bashrc
-	echo 'export GOBIN=$GOPATH/bin' >>~/.bashrc
-	echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH' >>~/.bashrc
+	{
+		echo 'export GOPATH=$HOME/go'
+		echo 'export GOBIN=$GOPATH/bin'
+		echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH'
+	} >>~/.bashrc
+	# shellcheck source=/dev/null
 	source ~/.bashrc # Apply changes
 
 	echo "🚀 Go installed! Run 'go version' to check."

@@ -1,9 +1,8 @@
 #!/bin/bash
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/install_tokyonight_theme.sh) `
+
 # Function: install_tokyonight_gtk_theme
 # Description: Installs and applies the Tokyonight GTK theme
-# Source: `source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/install_tokyonight_theme.sh)`
-
-
 install_tokyonight_gtk_theme() {
 	echo "🎨 Installing Tokyonight GTK Theme..."
 

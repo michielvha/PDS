@@ -1,13 +1,13 @@
-Function Install-KubeCLI-Azure {
+Function Install-AzureKubeCLI {
     <#
     .SYNOPSIS
         Installs `kubectl` and `kubelogin` if they are not already installed on the system.
 
     .DESCRIPTION
-        The `Install-KubeCLI-Azure` function checks if both `kubectl` and `kubelogin` are installed on the system by attempting to retrieve their version information. If either tool is missing, the function uses the Azure CLI (`az`) to install both tools via `az aks install-cli`. If both tools are already installed, their version information is displayed.
+        The `Install-AzureKubeCLI` function checks if both `kubectl` and `kubelogin` are installed on the system by attempting to retrieve their version information. If either tool is missing, the function uses the Azure CLI (`az`) to install both tools via `az aks install-cli`. If both tools are already installed, their version information is displayed.
 
     .EXAMPLE
-        Install-KubeCLI-Azure
+        Install-AzureKubeCLI
 
         This command checks for the installation of both `kubectl` and `kubelogin`. If they are not found, it installs them using the Azure CLI. If they are already installed, it prints their current version.
 
@@ -26,20 +26,21 @@ Function Install-KubeCLI-Azure {
     #>
     
     # TODO: Auto install az cli if not installed
-    $azVer = az --version 2>$null
-    if (!$azVer) {
+    # Check if az command is available without producing an error if not found
+    if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
         Write-Host "Azure CLI is not installed. Please install Azure CLI before proceeding."
         return
     }
 
-    $KubectlVer = kubectl version 2>$null
-    $KubeloginVer = kubelogin --version  2>$null
-    if (!$KubectlVer -or !$KubeloginVer) {
+    $kubectlCmdExists = Get-Command kubectl -ErrorAction SilentlyContinue
+    $kubeloginCmdExists = Get-Command kubelogin -ErrorAction SilentlyContinue
+
+    if (-not $kubectlCmdExists -or -not $kubeloginCmdExists) {
         Write-Host "kubectl & kubelogin will be installed via az cli"
         az aks install-cli
     } else {
         Write-Host "Kubectl and kubelogin are already installed:"
-        $KubectlVer
-        $KubeloginVer
+        kubectl version 2>$null
+        kubelogin --version 2>$null
     }
 }
