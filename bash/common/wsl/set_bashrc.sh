@@ -1,8 +1,9 @@
 #!/bin/bash
-# Function: set_bashrc_wsl
-# Description: Configure bashrc for Windows Subsystem for Linux.
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/wsl/set_bashrc.sh) `
 
-set_bashrc_wsl() {
+# Function: set_bashrc
+# Description: Configure bashrc for Windows Subsystem for Linux.
+set_bashrc() {
     echo "🔧 Configuring .bashrc for WSL..."
 
     # Check if .bashrc already contains the WSL configuration
