@@ -64,7 +64,8 @@ $packagesToInstall = @(
     "nano-win",
     "pwsh",
     "jq",
-    "yq"
+    "yq",
+    "powertoys"
 )
 
 
