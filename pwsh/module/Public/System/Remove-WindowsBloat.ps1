@@ -1,10 +1,10 @@
-Function Clean-WindowsBloat {
+Function Remove-WindowsBloat {
     <#
     .SYNOPSIS
         Disables non-essential and resource-heavy Windows services to improve system performance.
 
     .DESCRIPTION
-        The Clean-WindowsBloat function disables a curated list of background Windows services known to consume CPU, RAM, and disk bandwidth unnecessarily on modern machines.
+        The Remove-WindowsBloat function disables a curated list of background Windows services known to consume CPU, RAM, and disk bandwidth unnecessarily on modern machines.
         The script is safe for general use and avoids touching core system functionality or breaking essential features like networking or updates.
 
         Most of the services targeted are:
@@ -23,7 +23,7 @@ Function Clean-WindowsBloat {
         Requires: PowerShell 5.1+ and Administrator privileges
 
     .EXAMPLE
-        PS> Clean-WindowsBloat
+        PS> Remove-WindowsBloat
 
         Disables unnecessary Windows services to reduce background CPU and memory usage.
 
