@@ -3,6 +3,8 @@
 ### List & Description of Functions in Module (TO DO)
 here we need to create the docs for the module we created, define all the functions etc etc, the specific docs for each function should be in the functions to be compliant with the way powershell handles Function docs.
 
+- We could probably get all the info to generate a markdown here using the module info list functions since all functions have docs defined.. look into this
+
 ## Future enhancements
 
 - Do some research about useful modules
