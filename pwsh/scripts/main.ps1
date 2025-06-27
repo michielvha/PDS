@@ -29,6 +29,7 @@ Install-Choco
 $packagesToInstall = @(
     "nmap",
     "git",
+    "curl",
     "azure-cli",
     "terraform",
     "pycharm-community",
