@@ -43,6 +43,8 @@ $packagesToInstall = @(
     "bginfo",
     "gh",
     "docker",
+    "docker-compose",
+    "docker-desktop",
     "firefox",
     "awscli",
     "golang",
