@@ -67,7 +67,8 @@ $packagesToInstall = @(
     "pwsh",
     "jq",
     "yq",
-    "powertoys"
+    "powertoys",
+    "ngrok"
 )
 
 
