@@ -83,8 +83,9 @@ Set-PSReadLineModule
 # 4. Install & Configure kubectl/login for K8S Cluster management
 Install-AzureKubeCLI
 
-# 5. shell customizations with the startship
-# Define the content of the starship.toml file (modify as needed)
+# 5. shell customizations
+# - Starship configuration
+#   Define the content of the starship.toml file (modify as needed)
 $configContent = @"
 [azure]
 disabled = false
@@ -119,10 +120,17 @@ format = '[🏎💨 $workspace]($style) '
 # Run the function to create starship.toml for all users
 Set-StarshipConfigForAllUsers -configContent $configContent
 
+# - ncurl alias
+#   for powershell 5.1 we need a seperate alias for curl since it conflicts with the native curl binary
+Register-NativeCurl
+
+# - auto import PDS module & chocolatey profile
+#    includes usefull functions like `refreshenv` from chocolatey profile and ofcourse giving access to the PDS module by default.
+Set-UserProfile
+
 # 6. Configuring WSL
 Install-WSL -d Kali-Linux
 
 
 # ...
-# 8. package with cicd pipeline into exe (done)
-# 9. Add logging and error handeling.
+# x. Add logging and error handeling.
