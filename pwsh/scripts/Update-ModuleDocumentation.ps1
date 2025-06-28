@@ -225,12 +225,12 @@ foreach ($section in $functionSections.Keys | Sort-Object) {
 }
 
 # Write the module page
-$modulePagePath = Join-Path -Path $DocsPath -ChildPath "$moduleName.md"
+$modulePagePath = Join-Path -Path $DocsPath -ChildPath "readme.md"
 Set-Content -Path $modulePagePath -Value $modulePageContent
 
 # Cleanup any leftover files in the root docs directory
 $rootFiles = Get-ChildItem -Path $DocsPath -Filter "*.md" | 
-    Where-Object { $_.Directory.FullName -eq $DocsPath -and $_.Name -ne "$moduleName.md" }
+    Where-Object { $_.Directory.FullName -eq $DocsPath -and $_.Name -ne "readme.md" }
 if ($rootFiles) {
     Write-Host "Cleaning up duplicate documentation files in root directory..."
     foreach ($file in $rootFiles) {
