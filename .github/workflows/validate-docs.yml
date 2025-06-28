@@ -1,0 +1,43 @@
+# TODO: Decide if we want to add docs generation to the release pipeline or just keep the shift left method we currently have.
+# name: Validate Documentation
+# on:
+#   pull_request:
+#     paths:
+#       - 'pwsh/module/**/*.ps1'
+#   push:
+#     branches: [main, master]
+#     paths:
+#       - 'pwsh/module/**/*.ps1'
+# jobs:
+#   validate-docs:
+#     runs-on: windows-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0 # Full git history for diffs
+#       - name: Setup PowerShell
+#         uses: PowerShell/PowerShell-Action@v1
+#         with:
+#           pwsh-version: '7.4'
+#       - name: Install PlatyPS Module
+#         shell: pwsh
+#         run: |
+#           Install-Module -Name platyPS -Force -Scope CurrentUser
+#       - name: Update Documentation
+#         shell: pwsh
+#         run: |
+#           ./pwsh/scripts/Update-ModuleDocumentation.ps1
+#       - name: Check for changes
+#         id: check_changes
+#         shell: pwsh
+#         run: |
+#           $changes = git status -s docs/
+#           if ($changes) {
+#             echo "::set-output name=has_changes::true"
+#             git diff docs/
+#             Write-Error "Documentation is out of date. Please run ./pwsh/scripts/Update-ModuleDocumentation.ps1 and commit the changes."
+#             exit 1
+#           } else {
+#             echo "::set-output name=has_changes::false"
+#             Write-Host "Documentation is up to date."
+#           }

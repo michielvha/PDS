@@ -9,7 +9,7 @@ Function Clear-RedundantPSReadLineHistory {
     This function reads the PowerShell command history file (ConsoleHost_history.txt), 
     identifies duplicate entries, and removes them while maintaining the original order.
     It works with the default PSReadLine history file located at:
-    %APPDATA%\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
+    %APPDATA%\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt 
 
     .PARAMETER BackupFile
 
@@ -33,7 +33,6 @@ Function Clear-RedundantPSReadLineHistory {
 
     .NOTES
 
-    Author: GitHub Copilot
     Date: June 28, 2025
 
     .LINK
