@@ -32,7 +32,7 @@ Requires platyPS module to be installed.
 [CmdletBinding()]
 param(
     [string]$ModulePath = (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent),
-    [string]$DocsPath = (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "docs"),
+    [string]$DocsPath = (Join-Path (Split-Path $PSScriptRoot -Parent) "docs"),
     [switch]$ForceRegenerate
 )
 
