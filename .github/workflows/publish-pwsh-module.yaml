@@ -1,10 +1,10 @@
 name: Publish PowerShell Module
-
 permissions:
   id-token: write
   contents: write
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -15,19 +15,17 @@ on:
       - main
     paths:
       - 'pwsh/module/**'
-
 jobs:
   publish:
     runs-on: windows-latest
-
     steps:
-    # Step 2: Publish PowerShell Module
-    - name: Publish PowerShell Module
-      uses: michielvha/publish-pwsh-module-action@v2
-      with:
-        psd1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psd1"   # Updated with consistent backslashes
-        psm1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psm1"   # Updated with consistent backslashes
-        apiKey: ${{ secrets.API_KEY }}
-        description: "Personal Deploy Script"
-        rootModule: "PDS"
-        companyName: "itmvha"
+      # Step 2: Publish PowerShell Module
+      - name: Publish PowerShell Module
+        uses: michielvha/publish-pwsh-module-action@v2
+        with:
+          psd1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psd1" # Updated with consistent backslashes
+          psm1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psm1" # Updated with consistent backslashes
+          apiKey: ${{ secrets.API_KEY }}
+          description: "Personal Deploy Script"
+          rootModule: "PDS"
+          companyName: "itmvha"
