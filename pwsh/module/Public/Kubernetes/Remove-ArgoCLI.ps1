@@ -16,6 +16,7 @@ Function Remove-ArgoCLI {
     .NOTES
         This function is part of the PDS Module and is used to manage the installation of the ArgoCD CLI.
 
+        Author: Michiel VH
     .LINK
         https://argoproj.github.io/argo-cd/
     #>

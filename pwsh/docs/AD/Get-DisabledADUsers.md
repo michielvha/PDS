@@ -143,4 +143,6 @@ Accept wildcard characters: False
 - Make sure you have appropriate permissions to query AD
 - You might want to run this on a domain controller or computer with the RSAT tools installed
 
+Author: Michiel VH
+
 ## RELATED LINKS

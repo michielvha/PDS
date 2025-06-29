@@ -92,7 +92,7 @@ Accept wildcard characters: False
 ## OUTPUTS
 
 ## NOTES
-Author: Michiel Van Haegenborgh
+Author: Michiel VH
 This function is intended to be reusable and extensible for managing persistent shell customizations.
 
 ## RELATED LINKS

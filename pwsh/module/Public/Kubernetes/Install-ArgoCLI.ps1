@@ -12,7 +12,7 @@ function Install-ArgoCLI {
     This example checks if ArgoCD CLI is installed on the system. If it is not, the function installs ArgoCD CLI. If it is already installed, it prints the installed version of ArgoCD CLI.
 
 .NOTES
-    Author: itmvha
+    Author: Michiel VH
     Requires: Internet connection for downloading ArgoCD CLI if it is not already installed.
 
 

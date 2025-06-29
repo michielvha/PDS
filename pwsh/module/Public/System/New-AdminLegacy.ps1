@@ -1,7 +1,7 @@
 Function New-AdminLegacy {
     <#
     .SYNOPSIS
-    Create a new local user account with administrative privileges using legacy commands.
+        Create a new local user account with administrative privileges using legacy commands.
     
     .DESCRIPTION
     
@@ -10,11 +10,12 @@ Function New-AdminLegacy {
     .PARAMETER Credential
 
     .EXAMPLE
-    Create-Admin -Credential (Get-Credential)  -FullName "Example" -Description "Example admin account"
+        Create-Admin -Credential (Get-Credential)  -FullName "Example" -Description "Example admin account"
 
     .NOTES
-    This function only work in PS 5.1 and below.
-    
+        This function only work in PS 5.1 and below.
+        Author: Michiel VH
+        
     .LINK
     #>
 

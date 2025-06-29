@@ -30,7 +30,7 @@ function Set-DefaultProfile {
         This example appends a custom alias definition for 'll' to the global profile, making it available for all users.
 
     .NOTES
-        Author: MKTHEPLUGG
+        Author: Michiel VH
         Requires: PowerShell 5.1 or higher.
         This function modifies the global profile located at `$PROFILE.AllUsersAllHosts`, and administrative privileges are required to make these changes.
 

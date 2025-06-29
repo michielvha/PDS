@@ -1,31 +1,28 @@
 Function Register-NativeCurl {
     <#
     .SYNOPSIS
-    
-    Creates an 'ncurl' function for the native curl binary.
+        Creates an 'ncurl' function for the native curl binary.
 
     .DESCRIPTION
+        This function creates an 'ncurl' function that calls the native curl binary installed via Chocolatey.
+        The function is added to your PowerShell profile so it persists across sessions.
 
-    This function creates an 'ncurl' function that calls the native curl binary installed via Chocolatey.
-    The function is added to your PowerShell profile so it persists across sessions.
-
-    This is useful in PowerShell 5.1 where the 'curl' command is aliased to Invoke-WebRequest.
+        This is useful in PowerShell 5.1 where the 'curl' command is aliased to Invoke-WebRequest.
 
     .EXAMPLE
-
-    Register-NativeCurl
-    
-    # Creates the ncurl alias that points to the native curl.exe binary
+        Register-NativeCurl
+        
+        # Creates the ncurl alias that points to the native curl.exe binary
 
     .NOTES
+        Date: June 28, 2025
+        Author: Michiel VH
+        
+        PowerShell 7+ typically handles curl better, but this function helps in PowerShell 5.1
+        where curl is aliased to Invoke-WebRequest.
 
-    Date: June 28, 2025
-
-    PowerShell 7+ typically handles curl better, but this function helps in PowerShell 5.1
-    where curl is aliased to Invoke-WebRequest.
-
-    IMPORTANT: Manual install of curl is not needed, it's installed by default in `C:\Windows\System32\curl.exe`.
-    If you want to use the Chocolatey version, install it with: `choco install curl`. It might be a more recent version.
+        IMPORTANT: Manual install of curl is not needed, it's installed by default in `C:\Windows\System32\curl.exe`.
+        If you want to use the Chocolatey version, install it with: `choco install curl`. It might be a more recent version.
     #>
 
     [CmdletBinding()]

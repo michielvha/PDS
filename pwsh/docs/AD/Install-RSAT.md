@@ -118,4 +118,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - On Windows 10, RSAT is installed as optional features
 - Internet connection may be required for installation
 
+Author: Michiel VH
+
 ## RELATED LINKS

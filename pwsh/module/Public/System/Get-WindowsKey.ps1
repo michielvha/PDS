@@ -46,6 +46,8 @@ function Get-WindowsKey {
         
         The digital product key decoding algorithm works on Windows XP through Windows 11.
         Remote access requires appropriate permissions and network connectivity.
+
+        Author: Michiel VH
     #>
     
     [CmdletBinding()]

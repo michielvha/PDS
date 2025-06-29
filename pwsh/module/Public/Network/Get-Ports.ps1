@@ -17,6 +17,7 @@ Function Get-Ports {
         - Some system processes may not display a process name if access is restricted.
         - The function does not require an elevated prompt, but limited permissions may restrict process name visibility.
 
+        Author: Michiel VH
     #>
 
     $tcp = Get-NetTCPConnection -State Listen | ForEach-Object {

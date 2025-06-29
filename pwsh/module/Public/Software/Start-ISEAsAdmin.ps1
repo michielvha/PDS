@@ -36,6 +36,7 @@ Function Start-ISEAsAdmin {
         - Windows PowerShell ISE is not included in PowerShell 7 or above, this function is for Windows PowerShell 5.1 and below
         - Windows PowerShell ISE may not be available in future versions of Windows
 
+        Author: Michiel VH
     .LINK
         https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/ise/introducing-the-windows-powershell-ise
     #>

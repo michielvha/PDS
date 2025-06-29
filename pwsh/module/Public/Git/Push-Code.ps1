@@ -23,6 +23,7 @@ function Push-Code {
     Ensure you are in the correct repository folder before running this command.
     Requires Git to be installed and available in your PATH.
 
+    Author: Michiel VH
 .LINK
     https://git-scm.com/docs
 #>

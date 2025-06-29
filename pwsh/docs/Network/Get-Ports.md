@@ -40,4 +40,6 @@ Lists all listening TCP and UDP ports with their associated process names and PI
 - Some system processes may not display a process name if access is restricted.
 - The function does not require an elevated prompt, but limited permissions may restrict process name visibility.
 
+Author: Michiel VH
+
 ## RELATED LINKS

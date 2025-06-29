@@ -1,31 +1,32 @@
 Function New-AwsProfile {
     <#
     .SYNOPSIS
-    Generates an AWS configuration file using the provided parameters.
+        Generates an AWS configuration file using the provided parameters.
 
     .DESCRIPTION
-    This function creates an AWS configuration file with the specified profile, region, and SSO settings.
+        This function creates an AWS configuration file with the specified profile, region, and SSO settings.
 
     .PARAMETER sso_profile
-    The name of the SSO profile to configure.
+        The name of the SSO profile to configure.
 
     .PARAMETER sso_session
-    The SSO session id.
+        The SSO session id.
 
     .PARAMETER sso_account_id
-    The AWS account ID for SSO.
+        The AWS account ID for SSO.
 
     .PARAMETER sso_role_name
-    The role name for SSO.
+        The role name for SSO.
 
     .EXAMPLE
-    New-AwsProfile -sso_profile "example"  -sso_session "example" -sso_account_id "123456789012" -sso_role_name "MyRole"
+        New-AwsProfile -sso_profile "example"  -sso_session "example" -sso_account_id "123456789012" -sso_role_name "MyRole"
 
     .NOTES
-    Ensure that the AWS CLI is installed and configured on your system.
+        Author: Michiel VH
+        Ensure that the AWS CLI is installed and configured on your system.
 
     .LINK
-    https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html
+        https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html
     #>
 
     param (

@@ -1,23 +1,20 @@
 Function Get-CurlStatus {
     <#
     .SYNOPSIS
-    
     Displays information about curl availability and aliases in the current PowerShell session.
 
     .DESCRIPTION
-
     This function checks for curl aliases and native curl binary availability
     to help diagnose curl command availability in PowerShell.
 
     .EXAMPLE
-
     Get-CurlStatus
     
     # Shows information about curl configuration in the current session
 
     .NOTES
-
     Date: June 28, 2025
+    Author: Michiel VH
 
     #>
 

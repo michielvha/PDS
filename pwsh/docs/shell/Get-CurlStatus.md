@@ -55,5 +55,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## NOTES
 Date: June 28, 2025
+Author: Michiel VH
 
 ## RELATED LINKS

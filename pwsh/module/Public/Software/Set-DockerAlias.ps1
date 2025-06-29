@@ -14,7 +14,8 @@ function Set-DockerAlias {
     .EXAMPLE
     Set-DockerAlias
 
-    .author: itmvha
+    .NOTES
+        Author: Michiel VH
     #>
 
     $profilePath = $PROFILE

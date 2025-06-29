@@ -26,7 +26,7 @@ Function Install-WSL {
         This example installs the distribution if it is available in the online list.
 
     .NOTES
-        Author: MKTHEPLUGG
+        Author: Michiel VH
         Requires: WSL to be enabled on the system. Is enabled by default on any newer windows build (w11+)
         This function uses the `wsl --install` command to install the specified distributions.
 

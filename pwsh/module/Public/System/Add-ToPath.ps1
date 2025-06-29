@@ -1,33 +1,28 @@
 function Add-ToPath {
     <#
     .SYNOPSIS
-
-    Adds a path to the user or system PATH environment variable.
+        Adds a path to the user or system PATH environment variable.
 
     .DESCRIPTION
-
-    This function adds a path to the user or system PATH environment variable.
+        This function adds a path to the user or system PATH environment variable.
 
     .PARAMETER PathToAdd
-
-    The path to add to the PATH environment variable.
+        The path to add to the PATH environment variable.
 
     .PARAMETER SystemPath
-
-    If set, modifies the system PATH instead of the user PATH.
-
-    .EXAMPLE
-
-    Add-ToPath -PathToAdd "C:\MyCustomTools"
-
-    Adds "C:\MyCustomTools" to the user PATH environment variable.
+        If set, modifies the system PATH instead of the user PATH.
 
     .EXAMPLE
+        Add-ToPath -PathToAdd "C:\MyCustomTools"
 
-    Add-ToPath -PathToAdd "C:\SystemWideTools" -SystemPath
+        Adds "C:\MyCustomTools" to the user PATH environment variable.
 
-    Adds "C:\SystemWideTools" to the system PATH environment variable.
+    .EXAMPLE
+        Add-ToPath -PathToAdd "C:\SystemWideTools" -SystemPath
 
+        Adds "C:\SystemWideTools" to the system PATH environment variable.
+    .NOTES
+        Author: Michiel VH
     #>
 
     param (

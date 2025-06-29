@@ -40,7 +40,7 @@ If it is already installed, it prints the installed version of ArgoCD CLI.
 ## OUTPUTS
 
 ## NOTES
-Author: itmvha
+Author: Michiel VH
 Requires: Internet connection for downloading ArgoCD CLI if it is not already installed.
 
 ## RELATED LINKS

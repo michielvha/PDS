@@ -72,6 +72,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 This function requires Visual Studio Code to be installed on the system.
 The shortcut is placed on the desktop of the user running the function.
 
+Author: Michiel VH
+
 ## RELATED LINKS
 
 [https://code.visualstudio.com/](https://code.visualstudio.com/)

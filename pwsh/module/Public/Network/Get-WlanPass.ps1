@@ -24,6 +24,7 @@ Function Get-WlanPass {
         - You must run this function as an account with local admin priveledges, elevated prompt is not required for it to retrieve passwords.
         - If an SSID shows "N/A", it means the password is not stored locally.
 
+        Author: Michiel VH
     .LINK
         Microsoft Documentation on netsh:
         https://docs.microsoft.com/en-us/windows-server/networking/technologies/netsh/netsh-wlan

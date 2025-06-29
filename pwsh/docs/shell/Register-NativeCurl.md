@@ -57,8 +57,13 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## NOTES
 Date: June 28, 2025
+Author: Michiel VH
 
 PowerShell 7+ typically handles curl better, but this function helps in PowerShell 5.1
 where curl is aliased to Invoke-WebRequest.
+
+IMPORTANT: Manual install of curl is not needed, it's installed by default in \`C:\Windows\System32\curl.exe\`.
+If you want to use the Chocolatey version, install it with: \`choco install curl\`.
+It might be a more recent version.
 
 ## RELATED LINKS

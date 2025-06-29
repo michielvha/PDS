@@ -12,7 +12,7 @@ Function Install-AzureKubeCLI {
         This command checks for the installation of both `kubectl` and `kubelogin`. If they are not found, it installs them using the Azure CLI. If they are already installed, it prints their current version.
 
     .NOTES
-        Author: Michiel Van Haegenborgh
+        Author: Michiel VH
         Requires: Azure CLI (`az`) to be installed on the system for installing `kubectl` and `kubelogin`.
         This function assumes that `az aks install-cli` will be used to manage the Kubernetes CLI tools.
 

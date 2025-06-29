@@ -1,27 +1,23 @@
 Function Template-Function {
     <#
     .SYNOPSIS
-    
-    Provide a brief summary of what the function does. This should be a concise description, typically one or two sentences, that gives an overview of the function's purpose and functionality.
+        Provide a brief summary of what the function does. This should be a concise description, typically one or two sentences, that gives an overview of the function's purpose and functionality.
 
     .DESCRIPTION
-
-    Provide a description for the function
+        Provide a description for the function
 
     .PARAMETER Example
-
-    provide info about the parameter
+        provide info about the parameter
 
     .EXAMPLE
-
-    Give an example of how the function can be used
+        Give an example of how the function can be used
 
     .NOTES
+        extra notes
 
-    extra notes
+        Author: Michiel VH
 
     .LINK
-
     extra links
 
     #>

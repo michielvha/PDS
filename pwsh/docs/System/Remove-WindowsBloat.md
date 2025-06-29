@@ -50,7 +50,7 @@ Disables unnecessary Windows services to reduce background CPU and memory usage.
 ## OUTPUTS
 
 ## NOTES
-Author: itmvha
+Author: Michiel VH
 Requires: PowerShell 5.1+ and Administrator privileges
 
 ## RELATED LINKS

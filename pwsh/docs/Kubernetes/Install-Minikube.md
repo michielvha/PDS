@@ -38,7 +38,7 @@ This example installs Minikube on the Windows system and ensures it's available 
 ## OUTPUTS
 
 ## NOTES
-Author: itmvha
+Author: Michiel VH
 Requires: Administrator privileges to modify system PATH.
 Alternative: You can also install Minikube using Chocolatey with 'choco install minikube'
 

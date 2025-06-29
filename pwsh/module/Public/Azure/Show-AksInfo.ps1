@@ -1,44 +1,45 @@
 Function Show-AksInfo {
     <#
     .SYNOPSIS
-    Retrieves and displays AKS cluster information, including VNet details.
+        Retrieves and displays AKS cluster information, including VNet details.
 
     .DESCRIPTION
-    Fetches all AKS clusters in a given Azure subscription and retrieves their 
-    resource groups, associated virtual networks, and subnet details. This function 
-    is designed for Azure CNI-based AKS clusters.
+        Fetches all AKS clusters in a given Azure subscription and retrieves their 
+        resource groups, associated virtual networks, and subnet details. This function 
+        is designed for Azure CNI-based AKS clusters.
 
     .PARAMETER SubscriptionId
-    (Optional) Specifies the Azure subscription ID to use when querying AKS clusters 
-    and network details. If not provided, the function uses the currently active 
-    Azure subscription.
+        (Optional) Specifies the Azure subscription ID to use when querying AKS clusters 
+        and network details. If not provided, the function uses the currently active 
+        Azure subscription.
 
     .EXAMPLE
-    Show-AksInfo
-    Retrieves AKS cluster information using the currently active Azure subscription.
+        Show-AksInfo
+        Retrieves AKS cluster information using the currently active Azure subscription.
 
     .EXAMPLE
-    Show-AksInfo -SubscriptionId "e432466e-7fb8-4734-a361-8d42befe77d5"
-    Retrieves AKS cluster information from the specified Azure subscription.
+        Show-AksInfo -SubscriptionId "e432466e-7fb8-4734-a361-8d42befe77d5"
+        Retrieves AKS cluster information from the specified Azure subscription.
 
     .OUTPUTS
-    Displays a formatted table containing:
-    - ClusterName: Name of the AKS cluster.
-    - ResourceGroup: The resource group where the AKS cluster is deployed.
-    - VNetResourceGroup: The resource group where the associated VNet is located.
-    - VNetName: The name of the virtual network used by the AKS cluster.
-    - SubnetName: The name of the subnet associated with the AKS cluster.
-    - SubnetRange: The subnet’s address range.
+        Displays a formatted table containing:
+        - ClusterName: Name of the AKS cluster.
+        - ResourceGroup: The resource group where the AKS cluster is deployed.
+        - VNetResourceGroup: The resource group where the associated VNet is located.
+        - VNetName: The name of the virtual network used by the AKS cluster.
+        - SubnetName: The name of the subnet associated with the AKS cluster.
+        - SubnetRange: The subnet’s address range.
 
     .NOTES
-    - This function requires Azure CLI (`az`).
-    - The user must be authenticated with Azure CLI before running this function.
-    - Works only with AKS clusters configured with Azure CNI (not Kubenet).
-    - Uses the first available node pool's `vnetSubnetId` as the source for networking details.
+        - This function requires Azure CLI (`az`).
+        - The user must be authenticated with Azure CLI before running this function.
+        - Works only with AKS clusters configured with Azure CNI (not Kubenet).
+        - Uses the first available node pool's `vnetSubnetId` as the source for networking details.
 
+        Author: Michiel VH
     .LINK
-    https://learn.microsoft.com/en-us/cli/azure/aks
-    https://learn.microsoft.com/en-us/cli/azure/network/vnet
+        https://learn.microsoft.com/en-us/cli/azure/aks
+        https://learn.microsoft.com/en-us/cli/azure/network/vnet
     #>
 
     [CmdletBinding()]

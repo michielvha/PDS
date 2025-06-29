@@ -1,19 +1,19 @@
 function Set-AzureCLI {
     <#
     .SYNOPSIS
-    Installs Azure CLI extensions.
+        Installs Azure CLI extensions.
 
     .DESCRIPTION
-    This function installs the 'aks-preview' and 'ssh' Azure CLI extensions.
+        This function installs the 'aks-preview' and 'ssh' Azure CLI extensions.
 
     .EXAMPLE
-    Set-AzureCLI
+        Set-AzureCLI
 
-    Installs 'aks-preview' and 'ssh' Azure CLI extensions.
+        Installs 'aks-preview' and 'ssh' Azure CLI extensions.
 
     .NOTES
-    Author: Michiel VH
-    This function is intended to ensure specific Azure CLI extensions are installed.
+        Author: Michiel VH
+        This function is intended to ensure specific Azure CLI extensions are installed.
     #>
 
     param()

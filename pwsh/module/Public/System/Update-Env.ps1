@@ -31,14 +31,12 @@ function Update-Env{
         None. The function does not return any values, but it updates the session's environment variables.
 
     .NOTES
-        Author: Michiel VHA
-        Date:   February 2025
-        Version: 1.0
-
         - Requires administrative privileges if modifying system environment variables.
         - This function does not permanently modify environment variables; it only updates the session.
         - The function does not handle changes made via `SetX` or `Environment.SetEnvironmentVariable` with the `Machine` scope.
-    
+
+        Author: Michiel VH
+        Date:   February 2025
     .LINK
         https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/setx
     #>

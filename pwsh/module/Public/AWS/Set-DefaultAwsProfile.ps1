@@ -16,13 +16,14 @@ Function Set-DefaultAwsProfile {
     The SSO start URL for AWS SSO.
 
     .PARAMETER sso_region
-    The AWS region where the SSO is configured. If not specified it will default to the region parameter.
+        The AWS region where the SSO is configured. If not specified it will default to the region parameter.
 
     .EXAMPLE
-    set-DefaultAwsProfile  -region "eu-west-1" -profile "main" -sso_start_url "https://d-93672f1b5f.awsapps.com/start" -sso_region "eu-west-1"
+        set-DefaultAwsProfile  -region "eu-west-1" -profile "main" -sso_start_url "https://d-93672f1b5f.awsapps.com/start" -sso_region "eu-west-1"
 
     .NOTES
-    Ensure that the AWS CLI is installed and configured on your system.
+        Author: Michiel VH
+        Ensure that the AWS CLI is installed and configured on your system.
 
     .LINK
     https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html

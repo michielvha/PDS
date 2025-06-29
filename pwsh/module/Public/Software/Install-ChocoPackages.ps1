@@ -21,7 +21,7 @@ function Install-ChocoPackages {
         This command installs `docker` and `vscode` if they are not already present on the system.
 
     .NOTES
-        Author: MKTHEPLUGG
+        Author: Michiel VH
         Requires: Chocolatey to be installed on the system.
         This function uses the `choco install` command and runs it with the `-y` flag to bypass prompts.
 

@@ -113,6 +113,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## OUTPUTS
 
 ## NOTES
+Author: Michiel VH
 Ensure that the AWS CLI is installed and configured on your system.
 
 ## RELATED LINKS

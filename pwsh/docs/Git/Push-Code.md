@@ -89,6 +89,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 Ensure you are in the correct repository folder before running this command.
 Requires Git to be installed and available in your PATH.
 
+Author: Michiel VH
+
 ## RELATED LINKS
 
 [https://git-scm.com/docs](https://git-scm.com/docs)

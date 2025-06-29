@@ -36,6 +36,8 @@ This command will remove the ArgoCD CLI from the local bin directory if it was i
 ## NOTES
 This function is part of the PDS Module and is used to manage the installation of the ArgoCD CLI.
 
+Author: Michiel VH
+
 ## RELATED LINKS
 
 [https://argoproj.github.io/argo-cd/](https://argoproj.github.io/argo-cd/)

@@ -32,6 +32,8 @@ Function Get-NetProfile {
         - This function does not require administrator privileges.
         - It simply queries stored network profiles without modifying any settings.
 
+        Author: Michiel VH
+
     .LINK
         Microsoft Documentation on netsh:
         https://docs.microsoft.com/en-us/windows-server/networking/technologies/netsh/netsh-wlan

@@ -57,6 +57,8 @@ function Get-DisabledADUsers {
         - Requires the ActiveDirectory module
         - Make sure you have appropriate permissions to query AD
         - You might want to run this on a domain controller or computer with the RSAT tools installed
+
+        Author: Michiel VH
     #>
     
     param (

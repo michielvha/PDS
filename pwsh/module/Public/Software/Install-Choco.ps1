@@ -12,7 +12,7 @@ function Install-Choco {
     This example checks if Chocolatey is installed on the system. If it is not, the function installs Chocolatey. If it is already installed, it prints the installed version of Chocolatey.
 
 .NOTES
-    Author: MKTHEPLUGG
+    Author: Michiel VH
     Requires: Internet connection for downloading Chocolatey if it is not already installed.
     This function modifies the execution policy temporarily to allow Chocolatey to be installed.
 

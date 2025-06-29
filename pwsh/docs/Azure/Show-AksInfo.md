@@ -92,6 +92,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Works only with AKS clusters configured with Azure CNI (not Kubenet).
 - Uses the first available node pool's \`vnetSubnetId\` as the source for networking details.
 
+Author: Michiel VH
+
 ## RELATED LINKS
 
 [https://learn.microsoft.com/en-us/cli/azure/aks

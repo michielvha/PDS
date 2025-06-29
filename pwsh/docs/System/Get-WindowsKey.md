@@ -119,4 +119,6 @@ this makes the function faster and more robust.
 The digital product key decoding algorithm works on Windows XP through Windows 11.
 Remote access requires appropriate permissions and network connectivity.
 
+Author: Michiel VH
+
 ## RELATED LINKS

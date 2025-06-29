@@ -19,7 +19,7 @@ Function Remove-WindowsBloat {
         This function takes no parameters.
 
     .NOTES
-        Author: itmvha
+        Author: Michiel VH
         Requires: PowerShell 5.1+ and Administrator privileges
 
     .EXAMPLE

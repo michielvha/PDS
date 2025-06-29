@@ -1,7 +1,7 @@
 Function New-Admin {
     <#
     .SYNOPSIS
-    Create a new local user account with administrative privileges.
+        Create a new local user account with administrative privileges.
     
     .DESCRIPTION
     
@@ -10,15 +10,16 @@ Function New-Admin {
     .PARAMETER Credential
 
     .EXAMPLE
-    # Create a credential object
-    $Credential = Get-Credential
+        # Create a credential object
+        $Credential = Get-Credential
 
-    # Call the function
-    New-Admin -Credential $Credential -FullName "Test User" -Description "Test admin account"
+        # Call the function
+        New-Admin -Credential $Credential -FullName "Test User" -Description "Test admin account"
 
     .NOTES
-    This function is compatible with every version of powershell due to the use of System.DirectoryServices.AccountManagement .NET Core API for user creation.
+        This function is compatible with every version of powershell due to the use of System.DirectoryServices.AccountManagement .NET Core API for user creation.
 
+        Author: Michiel VH
     .LINK
     #>
 

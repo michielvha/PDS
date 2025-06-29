@@ -55,6 +55,8 @@ Profile Name : GuestWiFi
 - This function does not require administrator privileges.
 - It simply queries stored network profiles without modifying any settings.
 
+Author: Michiel VH
+
 ## RELATED LINKS
 
 [Microsoft Documentation on netsh:

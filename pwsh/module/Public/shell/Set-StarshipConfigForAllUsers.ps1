@@ -34,7 +34,7 @@ function Set-StarshipConfigForAllUsers {
     This will set the Starship configuration for all users by passing the config content directly as a parameter.
 
 .NOTES
-    Author: MKTHEPLUGG
+    Author: Michiel VH
     This function requires administrative privileges to access other user profiles.
 #>
 

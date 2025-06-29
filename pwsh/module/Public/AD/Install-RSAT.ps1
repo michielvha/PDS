@@ -46,6 +46,8 @@ function Install-RSAT {
         - Not available on Windows 10 Home edition
         - On Windows 10, RSAT is installed as optional features
         - Internet connection may be required for installation
+        
+        Author: Michiel VH
     #>
     
     [CmdletBinding()]

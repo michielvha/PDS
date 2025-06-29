@@ -1,32 +1,28 @@
 Function New-VSCodeShortcut {
     <#
     .SYNOPSIS
-    
-    Creates a desktop shortcut that opens a specific file in Visual Studio Code.
+        Creates a desktop shortcut that opens a specific file in Visual Studio Code.
 
     .DESCRIPTION
-
-    This function creates a Windows shortcut (.lnk file) on the user's desktop 
-    that will open the specified file in Visual Studio Code when clicked.
+        This function creates a Windows shortcut (.lnk file) on the user's desktop 
+        that will open the specified file in Visual Studio Code when clicked.
 
     .PARAMETER FilePath
-
-    The path to the file that should be opened in VS Code when the shortcut is clicked.
-    This parameter is mandatory.
+        The path to the file that should be opened in VS Code when the shortcut is clicked.
+        This parameter is mandatory.
 
     .EXAMPLE
-
-    New-VSCodeShortcut -FilePath "C:\Projects\myproject\app.js"
-    Creates a shortcut on the desktop named "app.js - VS Code.lnk" that opens app.js in VS Code.
+        New-VSCodeShortcut -FilePath "C:\Projects\myproject\app.js"
+        Creates a shortcut on the desktop named "app.js - VS Code.lnk" that opens app.js in VS Code.
 
     .NOTES
+        This function requires Visual Studio Code to be installed on the system.
+        The shortcut is placed on the desktop of the user running the function.
 
-    This function requires Visual Studio Code to be installed on the system.
-    The shortcut is placed on the desktop of the user running the function.
+        Author: Michiel VH
 
     .LINK
-
-    https://code.visualstudio.com/
+        https://code.visualstudio.com/
 
     #>
 

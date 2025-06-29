@@ -25,7 +25,7 @@ Function Set-AutoAdminLogin {
         The system will bypass the login screen and log in to this account after rebooting.
 
     .NOTES
-        Author: MKTHEPLUGG
+        Author: Michiel VH
         This function modifies registry keys to configure auto-login, so it must be run with elevated (Administrator) privileges.
 
     .LINK

@@ -49,6 +49,8 @@ PublicWiFi       N/A
 - You must run this function as an account with local admin priveledges, elevated prompt is not required for it to retrieve passwords.
 - If an SSID shows "N/A", it means the password is not stored locally.
 
+Author: Michiel VH
+
 ## RELATED LINKS
 
 [Microsoft Documentation on netsh:
