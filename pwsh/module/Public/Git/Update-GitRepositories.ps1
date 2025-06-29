@@ -1,37 +1,22 @@
 function Update-GitRepositories {
     <#
     .SYNOPSIS
-        Updates all Git repositories in subdirectories by performing a git pull operation.
+        Updates all Git repositories in immediate subdirectories by performing a git pull operation.
 
     .DESCRIPTION
-        This function searches for all directories containing a .git folder in the specified root directory
-        (or the current directory by default), and performs a git pull operation in each one to update them
-        to the latest version of the current branch.
+        This function searches for all immediate subdirectories containing a .git folder in the specified root directory
+        (or the current directory by default), and performs a simple git pull operation in each one.
 
     .PARAMETER RootDirectory
         The root directory containing the Git repositories to update. Defaults to the current directory.
 
-    .PARAMETER Recurse
-        If specified, the function will search for Git repositories recursively in all subdirectories.
-
-    .PARAMETER Branch
-        The branch to checkout before pulling. If not specified, pulls the current branch.
-
     .EXAMPLE
         Update-GitRepositories
-        Updates all Git repositories in the current directory.
+        Updates all Git repositories in the immediate subdirectories of the current directory.
 
     .EXAMPLE
         Update-GitRepositories -RootDirectory "C:\Projects"
-        Updates all Git repositories in the C:\Projects directory.
-
-    .EXAMPLE
-        Update-GitRepositories -Recurse
-        Updates all Git repositories in the current directory and all its subdirectories recursively.
-
-    .EXAMPLE
-        Update-GitRepositories -Branch main
-        Updates all Git repositories in the current directory, checking out the main branch first.
+        Updates all Git repositories in the immediate subdirectories of the C:\Projects directory.
 
     .NOTES
         Requires Git to be installed and available in your PATH.
@@ -45,13 +30,7 @@ function Update-GitRepositories {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false, Position=0)]
-        [string]$RootDirectory = (Get-Location),
-
-        [Parameter(Mandatory=$false)]
-        [switch]$Recurse,
-
-        [Parameter(Mandatory=$false)]
-        [string]$Branch
+        [string]$RootDirectory = (Get-Location)
     )
 
     # Save the original location to return to it at the end
@@ -67,65 +46,89 @@ function Update-GitRepositories {
         # Set location to the root directory
         Set-Location -Path $RootDirectory
 
-        # Find all .git directories
-        $gitDirs = Get-ChildItem -Path $RootDirectory -Filter ".git" -Directory -Depth $(if ($Recurse) { 100 } else { 1 })
+        # Find all Git repositories (directories that contain a .git subfolder)
+        # Simple approach to just search one level down - include hidden items with -Hidden
+        $dirs = Get-ChildItem -Path $RootDirectory -Directory
+        $gitDirs = @()
+        
+        foreach ($dir in $dirs) {
+            # Look specifically for hidden .git directories
+            $gitFolder = Get-ChildItem -Path $dir.FullName -Directory -Hidden -Filter ".git" -ErrorAction SilentlyContinue
+            if ($gitFolder) {
+                $gitDirs += $gitFolder
+            }
+        }
 
         Write-Host "Found $($gitDirs.Count) Git repositories to update." -ForegroundColor Cyan
-
+        
+        # Initialize progress bar
+        $progressParams = @{
+            Activity = "Updating Git Repositories"
+            Status = "Starting updates..."
+            PercentComplete = 0
+        }
+        Write-Progress @progressParams
+        
         # Process each repository
+        $currentRepo = 0
+        $totalRepos = $gitDirs.Count
+        
         foreach ($gitDir in $gitDirs) {
+            $currentRepo++
             $repoPath = $gitDir.Parent.FullName
             $repoName = $gitDir.Parent.Name
+            
+            # Update progress bar
+            $progressParams.Status = "Processing $currentRepo of $totalRepos - $repoName"
+            $progressParams.PercentComplete = ($currentRepo / $totalRepos) * 100
+            Write-Progress @progressParams
 
-            Write-Host "`nUpdating repository: $repoName" -ForegroundColor Yellow
+            Write-Host "`nUpdating repository: $repoName [$currentRepo/$totalRepos]" -ForegroundColor Yellow
             Write-Host "Repository path: $repoPath" -ForegroundColor Gray
 
             # Navigate to the repository
             Set-Location -Path $repoPath
 
-            # Check for local changes
-            $status = git status --porcelain
-            if ($status) {
-                Write-Host "Repository has local changes. Skipping..." -ForegroundColor Red
-                Write-Host "$status" -ForegroundColor Red
-                continue
-            }
-
             try {
-                # Checkout specific branch if specified
-                if ($Branch) {
-                    Write-Host "Checking out branch: $Branch" -ForegroundColor Gray
-                    git checkout $Branch 2>&1
-                    if ($LASTEXITCODE -ne 0) {
-                        Write-Host "Failed to checkout branch $Branch. Skipping repository." -ForegroundColor Red
-                        continue
-                    }
-                }
-
-                # Get current branch name
-                $currentBranch = git branch --show-current
-                Write-Host "Pulling latest changes for branch: $currentBranch" -ForegroundColor Gray
-
+                # Simple git pull operation
+                Write-Host "Running git pull..." -ForegroundColor Gray
+                
                 # Perform git pull
                 $pullResult = git pull 2>&1
+                
+                # Show the result
                 if ($LASTEXITCODE -eq 0) {
+                    Write-Host "Success" -ForegroundColor Green
+                    
+                    # Format the output in a more structured way
                     if ($pullResult -match "Already up to date") {
-                        Write-Host "Repository is already up to date." -ForegroundColor Green
+                        Write-Host "  Status: Already up to date" -ForegroundColor Cyan
                     } else {
-                        Write-Host "Successfully updated repository." -ForegroundColor Green
-                        Write-Host "$pullResult" -ForegroundColor Gray
+                        Write-Host "  Status: Changes pulled successfully" -ForegroundColor Cyan
+                        
+                        # Parse and display changes in a structured format
+                        $changes = $pullResult -split "`n" | Where-Object { $_ -match "\s+\d+\s+\w+\(\+\)" -or $_ -match "\s+\d+\s+files?\s+changed" -or $_ -match "^\s+(create mode|rename|delete mode)" }
+                        
+                        if ($changes) {
+                            Write-Host "  Changes:" -ForegroundColor Cyan
+                            foreach ($change in $changes) {
+                                Write-Host "    $($change.Trim())" -ForegroundColor White
+                            }
+                        }
                     }
                 } else {
-                    Write-Host "Failed to update repository." -ForegroundColor Red
-                    Write-Host "$pullResult" -ForegroundColor Red
+                    Write-Host "Failed: $pullResult" -ForegroundColor Red
                 }
             } catch {
-                Write-Host "Error updating repository $repoName $($_.Exception.Message)" -ForegroundColor Red
+                Write-Host "Error updating repository $repoName : $($_.Exception.Message)" -ForegroundColor Red
             }
         }
     } catch {
         Write-Host "Error: $_" -ForegroundColor Red
     } finally {
+        # Complete the progress bar
+        Write-Progress -Activity "Updating Git Repositories" -Completed
+        
         # Return to the original location
         Set-Location -Path $originalLocation
     }
