@@ -72,6 +72,8 @@ $packagesToInstall = @(
     "ngrok"
 )
 
+# TODO: Evalute packages:
+# - msys2: Unix-like shell & tools for Windows
 
 Install-ChocoPackages -packagesToInstall $packagesToInstall
 
