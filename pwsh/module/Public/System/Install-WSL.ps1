@@ -90,3 +90,24 @@ Function Install-WSL {
     }
 }
 
+# Old snippet
+
+<#
+#enable wsl
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all
+#enable vmp
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all
+#enable hypervisor platform
+dism.exe /online /enable-feature /featurename:HypervisorPlatform /all
+# you can also use enable-windowspackage
+
+#update linux kernel
+msiexec.exe /i "C:\software\wsl_update_x64.msi" /quiet
+#set WSL version
+wsl --set-default-version 2
+wsl --update
+#install wsl
+# list with :
+# wsl.exe --list --online
+wsl.exe --install -d kali-linux
+#>
