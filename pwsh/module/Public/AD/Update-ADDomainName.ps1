@@ -114,10 +114,10 @@ function Update-ADDomainName {
                 try {
                     Write-Verbose "Adding proxy address: smtp:$UserPrincipalName"
                     Set-ADUser $SamAccountName -Add @{proxyAddresses="smtp:$UserPrincipalName"} -ErrorAction Stop
-                    Write-Host "  ✓ Added proxy address for $displayInfo" -ForegroundColor Green
+                    Write-Host "  [OK] Added proxy address for $displayInfo" -ForegroundColor Green
                     $processedUsers += $user
                 } catch {
-                    Write-Error "  ✗ Failed to add proxy address for $displayInfo : $_"
+                    Write-Error "  [ERROR] Failed to add proxy address for $displayInfo : $_"
                 }
             }
         }
@@ -130,14 +130,14 @@ function Update-ADDomainName {
             $SamAccountName = $user.SamAccountName
             $oldUPN = $user.UserPrincipalName
             $newUPN = $oldUPN.Replace($OldDomain, $NewDomain)
-            $displayInfo = "$SamAccountName ($oldUPN → $newUPN)"
+            $displayInfo = "$SamAccountName ($oldUPN -> $newUPN)"
             
             if ($PSCmdlet.ShouldProcess($displayInfo, "Update UPN")) {
                 try {
                     Set-ADUser -Identity $user -UserPrincipalName $newUPN -ErrorAction Stop
-                    Write-Host "  ✓ Updated UPN for $SamAccountName" -ForegroundColor Green
+                    Write-Host "  [OK] Updated UPN for $SamAccountName" -ForegroundColor Green
                 } catch {
-                    Write-Error "  ✗ Failed to update UPN for $displayInfo : $_"
+                    Write-Error "  [ERROR] Failed to update UPN for $displayInfo : $_"
                 }
             }
         }
@@ -155,9 +155,9 @@ function Update-ADDomainName {
                 try {
                     Write-Verbose "Setting primary SMTP address: SMTP:$UserPrincipalName"
                     Set-ADUser $SamAccountName -Add @{proxyAddresses="SMTP:$UserPrincipalName"} -ErrorAction Stop
-                    Write-Host "  ✓ Set primary SMTP address for $displayInfo" -ForegroundColor Green
+                    Write-Host "  [OK] Set primary SMTP address for $displayInfo" -ForegroundColor Green
                 } catch {
-                    Write-Error "  ✗ Failed to set primary SMTP address for $displayInfo : $_"
+                    Write-Error "  [ERROR] Failed to set primary SMTP address for $displayInfo : $_"
                 }
             }
         }
