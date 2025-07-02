@@ -79,3 +79,4 @@ check notes on phone for more idea's.
 - [PowerShell Gallery](https://www.powershellgallery.com/)   
 - [Tiny11Builder](https://github.com/ntdevlabs/tiny11builder)  
 - [Win11Debloat](https://github.com/Raphire/Win11Debloat/tree/master)
+- [Crapfixer](https://github.com/builtbybel/Crapfixer): removes a lot of the bloatware and bad settings from Windows 11.
