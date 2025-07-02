@@ -20,11 +20,12 @@ function Install-Choco {
     https://chocolatey.org/
     Learn more about Chocolatey and how it is used for package management.
 #>
-  $chocoVersion = choco --version 2>$null
-  if (!$chocoVersion) {
+  $chocoCommand = Get-Command -Name choco -ErrorAction SilentlyContinue
+  if (!$chocoCommand) {
    Write-Output "Chocolatey will be installed"
    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
   } else {
+   $chocoVersion = choco --version
    Write-Output "Chocolatey is already installed. Version: $chocoVersion"
   }
 }
