@@ -1,4 +1,4 @@
-Function Get-RDSActiveSessions {
+Function Get-RDSActiveSession {
     <#
     .SYNOPSIS
         Retrieves and logs active Remote Desktop Services (RDS) user sessions.
