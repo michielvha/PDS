@@ -43,11 +43,11 @@ Import-Module -Name PSReadLine
 Set-PSReadLineOption -PredictionViewStyle ListView
 
 # additional config general to all our environments, adding it here for easy of use but not needed for PSReadLine module to function
-Invoke-Expression (&starship init powershell)                                       # Load starship
-Import-Module -Name PDS                                                             # Load PDS module          
-$ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"        # Load Chocolatey profile if it exists
-if (Test-Path($ChocolateyProfile)) {
-  Import-Module "$ChocolateyProfile"
+Invoke-Expression (&starship init powershell)                                         # Load starship
+Import-Module -Name PDS                                                               # Load PDS module          
+`$ChocolateyProfile = "`$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"        # Load Chocolatey profile if it exists
+if (Test-Path(`$ChocolateyProfile)) {
+  Import-Module "`$ChocolateyProfile"
 }
 
 "@
