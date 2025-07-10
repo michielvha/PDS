@@ -38,6 +38,7 @@ function Set-PSReadLineModule {
 
 
 $commands = @"
+Import-Module -Name PDS
 Import-Module -Name PSReadLine
 Invoke-Expression (&starship init powershell)
 Set-PSReadLineOption -PredictionViewStyle ListView
