@@ -61,6 +61,8 @@ if (Test-Path(`$ChocolateyProfile)) {
 # }
 # Import-Module Microsoft.PowerShell.UnixCompleters
 
+# TODO: Check to enable quake mode for windows terminal
+# https://youtu.be/4GASGO0go5I?si=C2jEFteGInNTOCoK&t=628
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Output "This function needs to be ran as admin please rerun it with the proper rights."
