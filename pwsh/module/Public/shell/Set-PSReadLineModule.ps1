@@ -53,6 +53,14 @@ if (Test-Path(`$ChocolateyProfile)) {
 "@
 
 
+# TODO: check to implement this UnixCompleters
+
+# # 3. Unix completions
+# if (-not (Get-Module -ListAvailable -Name Microsoft.PowerShell.UnixCompleters)) {
+#     Install-Module Microsoft.PowerShell.UnixCompleters -Scope CurrentUser -Force
+# }
+# Import-Module Microsoft.PowerShell.UnixCompleters
+
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Output "This function needs to be ran as admin please rerun it with the proper rights."
