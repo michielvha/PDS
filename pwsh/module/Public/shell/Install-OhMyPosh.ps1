@@ -32,8 +32,10 @@ function Install-OhMyPosh {
         Author: Michiel VH
 
     .LINK
-        https://ohmyposh.dev/docs/installation/windows
-        https://ohmyposh.dev/docs/installation/customize
+        install:        https://ohmyposh.dev/docs/installation/windows
+        customize:      https://ohmyposh.dev/docs/installation/customize
+        themes:         https://ohmyposh.dev/docs/themes
+        custom theme:   https://ohmyposh.dev/docs/configuration/general
     #>
 
 
@@ -86,6 +88,8 @@ function Install-OhMyPosh {
     # }
     # Import-Module Microsoft.PowerShell.UnixCompleters
 
+
+    # TODO: Only add these commands if they are not already in the profile
     $commands = @"
 # load powerlevel10k_rainbow theme
 oh-my-posh init pwsh --config "`$env:POSH_THEMES_PATH\powerlevel10k_rainbow.omp.json" | Invoke-Expression
