@@ -1,4 +1,4 @@
-function Set-PSReadLineModule {
+function Set-PSReadLineModuleStarship {
     <#
     .SYNOPSIS
         Configures the PSReadLine module for all users by installing and importing the module, setting PSReadLine options, and appending commands to the global profile.
