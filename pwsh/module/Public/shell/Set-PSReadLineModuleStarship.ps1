@@ -39,22 +39,34 @@ function Set-PSReadLineModule {
 
     $commands = @"
 
-# PSreadLine configuration
 Import-Module -Name PSReadLine
 Set-PSReadLineOption -PredictionViewStyle ListView
+
+# additional config general to all our environments, adding it here for easy of use but not needed for PSReadLine module to function
+Invoke-Expression (&starship init powershell)                                         # Load starship
+
+Import-Module -Name PDS                                                               # Load PDS module     
+    
+`$ChocolateyProfile = "`$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"        # Load Chocolatey profile if it exists
+if (Test-Path(`$ChocolateyProfile)) {
+Import-Module "`$ChocolateyProfile"
+}
 
 "@
 
 
-    if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
-        Write-Host "📦 Installing PSReadLine Module."
-        Install-Module PSReadLine -Scope CurrentUser -Force
+
+
+    if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+        Write-Output "This function needs to be ran as admin please rerun it with the proper rights."
+        start-sleep 10
+        exit
     } else {
-        Write-Host "PSReadLine Module is already installed. Continuing with configuration."
+        Write-Output "PSReadLine Module will be installed"
+        Install-Module -Name PSReadLine -Force -SkipPublisherCheck
     }
 
-
     # Append the commands to the global profile using tee
-    $commands | Out-File -FilePath $PROFILE -Encoding utf8 -Append
+    $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
 
 }
