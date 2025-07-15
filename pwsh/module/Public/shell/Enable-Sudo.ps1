@@ -1,4 +1,4 @@
-function Set-Sudo {
+function Enable-Sudo {
     <#
     .SYNOPSIS
         Enables sudo functionality for Windows by configuring the built-in sudo feature.
@@ -153,5 +153,4 @@ function Set-Sudo {
         Write-Error "Failed to enable sudo: $($_.Exception.Message)"
         Write-Host "Make sure you're running on a supported Windows version and have administrator privileges." -ForegroundColor Yellow
     }
-}
 }
