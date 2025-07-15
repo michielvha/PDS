@@ -39,7 +39,7 @@ function Install-ShellCustomizations {
 
     Install-OhMyPosh
 
-    Set-WindowsTerminalFont
+    Set-WindowsTerminalFont -FontName "JetBrainsMono Nerd Font Mono"
 
     Set-PSReadLineModule
 }

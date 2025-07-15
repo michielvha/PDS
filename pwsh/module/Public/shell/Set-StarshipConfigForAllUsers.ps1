@@ -49,20 +49,20 @@ function Set-StarshipConfigForAllUsers {
     # Get all user profile directories
     $userProfiles = Get-WmiObject Win32_UserProfile | Where-Object { $_.Special -eq $false }
     # loop through all users
-    foreach ($profile in $userProfiles) {
-        $userConfigDir = Join-Path $profile.LocalPath ".config"
+    foreach ($uprofile in $userProfiles) {
+        $userConfigDir = Join-Path $uprofile.LocalPath ".config"
         $starshipFile = Join-Path $userConfigDir "starship.toml"
         # Check if .config directory exists, create it if not
         if (-Not (Test-Path $userConfigDir)) {
-            Write-Host "Creating .config directory for user: $($profile.LocalPath)"
+            Write-Host "Creating .config directory for user: $($uprofile.LocalPath)"
             New-Item -Path $userConfigDir -ItemType Directory -Force
         }
         # Write the starship.toml configuration file
         if (-Not (Test-Path $starshipFile)) {
-            Write-Host "Creating starship.toml for user: $($profile.LocalPath)"
+            Write-Host "Creating starship.toml for user: $($uprofile.LocalPath)"
             $configContent | Out-File -FilePath $starshipFile -Encoding utf8
         } else {
-            Write-Host "starship.toml already exists for user: $($profile.LocalPath)"
+            Write-Host "starship.toml already exists for user: $($uprofile.LocalPath)"
         }
     }
 }
