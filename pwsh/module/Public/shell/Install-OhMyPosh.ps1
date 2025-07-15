@@ -36,6 +36,7 @@ function Install-OhMyPosh {
         customize:      https://ohmyposh.dev/docs/installation/customize
         themes:         https://ohmyposh.dev/docs/themes
         custom theme:   https://ohmyposh.dev/docs/configuration/general
+        nerdfont icons: https://www.nerdfonts.com/cheat-sheet
     #>
 
 
@@ -77,6 +78,36 @@ function Install-OhMyPosh {
             Write-Host "Theme file not found at: $themeFile"
         }
     }
+
+    
+    #TODO: insert into theme file to add azure / kubernetes recognition
+    <#
+        {
+          "type": "az",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b2",
+          "invert_powerline": true,
+          "foreground": "#ffffff",
+          "background": "#0072C6",
+          "template": " \uebd8 {{ .Name }} ",
+          "properties": {
+            "display_default": true
+          }
+        },
+        {
+          "type": "kubectl",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b2",
+          "invert_powerline": true,
+          "foreground": "#ffffff",
+          "background": "#326ce5",
+          "template": " \ue81d {{ .Context }}{{ if .Namespace }}:{{ .Namespace }}{{ end }} ",
+          "properties": {
+            "display_default": true
+          }
+        }
+    #>
+
 
     # TODO: Check to enable quake mode for windows terminal
     # https://youtu.be/4GASGO0go5I?si=C2jEFteGInNTOCoK&t=628   

@@ -35,6 +35,14 @@ function Install-ShellCustomizations {
         - Windows Terminal settings.json
     #>
 
+
+    # TODO: Auto elevate to admin so we don't need the check below
+    if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Output "This function needs to be ran as admin please rerun it with the proper rights."
+    start-sleep 10
+    exit
+    }
+
     try {
         Install-OhMyPosh
     }
