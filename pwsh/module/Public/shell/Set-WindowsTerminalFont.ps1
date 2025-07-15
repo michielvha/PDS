@@ -53,7 +53,7 @@ function Set-WindowsTerminalFont {
         winget install JanDeDobbeleer.OhMyPosh -s winget
         
         # Refresh the environment to make oh-my-posh available
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
     }
 
     # install the fonts
