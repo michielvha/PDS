@@ -48,12 +48,12 @@ function Install-OhMyPosh {
 
     if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
         Write-Host "Installing Terminal-Icons..."
-        Install-Module Terminal-Icons -Scope CurrentUser -Force
+        Install-Module Terminal-Icons -Force # -Scope CurrentUser
     }
 
     if (-not (Get-Module -ListAvailable -Name posh-git)) {
         Write-Host "Installing posh-git..."
-        Install-Module posh-git -Scope CurrentUser -Force
+        Install-Module posh-git -Force # -Scope CurrentUser
     }
 
     # Remove console_title_template from powerlevel10k_rainbow theme to allow PowerShell default window title behavior
@@ -113,9 +113,9 @@ Import-Module "`$ChocolateyProfile"
 
     if (-not (Test-Path $PROFILE)) {
         Write-Host "Creating PowerShell profile at $PROFILE"
-        New-Item -Path $PROFILE -ItemType File -Force | Out-Null
+        New-Item -Path $PROFILE.AllUsersAllHosts -ItemType File -Force | Out-Null
     }
 
     # Append the commands to the global profile using tee
-    $commands | Out-File -FilePath $PROFILE -Encoding utf8 -Append
+    $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
 }

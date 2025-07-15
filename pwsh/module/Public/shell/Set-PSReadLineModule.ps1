@@ -49,7 +49,7 @@ Set-PSReadLineOption -PredictionViewStyle ListView
     if (-not (Get-Module -ListAvailable -Name PSReadLine)) {
         Write-Host "Installing PSReadLine Module."
         try {
-            Install-Module PSReadLine -Scope CurrentUser -Force -SkipPublisherCheck
+            Install-Module PSReadLine -Force -SkipPublisherCheck # -Scope CurrentUser # use this for scoped install
         }
         catch {
             Write-Warning "Failed to install PSReadLine module: $_"
@@ -61,11 +61,11 @@ Set-PSReadLineOption -PredictionViewStyle ListView
     }
 
     # Ensure profile exists
-    if (-not (Test-Path $PROFILE)) {
+    if (-not (Test-Path $PROFILE.AllUsersAllHosts)) {
         Write-Host "Creating PowerShell profile at $PROFILE"
-        New-Item -Path $PROFILE -ItemType File -Force | Out-Null
+        New-Item -Path $PROFILE.AllUsersAllHosts -ItemType File -Force | Out-Null
     }
 
     # Append the commands to the global profile using tee
-    $commands | Out-File -FilePath $PROFILE -Encoding utf8 -Append
+    $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
 }
