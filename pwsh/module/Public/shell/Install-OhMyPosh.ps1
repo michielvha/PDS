@@ -41,18 +41,18 @@ function Install-OhMyPosh {
 
     # Install Oh My Posh if not already installed
     if (-not (Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
-        Write-Host "📦 Installing Oh My Posh..."
+        Write-Host "Installing Oh My Posh..."
         Write-Verbose "Using winget to install Oh My Posh.`nThis will fetch the exe and latest themes from the official repository.`nThe installation is user scoped"
         winget install JanDeDobbeleer.OhMyPosh -s winget
     }
 
     if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
-        Write-Host "📦 Installing Terminal-Icons..."
+        Write-Host "Installing Terminal-Icons..."
         Install-Module Terminal-Icons -Scope CurrentUser -Force
     }
 
     if (-not (Get-Module -ListAvailable -Name posh-git)) {
-        Write-Host "📦 Installing posh-git..."
+        Write-Host "Installing posh-git..."
         Install-Module posh-git -Scope CurrentUser -Force
     }
 
@@ -60,7 +60,7 @@ function Install-OhMyPosh {
     if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
         $themeFile = "$env:POSH_THEMES_PATH\powerlevel10k_rainbow.omp.json"
         if (Test-Path $themeFile) {
-            Write-Host "🔧 Modifying Oh My Posh theme to remove console title override..."
+            Write-Host "Modifying Oh My Posh theme to remove console title override..."
             $themeContent = Get-Content $themeFile -Raw
             
             # Check if console_title_template exists
@@ -69,12 +69,12 @@ function Install-OhMyPosh {
                 # More flexible regex - handles different line endings and spacing
                 $modifiedContent = $themeContent -replace '(?m)^\s*"console_title_template"\s*:\s*"[^"]*"\s*,?\s*$\r?\n?', ''
                 $modifiedContent | Set-Content $themeFile -Encoding UTF8
-                Write-Host "✅ Console title template removed successfully"
+                Write-Host "Console title template removed successfully"
             } else {
-                Write-Host "⚠️ Console title template not found in theme file"
+                Write-Host "Console title template not found in theme file"
             }
         } else {
-            Write-Host "⚠️ Theme file not found at: $themeFile"
+            Write-Host "Theme file not found at: $themeFile"
         }
     }
 

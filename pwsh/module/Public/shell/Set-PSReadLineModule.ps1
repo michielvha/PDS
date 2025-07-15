@@ -47,7 +47,7 @@ Set-PSReadLineOption -PredictionViewStyle ListView
 
 
     if (-not (Get-Module -ListAvailable -Name PSReadLine)) {
-        Write-Host "📦 Installing PSReadLine Module."
+        Write-Host "Installing PSReadLine Module."
         try {
             Install-Module PSReadLine -Scope CurrentUser -Force -SkipPublisherCheck
         }

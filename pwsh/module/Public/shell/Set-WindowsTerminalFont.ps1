@@ -48,7 +48,7 @@ function Set-WindowsTerminalFont {
 
     # Install Oh My Posh if not already installed
     if (-not (Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
-        Write-Host "📦 Installing Oh My Posh..."
+        Write-Host "Installing Oh My Posh..."
         Write-Verbose "Using winget to install Oh My Posh.`nThis will fetch the exe and latest themes from the official repository.`nThe installation is user scoped"
         winget install JanDeDobbeleer.OhMyPosh -s winget
         
@@ -58,7 +58,7 @@ function Set-WindowsTerminalFont {
 
     # install the fonts
     if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
-        Write-Host "📦 Installing Nerd fonts"
+        Write-Host "Installing Nerd fonts"
         try {
             oh-my-posh font install meslo
             oh-my-posh font install JetBrainsMono
