@@ -46,7 +46,7 @@ Set-PSReadLineOption -PredictionViewStyle ListView
 "@
 
 
-    if (-not (Get-Module -ListAvailable -Name Terminal-Icons)) {
+    if (-not (Get-Module -ListAvailable -Name PSReadLine)) {
         Write-Host "📦 Installing PSReadLine Module."
         Install-Module PSReadLine -Scope CurrentUser -Force
     } else {

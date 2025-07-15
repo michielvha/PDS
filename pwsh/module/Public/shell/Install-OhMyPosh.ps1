@@ -118,5 +118,4 @@ Import-Module "`$ChocolateyProfile"
 
     # Append the commands to the global profile using tee
     $commands | Out-File -FilePath $PROFILE -Encoding utf8 -Append
-
 }
