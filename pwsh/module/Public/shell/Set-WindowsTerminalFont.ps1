@@ -51,13 +51,23 @@ function Set-WindowsTerminalFont {
         Write-Host "📦 Installing Oh My Posh..."
         Write-Verbose "Using winget to install Oh My Posh.`nThis will fetch the exe and latest themes from the official repository.`nThe installation is user scoped"
         winget install JanDeDobbeleer.OhMyPosh -s winget
+        
+        # Refresh the environment to make oh-my-posh available
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     }
 
     # install the fonts
     if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
         Write-Host "📦 Installing Nerd fonts"
-        oh-my-posh font install meslo
-        oh-my-posh font install JetBrainsMono
+        try {
+            oh-my-posh font install meslo
+            oh-my-posh font install JetBrainsMono
+        }
+        catch {
+            Write-Warning "Failed to install fonts via oh-my-posh. You may need to restart your terminal and try again, or install fonts manually."
+        }
+    } else {
+        Write-Warning "oh-my-posh command not found after installation. You may need to restart your terminal session."
     }
 
     $settingsPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"

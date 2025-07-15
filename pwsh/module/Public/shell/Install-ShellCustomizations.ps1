@@ -37,9 +37,35 @@ function Install-ShellCustomizations {
 
     #>
 
-    Install-OhMyPosh
+    try {
+        Install-OhMyPosh
+    }
+    catch {
+        Write-Error "Failed to run Install-OhMyPosh: $_"
+        Write-Host "Attempting to install Oh My Posh directly..."
+        
+        # Fallback: Install Oh My Posh directly
+        if (-not (Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
+            Write-Host "📦 Installing Oh My Posh..."
+            winget install JanDeDobbeleer.OhMyPosh -s winget
+            
+            # Refresh the environment to make oh-my-posh available
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+        }
+    }
 
-    Set-WindowsTerminalFont -FontName "JetBrainsMono Nerd Font Mono"
+    try {
+        Set-WindowsTerminalFont -FontName "JetBrainsMono Nerd Font Mono"
+    }
+    catch {
+        Write-Error "Failed to run Set-WindowsTerminalFont: $_"
+    }
 
-    Set-PSReadLineModule
+    try {
+        Set-PSReadLineModule
+    }
+    catch {
+        Write-Error "Failed to run Set-PSReadLineModule: $_"
+        Write-Warning "PSReadLine configuration may need to be completed manually after restarting PowerShell."
+    }
 }
