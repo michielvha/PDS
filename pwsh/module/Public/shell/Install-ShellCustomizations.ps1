@@ -33,8 +33,6 @@ function Install-ShellCustomizations {
         The function modifies:
         - PowerShell profile ($PROFILE)
         - Windows Terminal settings.json
-        
-
     #>
 
     try {
@@ -46,7 +44,7 @@ function Install-ShellCustomizations {
         
         # Fallback: Install Oh My Posh directly
         if (-not (Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
-            Write-Host "📦 Installing Oh My Posh..."
+            Write-Host "Installing Oh My Posh..."
             winget install JanDeDobbeleer.OhMyPosh -s winget
             
             # Refresh the environment to make oh-my-posh available
