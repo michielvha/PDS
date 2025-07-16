@@ -57,57 +57,87 @@ function Install-OhMyPosh {
         Install-Module posh-git -Force # -Scope CurrentUser
     }
 
-    # Remove console_title_template from powerlevel10k_rainbow theme to allow PowerShell default window title behavior
+    # Modify the powerlevel10k_rainbow theme to remove console title override and add Azure/Kubernetes segments
+    # Remove console_title_template
     if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
         $themeFile = "$env:POSH_THEMES_PATH\powerlevel10k_rainbow.omp.json"
         if (Test-Path $themeFile) {
-            Write-Host "Modifying Oh My Posh theme to remove console title override..."
+            Write-Host "Modifying Oh My Posh theme..."
             $themeContent = Get-Content $themeFile -Raw
-            
-            # Check if console_title_template exists
+            $themeModified = $false
+
+            # Check if console_title_template exists and remove it
             if ($themeContent -match '"console_title_template"') {
                 Write-Host "Found console_title_template, removing it..."
                 # More flexible regex - handles different line endings and spacing
-                $modifiedContent = $themeContent -replace '(?m)^\s*"console_title_template"\s*:\s*"[^"]*"\s*,?\s*$\r?\n?', ''
-                $modifiedContent | Set-Content $themeFile -Encoding UTF8
+                $themeContent = $themeContent -replace '(?m)^\s*"console_title_template"\s*:\s*"[^"]*"\s*,?\s*$\r?\n?', ''
                 Write-Host "Console title template removed successfully"
-            } else {
-                Write-Host "Console title template not found in theme file"
+                $themeModified = $true
+            }
+            
+            # Convert to JSON object for segment manipulation
+            try {
+                $themeObject = $themeContent | ConvertFrom-Json
+                
+                # Check if Azure segment already exists
+                $hasAzureSegment = $themeObject.blocks[0].segments | Where-Object { $_.type -eq "az" }
+                if (-not $hasAzureSegment) {
+                    Write-Host "Adding Azure segment to theme..."
+                    $azureSegment = @{
+                        type = "az"
+                        style = "powerline"
+                        powerline_symbol = "`ue0b2"
+                        invert_powerline = $true
+                        foreground = "#ffffff"
+                        background = "#0072C6"
+                        template = " `u{ebd8} {{ .Name }} "
+                        properties = @{
+                            display_default = $true
+                        }
+                    }
+                    $themeObject.blocks[0].segments += $azureSegment
+                    $themeModified = $true
+                }
+                
+                # Check if Kubernetes segment already exists
+                $hasKubernetesSegment = $themeObject.blocks[0].segments | Where-Object { $_.type -eq "kubectl" }
+                if (-not $hasKubernetesSegment) {
+                    Write-Host "Adding Kubernetes segment to theme..."
+                    $kubernetesSegment = @{
+                        type = "kubectl"
+                        style = "powerline"
+                        powerline_symbol = "`ue0b2"
+                        invert_powerline = $true
+                        foreground = "#ffffff"
+                        background = "#326ce5"
+                        template = " `u{e81d} {{ .Context }}{{ if .Namespace }}:{{ .Namespace }}{{ end }} "
+                        properties = @{
+                            display_default = $true
+                        }
+                    }
+                    $themeObject.blocks[0].segments += $kubernetesSegment
+                    $themeModified = $true
+                }
+                
+                # Save modified theme if changes were made
+                if ($themeModified) {
+                    $themeObject | ConvertTo-Json -Depth 10 | Set-Content $themeFile -Encoding UTF8
+                    Write-Host "Theme modifications saved successfully"
+                } else {
+                    Write-Host "No theme modifications needed"
+                }
+                
+            } catch {
+                Write-Warning "Could not parse theme file as JSON: $_"
+                # If JSON parsing fails, just save the console title template removal
+                if ($themeModified) {
+                    $themeContent | Set-Content $themeFile -Encoding UTF8
+                }
             }
         } else {
             Write-Host "Theme file not found at: $themeFile"
         }
     }
-
-    
-    #TODO: insert into theme file to add azure / kubernetes recognition
-    <#
-        {
-          "type": "az",
-          "style": "powerline",
-          "powerline_symbol": "\ue0b2",
-          "invert_powerline": true,
-          "foreground": "#ffffff",
-          "background": "#0072C6",
-          "template": " \uebd8 {{ .Name }} ",
-          "properties": {
-            "display_default": true
-          }
-        },
-        {
-          "type": "kubectl",
-          "style": "powerline",
-          "powerline_symbol": "\ue0b2",
-          "invert_powerline": true,
-          "foreground": "#ffffff",
-          "background": "#326ce5",
-          "template": " \ue81d {{ .Context }}{{ if .Namespace }}:{{ .Namespace }}{{ end }} ",
-          "properties": {
-            "display_default": true
-          }
-        }
-    #>
-
 
     # TODO: Check to enable quake mode for windows terminal
     # https://youtu.be/4GASGO0go5I?si=C2jEFteGInNTOCoK&t=628   
