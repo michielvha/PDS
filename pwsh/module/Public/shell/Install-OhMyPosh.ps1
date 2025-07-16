@@ -86,7 +86,7 @@ function Install-OhMyPosh {
                     $azureSegment = @{
                         type = "az"
                         style = "powerline"
-                        powerline_symbol = "`ue0b2"
+                        powerline_symbol = "`u{e0b2}"
                         invert_powerline = $true
                         foreground = "#ffffff"
                         background = "#0072C6"
@@ -106,7 +106,7 @@ function Install-OhMyPosh {
                     $kubernetesSegment = @{
                         type = "kubectl"
                         style = "powerline"
-                        powerline_symbol = "`ue0b2"
+                        powerline_symbol = "`u{e0b2}"
                         invert_powerline = $true
                         foreground = "#ffffff"
                         background = "#326ce5"
