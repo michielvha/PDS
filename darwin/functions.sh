@@ -42,6 +42,7 @@ zstyle ':autocomplete:*' min-input 1
 setopt HIST_FIND_NO_DUPS
 
 # --- Enable kubectl autocompletion for zsh ---
+# Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/
 autoload -Uz compinit
 compinit
 source <(kubectl completion zsh)
