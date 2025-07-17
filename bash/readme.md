@@ -12,6 +12,27 @@ The primary goal of this module is to:
 - **Enhance Reusability**: Offer a modular structure where functions can be easily imported and reused across different projects.
 - **Ensure Consistency**: Standardize the way environments are configured, reducing errors and improving reliability.
 
+## Coding style
+
+where possible I prefer using `conditional execution / short-circuit evaluation` to keep the code concise.
+
+**Example:**
+```shell
+# Pattern: condition && success_action || failure_action
+id "$ADMIN" &>/dev/null && echo "exists" || echo "doesn't exist"
+
+# Equivalent to:
+if id "$ADMIN" &>/dev/null; then
+    echo "exists"
+else
+    echo "doesn't exist"
+fi
+```
+
+it's clean, readable, and efficient!
+
+ofcourse it's only possible if the second statement after the && will always return true, else we should use the full if/else notation.
+
 ## Features
 
 - **Modular Design**: Functions are organized into directories based on their purpose, such as `common`, `debian`, and `fedora`, making it easy to locate and manage them.
