@@ -21,6 +21,9 @@ Function Set-Kubectl {
 
         krew - package manager for kubectl plugins:
         https://krew.sigs.k8s.io/
+
+        kubectl windows installation:
+        https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
     #>
 
     # function definiton
