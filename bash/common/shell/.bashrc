@@ -15,3 +15,4 @@ alias kgn='kubectl get nodes'
 alias kgs='kubectl get services'
 alias kge='kubectl get events'
 alias kgl='kubectl get logs'
+

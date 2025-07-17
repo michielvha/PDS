@@ -16,6 +16,8 @@ configure_admin(){
   # Check if ADMIN variable is set
   [[ -z "$ADMIN" ]] && { echo "Usage: configure_admin <username>"; return 1; }
 
+  echo "🔧 Creating new admin user: $ADMIN."
+
   # Check if user already exists before creating  
   id "$ADMIN" &>/dev/null && echo "👤 User $ADMIN already exists, skipping user creation..." || (echo "👤 Creating admin user $ADMIN..." && sudo useradd -m -s /bin/bash "$ADMIN")
   
@@ -23,7 +25,7 @@ configure_admin(){
   echo "🔑 Setting up SSH public key..."
   sudo mkdir -p /home/"$ADMIN"/.ssh
   # Add SSH public key to authorized_keys
-  echo "$SSH_PUBLIC_KEY" | sudo tee /home/"$ADMIN"/.ssh/authorized_keys
+  echo "$SSH_PUBLIC_KEY" | sudo tee /home/"$ADMIN"/.ssh/authorized_keys && echo "🔑 SSH public key added for $ADMIN."
   
   # Set permissions for SSH directory and authorized_keys file
   sudo chown -R "$ADMIN":"$ADMIN" /home/"$ADMIN"/.ssh
@@ -33,16 +35,16 @@ configure_admin(){
   # Add the user to the sudo group
   echo "🔐 Adding $ADMIN to the sudo group..."
   if [[ "$distro" == "debian" ]]; then
-    sudo usermod -aG sudo "$ADMIN"
+    sudo usermod -aG sudo "$ADMIN" && echo "🔐 Added $ADMIN to the sudo group for sudo access."
   elif [[ "$distro" == "rhel" ]]; then
-    sudo usermod -aG wheel "$ADMIN"
+    sudo usermod -aG wheel "$ADMIN" && echo "🔐 Added $ADMIN to the wheel group for sudo access."
   else
     echo "❌ Unsupported distribution: $distro"
     return 1
   fi
 
   # Configure .bashrc
-  # echo "🔧 Adding sourcing of pds main functions for $ADMIN."
+  
   # echo "source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/module/install.sh)" >> /home/"$ADMIN"/.bashrc
-  # echo "User $ADMIN created, SSH key added, user added to sudo group and bashrc modified."
+ 
 }

@@ -1,4 +1,4 @@
-# #!/bin/bash
+#!/bin/bash
 # # Download and source all modules
 # # usage: quickly source this module with the following command:
 # # ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/bootstrap.sh) `
