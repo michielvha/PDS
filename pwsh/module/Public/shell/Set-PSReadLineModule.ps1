@@ -36,11 +36,12 @@ function Set-PSReadLineModule {
 
     #>
 
-
     $commands = @"
 
 # PSreadLine configuration
-Import-Module -Name PSReadLine
+if (-not (Get-Module -ListAvailable -Name PSReadLine)) {
+    Import-Module -Name PSReadLine
+}
 Set-PSReadLineOption -PredictionViewStyle ListView
 
 "@
