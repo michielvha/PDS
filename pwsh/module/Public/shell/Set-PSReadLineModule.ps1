@@ -39,8 +39,12 @@ function Set-PSReadLineModule {
     $commands = @"
 
 # PSreadLine configuration
-if (-not (Get-Module -ListAvailable -Name PSReadLine)) {
-    Import-Module -Name PSReadLine
+if (Get-Module -ListAvailable -Name PSReadLine) {
+    if (-not (Get-Module -Name PSReadLine)) {
+        Import-Module -Name PSReadLine
+    }
+} else {
+    Write-Warning "PSReadLine module is not available on this system, install it using 'Install-Module PSReadLine'"
 }
 Set-PSReadLineOption -PredictionViewStyle ListView
 
