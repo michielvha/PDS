@@ -1,8 +1,9 @@
 #!/bin/bash
-# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/shell/set_sudo_nopasswd.sh) `
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/shell/create_admin.sh) `
 
-# Function: set_sudo_nopasswd
-# Description: Setup passwordless sudo for a user
+# Function: configure_admin
+# Description: Configures a new admin user with SSH access and sudo privileges.
+# Usage: configure_admin <username>
 configure_admin (){
   local SSH_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJuz/p0uJEULyptuR7US4GnGmCziaKLQsxYO5VyAx+Oa sysadmin@mvha.eu.org"
   local ADMIN="$1"

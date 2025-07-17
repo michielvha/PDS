@@ -3,6 +3,7 @@
 
 # Function: set_sudo_nopasswd
 # Description: Setup passwordless sudo for a user
+# Usage: set_sudo_nopasswd <username>
 set_sudo_nopasswd() {
     local user="$1"
     local sudoers_file="/etc/sudoers.d/$user"
@@ -22,5 +23,3 @@ set_sudo_nopasswd() {
     sudo chmod 0440 "$sudoers_file"
     echo "Passwordless sudo enabled for $user."
 }
-
-# set_sudo_nopasswd $USER_NAME
