@@ -19,9 +19,8 @@ alias kgl='kubectl get logs'
 alias knr='kubectl get pods --field-selector=status.phase!=Running' # Get pods not in Running state
 
 # Install bash-completion if not already installed
-# Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion
-[[ -z $(type _init_completion &>/dev/null) ]] && { sudo apt install bash-completion; }
+# Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion\
+type _init_completion &>/dev/null || { sudo apt install bash-completion; }
 
 # Automatically source kubectl completion
 source <(kubectl completion bash)
-compdef __start_kubectl k

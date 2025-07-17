@@ -23,6 +23,7 @@ install_zi() {
 
 # Function: configure_zsh
 # Description: Configures ZSH using Zi with plugins and settings for an enhanced shell experience
+# TODO: Move to .zshrc file in this repository and create a function to add it to the /etc/zshrc file from github raw url, like we are doing in `set_bashrc`.
 configure_zsh() {
   cat <<'EOF' | sudo tee /etc/zshrc
 source /usr/local/share/zi/zi.zsh

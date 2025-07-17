@@ -40,6 +40,10 @@ ofcourse it's only possible if the second statement after the && will always ret
 - **Cross-Platform Support**: Scripts are tailored for different operating systems, including Fedora and Debian-based Linux distributions.
 - **Dynamic Importing**: Functions can be imported either temporarily (ephemeral) or persistently, depending on the use case.
 
+## Enhancements
+
+- **Create a custom bash package manager** using Golang to enhance the way we currently have to source all the files from different urls.
+
 ## Getting Started
 
 To get started with the PDS Bash module, you can explore the directories to find the functions you need. Each function is defined in a `.sh` file and follows a consistent format for easy understanding and integration.
