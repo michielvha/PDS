@@ -17,6 +17,8 @@ alias kgs='kubectl get services'
 alias kge='kubectl get events'
 alias kgl='kubectl get logs'
 alias knr='kubectl get pods --field-selector=status.phase!=Running' # Get pods not in Running state
+# Docker
+alias dcrenew='docker compose down && docker compose up -d'
 
 # Install bash-completion if not already installed
 # Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion\
