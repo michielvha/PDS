@@ -1,5 +1,5 @@
 #!/bin/bash
-# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/system/install_docker.sh) `
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_docker.sh) `
 
 # Function: install_docker
 # Description: Installs and configures Docker on Debian-based systems
