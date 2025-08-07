@@ -4,7 +4,9 @@
 
 # Function: refresh_docker_compose
 # Description: Remove a container tagged with latest to be sure the container is repulled and relaunch the docker compse stack.
-refresh_docker_compose(){
+docker_command(){
+
+  echo "Refreshing Docker Compose stack..."
 
   # docker compose down
   # Find the image based on the name, so get the id from the name and remove it
