@@ -172,6 +172,7 @@ Import-Module "`$ChocolateyProfile"
 
 # https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion
 kubectl completion powershell | Out-String | Invoke-Expression
+New-Alias -Name "k" kubectl
 "@
 
     if (-not (Test-Path $PROFILE)) {
