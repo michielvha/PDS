@@ -170,6 +170,8 @@ if (Test-Path(`$ChocolateyProfile)) {
 Import-Module "`$ChocolateyProfile"
 }
 
+# https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#enable-shell-autocompletion
+kubectl completion powershell | Out-String | Invoke-Expression
 "@
 
     if (-not (Test-Path $PROFILE)) {
