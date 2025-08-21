@@ -19,6 +19,8 @@ install_kubectl() {
 	sudo apt install -y kubectl
 
 	# TODO: auto completion configuration ⚠️
+ 	# TODO: add to plugin https://github.com/keisku/kubectl-explore
+  	# TODO: Maybe change the way we handle this instead of checking imperatively just generate a config file below a caution block and check if the caution block exists 
 	# Detect shell and set file to update
 	#    SHELL_NAME=$(basename "$SHELL")
 	#    [[ "$SHELL_NAME" == "zsh" ]] && PROFILE_FILE="$HOME/.zshrc" || PROFILE_FILE="$HOME/.bashrc"
