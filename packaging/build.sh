@@ -152,9 +152,15 @@ build_package() {
             
             # Show package contents
             log_info "Package contents:"
-            dpkg-deb -c "$package_file" | head -20
-            if [[ $(dpkg-deb -c "$package_file" | wc -l) -gt 20 ]]; then
-                echo "  ... and more files"
+            if ! package_contents=$(dpkg-deb -c "$package_file" 2>/dev/null); then
+                log_warning "Could not read package contents"
+            else
+                echo "$package_contents" | head -20
+                local total_files
+                total_files=$(echo "$package_contents" | wc -l)
+                if [[ $total_files -gt 20 ]]; then
+                    echo "  ... and $((total_files - 20)) more files"
+                fi
             fi
         else
             log_warning "Package file not found for display"
