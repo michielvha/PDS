@@ -165,12 +165,19 @@ build_package() {
 validate_package() {
     log_info "Validating package..."
     
-    local package_file="$DIST_DIR/${PACKAGE_NAME}_${VERSION}_all.deb"
+    # Find the actual package file created (nfpm might change version format)
+    local package_file
+    package_file=$(find "$DIST_DIR" -name "${PACKAGE_NAME}_*.deb" | head -1)
     
     if [[ ! -f "$package_file" ]]; then
-        log_error "Package file not found: $package_file"
+        log_error "Package file not found in: $DIST_DIR"
+        log_error "Expected pattern: ${PACKAGE_NAME}_*.deb"
+        log_error "Available files:"
+        ls -la "$DIST_DIR" || true
         exit 1
     fi
+    
+    log_info "Found package: $(basename "$package_file")"
     
     # Check package info
     if dpkg-deb -I "$package_file" > /dev/null; then
