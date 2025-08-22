@@ -57,7 +57,7 @@ contents:
       mode: 0644
   
   # Profile.d script for auto-loading
-  - src: ./profile.d/pds-funcs.sh
+  - src: ./profile.d/pds.sh
     dst: /etc/profile.d/pds.sh
     file_info:
       mode: 0644
