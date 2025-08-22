@@ -15,6 +15,24 @@ env:
   PACKAGE_NAME: pds-funcs
 
 jobs:
+  version:
+    name: Determine Version
+    runs-on: ubuntu-latest
+    outputs:
+      semVer: ${{ steps.gitversion.outputs.semVer }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # GitVersion needs full history
+
+      # Call your custom GitVersion action to determine version and tag
+      - name: Tag with GitVersion
+        id: gitversion
+        uses: michielvha/gitversion-tag-action@v5
+        with:
+          configFilePath: gitversion.yml  # Path to your GitVersion config file
+
   lint:
     name: Lint Scripts
     runs-on: ubuntu-latest
@@ -33,7 +51,7 @@ jobs:
   build:
     name: Build Package
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [version, lint]
     strategy:
       matrix:
         arch: [all]
@@ -43,12 +61,8 @@ jobs:
 
       - name: Set up environment
         run: |
-          # Extract version from tag or use default
-          if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-          else
-            VERSION="1.0.0-dev.${GITHUB_SHA:0:8}"
-          fi
+          # Use GitVersion determined version
+          VERSION="${{ needs.version.outputs.semVer }}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Building version: $VERSION"
 
@@ -62,7 +76,9 @@ jobs:
           cd packaging
           sed -i "s/version: .*/version: $VERSION/" nfpm.yaml
           sed -i "s/VERSION := .*/VERSION := $VERSION/" Makefile
-          sed -i "s/PDS_VERSION=.*/PDS_VERSION=\"$VERSION\"/" init.sh bin/pds
+          # Create VERSION file for runtime version detection
+          mkdir -p usr/share/pds-funcs
+          echo "$VERSION" > usr/share/pds-funcs/VERSION
 
       - name: Build package
         run: |
@@ -78,7 +94,7 @@ jobs:
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PACKAGE_NAME }}-${{ env.VERSION }}-${{ matrix.arch }}
+          name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-${{ matrix.arch }}
           path: packaging/dist/*.deb
           retention-days: 30
 
@@ -94,7 +110,7 @@ jobs:
   test-install:
     name: Test Installation
     runs-on: ubuntu-latest
-    needs: build
+    needs: [version, build]
     strategy:
       matrix:
         ubuntu-version: [20.04, 22.04, 24.04]
@@ -102,7 +118,7 @@ jobs:
       - name: Download package
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.PACKAGE_NAME }}-${{ env.VERSION }}-all
+          name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./packages
 
       - name: Test installation on Ubuntu ${{ matrix.ubuntu-version }}
@@ -119,7 +135,7 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [build, test-install]
+    needs: [version, build, test-install]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
@@ -129,27 +145,28 @@ jobs:
 
       - name: Set version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION="${{ needs.version.outputs.semVer }}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Download package
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.PACKAGE_NAME }}-${{ env.VERSION }}-all
+          name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./release
 
       - name: Generate release notes
         run: |
+          VERSION="${{ needs.version.outputs.semVer }}"
           cat > release-notes.md << 'EOF'
-          ## PDS (Personal Development Scripts) v${{ env.VERSION }}
+          ## PDS (Personal Development Scripts) v${{ needs.version.outputs.semVer }}
 
           ### Installation
 
           #### Direct Installation
           ```bash
           # Download and install
-          wget https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/${{ env.PACKAGE_NAME }}_${{ env.VERSION }}_all.deb
-          sudo dpkg -i ${{ env.PACKAGE_NAME }}_${{ env.VERSION }}_all.deb
+          wget https://github.com/${{ github.repository }}/releases/download/v${{ needs.version.outputs.semVer }}/${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb
+          sudo dpkg -i ${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb
           sudo apt-get install -f
           ```
 
@@ -198,12 +215,13 @@ jobs:
           EOF
 
       - name: Create Release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: PDS v${{ env.VERSION }}
+          release_name: PDS v${{ needs.version.outputs.semVer }}
           body_path: release-notes.md
           draft: false
           prerelease: false
@@ -214,15 +232,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/${{ env.PACKAGE_NAME }}_${{ env.VERSION }}_all.deb
-          asset_name: ${{ env.PACKAGE_NAME }}_${{ env.VERSION }}_all.deb
+          asset_path: ./release/${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb
+          asset_name: ${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb
           asset_content_type: application/vnd.debian.binary-package
 
   # Optional: Auto-update APT repository
   # deploy-repo:
   #   name: Update APT Repository
   #   runs-on: ubuntu-latest
-  #   needs: release
+  #   needs: [version, release]
   #   if: startsWith(github.ref, 'refs/tags/v')
   #   steps:
   #     - name: Deploy to APT repository

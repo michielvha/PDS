@@ -183,6 +183,7 @@ validate_package() {
     # Check for required files in package
     local required_files=(
         "./usr/share/pds-funcs/init.sh"
+        "./usr/share/pds-funcs/VERSION"
         "./etc/profile.d/pds-funcs.sh"
         "./usr/bin/pds"
     )
