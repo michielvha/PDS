@@ -1,0 +1,78 @@
+name: pds-funcs
+version: 1.0.0
+section: utils
+priority: optional
+maintainer: Michiel van Hoof <michiel@michielvh.nl>
+description: |
+  PDS (Personal Development Scripts) - Debian function library
+  A comprehensive collection of Bash functions for software installation,
+  UI/theme setup, and system deployment tasks. Functions are automatically
+  loaded in interactive shells for immediate use.
+  
+  Includes functions for:
+  - Software installation (Docker, VS Code, kubectl, etc.)
+  - HashiCorp tools (Packer, Terraform, Vault, etc.)  
+  - UI/theme setup (fonts, themes, GNOME configuration)
+  - Development environment setup
+  - System deployment and configuration
+license: MIT
+arch: all
+platform: linux
+
+# Dependencies
+depends:
+  - bash (>= 4.0)
+  - curl
+  - wget
+  - gpg
+
+# Files to include in the package
+contents:
+  # Copy the entire bash/debian structure to /usr/share/pds-funcs/
+  - src: ../bash/debian/software
+    dst: /usr/share/pds-funcs/software
+    file_info: 
+      mode: 0644
+  
+  - src: ../bash/debian/ui
+    dst: /usr/share/pds-funcs/ui
+    file_info:
+      mode: 0644
+      
+  - src: ../bash/debian/deploy
+    dst: /usr/share/pds-funcs/deploy
+    file_info:
+      mode: 0644
+  
+  # Main initialization script
+  - src: ./init.sh
+    dst: /usr/share/pds-funcs/init.sh
+    file_info:
+      mode: 0644
+  
+  # Profile.d script for auto-loading
+  - src: ./profile.d/pds-funcs.sh
+    dst: /etc/profile.d/pds-funcs.sh
+    file_info:
+      mode: 0644
+  
+  # CLI helper tool
+  - src: ./bin/pds
+    dst: /usr/bin/pds
+    file_info:
+      mode: 0755
+  
+  # Documentation
+  - src: ../bash/debian/readme.md
+    dst: /usr/share/doc/pds-funcs/README.md
+    file_info:
+      mode: 0644
+
+# Package scripts
+scripts:
+  postinstall: ./scripts/postinstall.sh
+  preremove: ./scripts/preremove.sh
+
+# Package metadata
+homepage: https://github.com/michielvha/PDS
+vendor: Michiel van Hoof
