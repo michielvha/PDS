@@ -142,9 +142,9 @@ jobs:
       - name: Generate release notes
         run: |
           # Use template file and substitute variables
-          sed -e "s/{{VERSION}}/${{ needs.version.outputs.semVer }}/g" \
-              -e "s/{{REPOSITORY}}/${{ github.repository }}/g" \
-              -e "s/{{PACKAGE_NAME}}/${{ env.PACKAGE_NAME }}/g" \
+          sed -e "s|{{VERSION}}|${{ needs.version.outputs.semVer }}|g" \
+              -e "s|{{REPOSITORY}}|${{ github.repository }}|g" \
+              -e "s|{{PACKAGE_NAME}}|${{ env.PACKAGE_NAME }}|g" \
               .github/templates/release-notes.md > release-notes.md
       - name: Create Release
         env:
