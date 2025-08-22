@@ -140,9 +140,9 @@ build_package() {
     if nfpm pkg --packager deb --config nfpm.yaml --target "$DIST_DIR/"; then
         log_success "Package built successfully"
         
-        # Find the actual package file created
+        # Find the actual package file created (most recent with correct naming)
         local package_file
-        package_file=$(find "$DIST_DIR" -name "${PACKAGE_NAME}_*.deb" -type f | head -1)
+        package_file=$(ls -t "$DIST_DIR/${PACKAGE_NAME}_"*_all.deb 2>/dev/null | head -1)
         
         if [[ -f "$package_file" ]]; then
             local size
@@ -177,7 +177,7 @@ validate_package() {
     
     # Find the actual package file created (nfpm might change version format)
     local package_file
-    package_file=$(find "$DIST_DIR" -name "${PACKAGE_NAME}_*.deb" | head -1)
+    package_file=$(ls -t "$DIST_DIR/${PACKAGE_NAME}_"*_all.deb 2>/dev/null | head -1)
     
     if [[ ! -f "$package_file" ]]; then
         log_error "Package file not found in: $DIST_DIR"
@@ -231,7 +231,7 @@ test_installation() {
     if command -v docker &> /dev/null; then
         # Find the actual package file (nfpm may change the filename format)
         local package_file
-        package_file=$(find "$DIST_DIR" -name "${PACKAGE_NAME}_*.deb" -type f | head -1)
+        package_file=$(ls -t "$DIST_DIR/${PACKAGE_NAME}_"*_all.deb 2>/dev/null | head -1)
         
         if [[ ! -f "$package_file" ]]; then
             log_error "No package file found in $DIST_DIR"

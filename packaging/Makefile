@@ -38,9 +38,15 @@ uninstall: ## Uninstall the package
 
 test: build ## Test the package installation in a Docker container
 	@echo "Testing package installation..."
-	@docker run --rm -v $(PWD)/$(DIST_DIR):/packages ubuntu:22.04 /bin/bash -c " \
+	@PACKAGE_FILE=$$(ls -t $(DIST_DIR)/$(PACKAGE_NAME)_*_$(ARCH).deb 2>/dev/null | head -1); \
+	if [ -z "$$PACKAGE_FILE" ]; then \
+		echo "❌ No package file found in $(DIST_DIR)"; \
+		exit 1; \
+	fi; \
+	echo "Testing package: $$(basename $$PACKAGE_FILE)"; \
+	docker run --rm -v $(PWD)/$(DIST_DIR):/packages ubuntu:22.04 /bin/bash -c " \
 		apt-get update && \
-		apt-get install -y /packages/$(PACKAGE_NAME)_$(VERSION)_$(ARCH).deb && \
+		apt-get install -y /packages/$$(basename $$PACKAGE_FILE) && \
 		pds doctor && \
 		echo 'Package test completed successfully' \
 	"
