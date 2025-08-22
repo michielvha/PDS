@@ -1,19 +1,15 @@
 name: Build PDS Package
-
 permissions:
   id-token: write
   contents: write
-
 on:
   push:
-    branches: [ main, develop ]
-    tags: [ 'v*' ]
+    branches: [main, develop]
+    tags: ['v*']
   pull_request:
-    branches: [ main ]
-
+    branches: [main]
 env:
   PACKAGE_NAME: pds-funcs
-
 jobs:
   version:
     name: Determine Version
@@ -24,30 +20,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # GitVersion needs full history
-
+          fetch-depth: 0 # GitVersion needs full history
       # Call your custom GitVersion action to determine version and tag
       - name: Tag with GitVersion
         id: gitversion
         uses: michielvha/gitversion-tag-action@v5
         with:
-          configFilePath: gitversion.yml  # Path to your GitVersion config file
-
+          configFilePath: gitversion.yml # Path to your GitVersion config file
   lint:
     name: Lint Scripts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Install shellcheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
-
       - name: Run shellcheck
         run: |
           cd packaging
           make lint
-
   build:
     name: Build Package
     runs-on: ubuntu-latest
@@ -58,19 +49,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up environment
         run: |
           # Use GitVersion determined version
           VERSION="${{ needs.version.outputs.semVer }}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Building version: $VERSION"
-
       - name: Install nfpm
         run: |
-          curl -sfL https://install.goreleaser.com/github.com/goreleaser/nfpm.sh | sh
-          sudo mv ./bin/nfpm /usr/local/bin/
-
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt update
+          sudo apt install nfpm
       - name: Update package version
         run: |
           cd packaging
@@ -79,25 +68,21 @@ jobs:
           # Create VERSION file for runtime version detection
           mkdir -p usr/share/pds-funcs
           echo "$VERSION" > usr/share/pds-funcs/VERSION
-
       - name: Build package
         run: |
           cd packaging
           chmod +x build.sh
           ./build.sh build
-
       - name: Test package
         run: |
           cd packaging
           make test
-
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-${{ matrix.arch }}
           path: packaging/dist/*.deb
           retention-days: 30
-
       - name: Show package info
         run: |
           cd packaging
@@ -106,7 +91,6 @@ jobs:
           echo
           echo "Package contents (first 20 files):"
           dpkg-deb -c dist/*.deb | head -20
-
   test-install:
     name: Test Installation
     runs-on: ubuntu-latest
@@ -120,7 +104,6 @@ jobs:
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./packages
-
       - name: Test installation on Ubuntu ${{ matrix.ubuntu-version }}
         run: |
           docker run --rm -v $(pwd)/packages:/packages ubuntu:${{ matrix.ubuntu-version }} /bin/bash -c "
@@ -131,7 +114,6 @@ jobs:
             pds info &&
             echo 'Installation test passed on Ubuntu ${{ matrix.ubuntu-version }}'
           "
-
   release:
     name: Create Release
     runs-on: ubuntu-latest
@@ -142,78 +124,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set version
         run: |
           VERSION="${{ needs.version.outputs.semVer }}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-
       - name: Download package
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./release
-
       - name: Generate release notes
-        run: |
-          VERSION="${{ needs.version.outputs.semVer }}"
-          cat > release-notes.md << 'EOF'
-          ## PDS (Personal Development Scripts) v${{ needs.version.outputs.semVer }}
-
-          ### Installation
-
-          #### Direct Installation
-          ```bash
-          # Download and install
-          wget https://github.com/${{ github.repository }}/releases/download/v${{ needs.version.outputs.semVer }}/${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb
-          sudo dpkg -i ${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb
-          sudo apt-get install -f
-          ```
-
-          #### Usage
-          ```bash
-          # Check installation
-          pds doctor
-
-          # List available functions
-          pds list
-
-          # Example usage
-          install_docker      # Install Docker
-          install_vscode      # Install VS Code
-          install_packer      # Install HashiCorp Packer
-          ```
-
-          ### What's Included
-
-          - **Software Installation Functions**: Docker, VS Code, kubectl, Azure CLI, and more
-          - **HashiCorp Tools**: Packer, Terraform, Vault, Consul installation functions
-          - **UI/Theme Setup**: Font and theme installation for GNOME
-          - **Development Environment**: Git and shell configuration tools
-          - **CLI Helper**: `pds` command for function discovery and management
-
-          ### Features
-
-          ✅ Auto-loading in interactive shells  
-          ✅ CLI helper for function discovery  
-          ✅ Opt-out support (`export PDS_DISABLE=1`)  
-          ✅ Comprehensive function library  
-          ✅ Easy installation and updates via APT  
-
-          ### Compatibility
-
-          - Ubuntu 20.04, 22.04, 24.04
-          - Debian 10, 11, 12
-          - Any Debian-based distribution
-
-          ### Documentation
-
-          - [Installation Guide](https://github.com/${{ github.repository }}/blob/main/packaging/README.md)
-          - [Function Reference](https://github.com/${{ github.repository }}/blob/main/bash/debian/readme.md)
-          - [Contributing](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)
-
-          EOF
-
+        run: "VERSION=\"${{ needs.version.outputs.semVer }}\"\ncat > release-notes.md << 'EOF'\n## PDS (Personal Development Scripts) v${{ needs.version.outputs.semVer }}\n\n### Installation\n\n#### Direct Installation\n```bash\n# Download and install\nwget https://github.com/${{ github.repository }}/releases/download/v${{ needs.version.outputs.semVer }}/${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb\nsudo dpkg -i ${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb\nsudo apt-get install -f\n```\n\n#### Usage\n```bash\n# Check installation\npds doctor\n\n# List available functions\npds list\n\n# Example usage\ninstall_docker      # Install Docker\ninstall_vscode      # Install VS Code\ninstall_packer      # Install HashiCorp Packer\n```\n\n### What's Included\n\n- **Software Installation Functions**: Docker, VS Code, kubectl, Azure CLI, and more\n- **HashiCorp Tools**: Packer, Terraform, Vault, Consul installation functions\n- **UI/Theme Setup**: Font and theme installation for GNOME\n- **Development Environment**: Git and shell configuration tools\n- **CLI Helper**: `pds` command for function discovery and management\n\n### Features\n\n✅ Auto-loading in interactive shells  \n✅ CLI helper for function discovery  \n✅ Opt-out support (`export PDS_DISABLE=1`)  \n✅ Comprehensive function library  \n✅ Easy installation and updates via APT  \n\n### Compatibility\n\n- Ubuntu 20.04, 22.04, 24.04\n- Debian 10, 11, 12\n- Any Debian-based distribution\n\n### Documentation\n\n- [Installation Guide](https://github.com/${{ github.repository }}/blob/main/packaging/README.md)\n- [Function Reference](https://github.com/${{ github.repository }}/blob/main/bash/debian/readme.md)\n- [Contributing](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)\n\nEOF\n"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -225,7 +146,6 @@ jobs:
           body_path: release-notes.md
           draft: false
           prerelease: false
-
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -236,15 +156,15 @@ jobs:
           asset_name: ${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb
           asset_content_type: application/vnd.debian.binary-package
 
-  # Optional: Auto-update APT repository
-  # deploy-repo:
-  #   name: Update APT Repository
-  #   runs-on: ubuntu-latest
-  #   needs: [version, release]
-  #   if: startsWith(github.ref, 'refs/tags/v')
-  #   steps:
-  #     - name: Deploy to APT repository
-  #       run: |
-  #         # Add your APT repository update logic here
-  #         # This could involve aptly, reprepro, or a hosted service API
-  #         echo "Would update APT repository here"
+# Optional: Auto-update APT repository
+# deploy-repo:
+#   name: Update APT Repository
+#   runs-on: ubuntu-latest
+#   needs: [version, release]
+#   if: startsWith(github.ref, 'refs/tags/v')
+#   steps:
+#     - name: Deploy to APT repository
+#       run: |
+#         # Add your APT repository update logic here
+#         # This could involve aptly, reprepro, or a hosted service API
+#         echo "Would update APT repository here"
