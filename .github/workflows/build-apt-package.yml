@@ -140,9 +140,12 @@ jobs:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./release
       - name: Generate release notes
-        # TODO: Fix this part of the workflow to be better, current handling is not prod ready.
-
-        run: "VERSION=\"${{ needs.version.outputs.semVer }}\"\ncat > release-notes.md << 'EOF'\n## PDS (Personal Development Scripts) v${{ needs.version.outputs.semVer }}\n\n### Installation\n\n#### Direct Installation\n```bash\n# Download and install\nwget https://github.com/${{ github.repository }}/releases/download/v${{ needs.version.outputs.semVer }}/${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb\nsudo dpkg -i ${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb\nsudo apt-get install -f\n```\n\n#### Usage\n```bash\n# Check installation\npds doctor\n\n# List available functions\npds list\n\n# Example usage\ninstall_docker      # Install Docker\ninstall_vscode      # Install VS Code\ninstall_packer      # Install HashiCorp Packer\n```\n\n### What's Included\n\n- **Software Installation Functions**: Docker, VS Code, kubectl, Azure CLI, and more\n- **HashiCorp Tools**: Packer, Terraform, Vault, Consul installation functions\n- **UI/Theme Setup**: Font and theme installation for GNOME\n- **Development Environment**: Git and shell configuration tools\n- **CLI Helper**: `pds` command for function discovery and management\n\n### Features\n\n✅ Auto-loading in interactive shells  \n✅ CLI helper for function discovery  \n✅ Opt-out support (`export PDS_DISABLE=1`)  \n✅ Comprehensive function library  \n✅ Easy installation and updates via APT  \n\n### Compatibility\n\n- Ubuntu 20.04, 22.04, 24.04\n- Debian 10, 11, 12\n- Any Debian-based distribution\n\n### Documentation\n\n- [Installation Guide](https://github.com/${{ github.repository }}/blob/main/packaging/README.md)\n- [Function Reference](https://github.com/${{ github.repository }}/blob/main/bash/debian/readme.md)\n- [Contributing](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)\n\nEOF\n"
+        run: |
+          # Use template file and substitute variables
+          sed -e "s/{{VERSION}}/${{ needs.version.outputs.semVer }}/g" \
+              -e "s/{{REPOSITORY}}/${{ github.repository }}/g" \
+              -e "s/{{PACKAGE_NAME}}/${{ env.PACKAGE_NAME }}/g" \
+              .github/templates/release-notes.md > release-notes.md
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
