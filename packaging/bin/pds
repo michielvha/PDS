@@ -1,0 +1,424 @@
+#!/bin/bash
+# PDS Functions CLI Helper
+# Usage: pds [command] [options]
+
+set -euo pipefail
+
+PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
+
+# Read version from file if available, fallback to default
+if [ -r "${PDS_LIB_DIR}/VERSION" ]; then
+    PDS_VERSION="$(cat "${PDS_LIB_DIR}/VERSION")"
+else
+    PDS_VERSION="dev"
+fi
+
+# Function to show help
+show_help() {
+    cat << 'EOF'
+PDS (Personal Development Scripts) CLI Helper
+
+USAGE:
+    pds <command> [options]
+
+COMMANDS:
+    help, -h, --help    Show this help message
+    list                List all available functions
+    info                Show PDS installation information
+    load                Manually load PDS functions in current shell
+    doctor              Check PDS installation health
+    search <term>       Search for functions containing term
+    show <function>     Show function source code
+
+FUNCTION CATEGORIES:
+    Software Installation:
+        install_docker, install_vscode, install_kubectl, etc.
+    
+    HashiCorp Tools:
+        install_hashicorp_product, install_packer
+    
+    UI/Theme Setup:
+        install_jetbrains_font, install_tokyonight_theme, setup_gnome_extras
+    
+    Shell Configuration:
+        install_ohmyzsh, configure_ohmyzsh, install_zsh_extensions
+
+EXAMPLES:
+    pds list                    # List all functions
+    pds search docker          # Find Docker-related functions
+    pds show install_docker    # Show install_docker function source
+    pds doctor                  # Check installation
+
+To disable auto-loading: export PDS_DISABLE=1
+To re-enable: unset PDS_DISABLE
+
+More info: https://github.com/michielvha/PDS
+EOF
+}
+
+# Function to list all available functions
+list_functions() {
+    echo "Available PDS Functions:"
+    echo "========================"
+    
+    if [ ! -d "$PDS_LIB_DIR" ]; then
+        echo "Error: PDS library directory not found: $PDS_LIB_DIR"
+        return 1
+    fi
+    
+    local category_count=0
+    
+    # List software functions
+    if [ -d "$PDS_LIB_DIR/software" ]; then
+        echo
+        echo "Category: Software Installation"
+        echo "------------------------------"
+        for script in "$PDS_LIB_DIR/software"/*.sh; do
+            if [ -f "$script" ]; then
+                local script_name
+                script_name=$(basename "$script" .sh)
+                echo "  $script_name"
+                
+                # Extract function names from this script
+                grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$script" | \
+                while IFS= read -r line; do
+                    local func_name
+                    func_name=$(echo "$line" | sed 's/[[:space:]]*\(\).*//' | xargs)
+                    printf "    %-25s\n" "$func_name"
+                done
+            fi
+        done
+        ((category_count++))
+    fi
+    
+    # List UI functions
+    if [ -d "$PDS_LIB_DIR/ui" ]; then
+        echo
+        echo "Category: UI/Theme Setup"
+        echo "-----------------------"
+        for script in "$PDS_LIB_DIR/ui"/*.sh; do
+            if [ -f "$script" ]; then
+                local script_name
+                script_name=$(basename "$script" .sh)
+                echo "  $script_name"
+                
+                # Extract function names from this script
+                grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$script" | \
+                while IFS= read -r line; do
+                    local func_name
+                    func_name=$(echo "$line" | sed 's/[[:space:]]*\(\).*//' | xargs)
+                    printf "    %-25s\n" "$func_name"
+                done
+            fi
+        done
+        ((category_count++))
+    fi
+    
+    # List deploy functions
+    if [ -d "$PDS_LIB_DIR/deploy" ]; then
+        echo
+        echo "Category: Deployment"
+        echo "-------------------"
+        for script in "$PDS_LIB_DIR/deploy"/*.sh; do
+            if [ -f "$script" ]; then
+                local script_name
+                script_name=$(basename "$script" .sh)
+                echo "  $script_name"
+                
+                # Extract function names from this script
+                grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$script" | \
+                while IFS= read -r line; do
+                    local func_name
+                    func_name=$(echo "$line" | sed 's/[[:space:]]*\(\).*//' | xargs)
+                    printf "    %-25s\n" "$func_name"
+                done
+            fi
+        done
+        ((category_count++))
+    fi
+    
+    echo
+    echo "Total categories: $category_count"
+}
+
+# Function to search for functions
+search_functions() {
+    local search_term="$1"
+    if [ -z "$search_term" ]; then
+        echo "Error: Please provide a search term"
+        return 1
+    fi
+    
+    echo "Searching for functions containing: $search_term"
+    echo "================================================"
+    
+    local found_any=false
+    
+    # Search in software directory
+    if [ -d "$PDS_LIB_DIR/software" ]; then
+        for script in "$PDS_LIB_DIR/software"/*.sh; do
+            if [ -f "$script" ]; then
+                local script_name
+                script_name=$(basename "$script" .sh)
+                
+                # Search in function names and comments
+                local matches
+                matches=$(grep -i -E "(function.*$search_term|$search_term.*\(\)|#.*$search_term)" "$script" || true)
+                
+                if [ -n "$matches" ]; then
+                    echo
+                    echo "In software/$script_name:"
+                    echo "$matches" | while IFS= read -r line; do
+                        echo "  $line"
+                    done
+                    found_any=true
+                fi
+            fi
+        done
+    fi
+    
+    # Search in UI directory
+    if [ -d "$PDS_LIB_DIR/ui" ]; then
+        for script in "$PDS_LIB_DIR/ui"/*.sh; do
+            if [ -f "$script" ]; then
+                local script_name
+                script_name=$(basename "$script" .sh)
+                
+                # Search in function names and comments
+                local matches
+                matches=$(grep -i -E "(function.*$search_term|$search_term.*\(\)|#.*$search_term)" "$script" || true)
+                
+                if [ -n "$matches" ]; then
+                    echo
+                    echo "In ui/$script_name:"
+                    echo "$matches" | while IFS= read -r line; do
+                        echo "  $line"
+                    done
+                    found_any=true
+                fi
+            fi
+        done
+    fi
+    
+    # Search in deploy directory
+    if [ -d "$PDS_LIB_DIR/deploy" ]; then
+        for script in "$PDS_LIB_DIR/deploy"/*.sh; do
+            if [ -f "$script" ]; then
+                local script_name
+                script_name=$(basename "$script" .sh)
+                
+                # Search in function names and comments
+                local matches
+                matches=$(grep -i -E "(function.*$search_term|$search_term.*\(\)|#.*$search_term)" "$script" || true)
+                
+                if [ -n "$matches" ]; then
+                    echo
+                    echo "In deploy/$script_name:"
+                    echo "$matches" | while IFS= read -r line; do
+                        echo "  $line"
+                    done
+                    found_any=true
+                fi
+            fi
+        done
+    fi
+    
+    if [ "$found_any" = false ]; then
+        echo "No matches found for: $search_term"
+    fi
+}
+
+# Function to show function source
+show_function() {
+    local func_name="$1"
+    if [ -z "$func_name" ]; then
+        echo "Error: Please provide a function name"
+        return 1
+    fi
+    
+    echo "Source code for function: $func_name"
+    echo "====================================="
+    
+    local found=false
+    
+    # Search in all directories
+    for dir in software ui deploy; do
+        if [ -d "$PDS_LIB_DIR/$dir" ]; then
+            for script in "$PDS_LIB_DIR/$dir"/*.sh; do
+                if [ -f "$script" ] && grep -q "^[[:space:]]*${func_name}[[:space:]]*(" "$script"; then
+                    local script_name
+                    script_name=$(basename "$script" .sh)
+                    echo "Found in $dir/$script_name"
+                    echo "File: $script"
+                    echo
+                    
+                    # Extract the function
+                    awk "/^[[:space:]]*${func_name}[[:space:]]*\(/,/^}/" "$script"
+                    found=true
+                    break 2
+                fi
+            done
+        fi
+    done
+    
+    if [ "$found" = false ]; then
+        echo "Function '$func_name' not found in any PDS library."
+        return 1
+    fi
+}
+
+# Function to check installation
+doctor_check() {
+    echo "PDS Installation Health Check"
+    echo "============================="
+    echo
+    
+    local issues=0
+    
+    # Check if init script exists
+    if [ -f /usr/share/pds/init.sh ]; then
+        echo "✅ Init script found: /usr/share/pds/init.sh"
+    else
+        echo "❌ Init script missing: /usr/share/pds/init.sh"
+        ((issues++))
+    fi
+    
+    # Check if profile.d script exists
+    if [ -f /etc/profile.d/pds.sh ]; then
+        echo "✅ Profile script found: /etc/profile.d/pds.sh"
+    else
+        echo "❌ Profile script missing: /etc/profile.d/pds.sh"
+        ((issues++))
+    fi
+    
+    # Check library directory
+    if [ -d "$PDS_LIB_DIR" ]; then
+        local software_count=0
+        local ui_count=0
+        local deploy_count=0
+        
+        if [ -d "$PDS_LIB_DIR/software" ]; then
+            software_count=$(find "$PDS_LIB_DIR/software" -name "*.sh" -type f | wc -l)
+        fi
+        if [ -d "$PDS_LIB_DIR/ui" ]; then
+            ui_count=$(find "$PDS_LIB_DIR/ui" -name "*.sh" -type f | wc -l)
+        fi
+        if [ -d "$PDS_LIB_DIR/deploy" ]; then
+            deploy_count=$(find "$PDS_LIB_DIR/deploy" -name "*.sh" -type f | wc -l)
+        fi
+        
+        echo "✅ Library directory found: $PDS_LIB_DIR"
+        echo "   - Software functions: $software_count"
+        echo "   - UI functions: $ui_count" 
+        echo "   - Deploy functions: $deploy_count"
+    else
+        echo "❌ Library directory missing: $PDS_LIB_DIR"
+        ((issues++))
+    fi
+    
+    # Check if functions are loaded
+    if declare -f install_docker >/dev/null 2>&1; then
+        echo "✅ Functions are loaded in current shell"
+    else
+        echo "⚠️  Functions not loaded in current shell (run 'source /usr/share/pds-funcs/init.sh')"
+    fi
+    
+    # Check environment variables
+    if [ -n "${PDS_DISABLE:-}" ]; then
+        echo "⚠️  PDS auto-loading is disabled (PDS_DISABLE=$PDS_DISABLE)"
+    else
+        echo "✅ PDS auto-loading is enabled"
+    fi
+    
+    echo
+    if [ $issues -eq 0 ]; then
+        echo "✅ PDS installation appears healthy!"
+    else
+        echo "❌ Found $issues issue(s). Consider reinstalling PDS package."
+        return 1
+    fi
+}
+
+# Function to manually load PDS
+load_pds() {
+    if [ -f /usr/share/pds/init.sh ]; then
+        # shellcheck disable=SC1091
+        source /usr/share/pds/init.sh
+        echo "✅ PDS functions loaded successfully!"
+    else
+        echo "❌ PDS init script not found. Is PDS installed?"
+        return 1
+    fi
+}
+
+# Function to show info
+show_info() {
+    echo "PDS (Personal Development Scripts) v${PDS_VERSION}"
+    echo "================================================="
+    echo "Installation path: /usr/share/pds/"
+    echo "Library path: $PDS_LIB_DIR"
+    echo "Profile script: /etc/profile.d/pds.sh"
+    echo
+    echo "GitHub: https://github.com/michielvha/PDS"
+    echo
+    if [ -d "$PDS_LIB_DIR" ]; then
+        local software_count=0
+        local ui_count=0
+        local deploy_count=0
+        
+        if [ -d "$PDS_LIB_DIR/software" ]; then
+            software_count=$(find "$PDS_LIB_DIR/software" -name "*.sh" -type f | wc -l)
+        fi
+        if [ -d "$PDS_LIB_DIR/ui" ]; then
+            ui_count=$(find "$PDS_LIB_DIR/ui" -name "*.sh" -type f | wc -l)
+        fi
+        if [ -d "$PDS_LIB_DIR/deploy" ]; then
+            deploy_count=$(find "$PDS_LIB_DIR/deploy" -name "*.sh" -type f | wc -l)
+        fi
+        
+        echo "Installed function categories:"
+        echo "  - Software: $software_count functions"
+        echo "  - UI: $ui_count functions"
+        echo "  - Deploy: $deploy_count functions"
+    fi
+}
+
+# Main command handling
+case "${1:-help}" in
+    help|-h|--help)
+        show_help
+        ;;
+    list)
+        list_functions
+        ;;
+    info)
+        show_info
+        ;;
+    load)
+        load_pds
+        ;;
+    doctor)
+        doctor_check
+        ;;
+    search)
+        if [ $# -lt 2 ]; then
+            echo "Error: search requires a search term"
+            echo "Usage: pds search <term>"
+            exit 1
+        fi
+        search_functions "$2"
+        ;;
+    show)
+        if [ $# -lt 2 ]; then
+            echo "Error: show requires a function name"
+            echo "Usage: pds show <function_name>"
+            exit 1
+        fi
+        show_function "$2"
+        ;;
+    *)
+        echo "Unknown command: $1"
+        echo "Run 'pds help' for usage information."
+        exit 1
+        ;;
+esac
