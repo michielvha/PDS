@@ -331,7 +331,7 @@ doctor_check() {
     fi
     
     echo
-    if [ $issues -eq 0 ]; then
+    if [ "$issues" -eq 0 ]; then
         echo "✅ PDS installation appears healthy!"
     else
         echo "❌ Found $issues issue(s). Consider reinstalling PDS package."

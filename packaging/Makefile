@@ -54,7 +54,7 @@ test: build ## Test the package installation in a Docker container
 lint: ## Run shellcheck on all scripts
 	@echo "Running shellcheck on scripts..."
 	@find ../bash/debian -name "*.sh" -exec shellcheck {} \; || true
-	@shellcheck init.sh bin/pds profile.d/pds-funcs.sh scripts/*.sh
+	@shellcheck init.sh bin/pds profile.d/pds.sh scripts/*.sh
 	@echo "✅ Linting completed"
 
 validate: ## Validate package configuration
