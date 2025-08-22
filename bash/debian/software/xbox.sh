@@ -7,9 +7,9 @@
 install_xbox_controller() {
     echo "📦 installing xbox controller support"
     git clone https://github.com/dlundqvist/xone
-    cd xone
+    cd xone || exit
     sudo ./install.sh
-    cd install
+    cd install || exit
     chmod +x firmware.sh
     sudo ./firmware.sh
 
@@ -117,8 +117,8 @@ fix_xbox_pairing() {
         return 1
     fi
     
-    BUS=$(echo $XBOX_USB | awk '{print $2}')
-    DEVICE=$(echo $XBOX_USB | awk '{print $4}' | sed 's/://')
+    BUS=$(echo "$XBOX_USB" | awk '{print $2}')
+    DEVICE=$(echo "$XBOX_USB" | awk '{print $4}' | sed 's/://')
     
     echo "📋 Found Xbox adapter on Bus $BUS Device $DEVICE"
     
