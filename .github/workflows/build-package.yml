@@ -72,7 +72,9 @@ jobs:
           cd packaging
           sed -i "s/version: .*/version: $VERSION/" nfpm.yaml
           sed -i "s/VERSION := .*/VERSION := $VERSION/" Makefile
-          sed -i "s/PDS_VERSION=.*/PDS_VERSION=\"$VERSION\"/" init.sh bin/pds
+          # Create VERSION file for runtime version detection
+          mkdir -p usr/share/pds-funcs
+          echo "$VERSION" > usr/share/pds-funcs/VERSION
 
       - name: Build package
         run: |
