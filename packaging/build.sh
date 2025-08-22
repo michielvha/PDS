@@ -140,8 +140,10 @@ build_package() {
     if nfpm pkg --packager deb --config nfpm.yaml --target "$DIST_DIR/"; then
         log_success "Package built successfully"
         
-        # Show package info
-        local package_file="$DIST_DIR/${PACKAGE_NAME}_${VERSION}_all.deb"
+        # Find the actual package file created
+        local package_file
+        package_file=$(find "$DIST_DIR" -name "${PACKAGE_NAME}_*.deb" -type f | head -1)
+        
         if [[ -f "$package_file" ]]; then
             local size
             size=$(du -h "$package_file" | cut -f1)
@@ -154,6 +156,8 @@ build_package() {
             if [[ $(dpkg-deb -c "$package_file" | wc -l) -gt 20 ]]; then
                 echo "  ... and more files"
             fi
+        else
+            log_warning "Package file not found for display"
         fi
     else
         log_error "Package build failed"
@@ -219,7 +223,16 @@ test_installation() {
     log_info "Testing package installation..."
     
     if command -v docker &> /dev/null; then
-        local package_file="$DIST_DIR/${PACKAGE_NAME}_${VERSION}_all.deb"
+        # Find the actual package file (nfpm may change the filename format)
+        local package_file
+        package_file=$(find "$DIST_DIR" -name "${PACKAGE_NAME}_*.deb" -type f | head -1)
+        
+        if [[ ! -f "$package_file" ]]; then
+            log_error "No package file found in $DIST_DIR"
+            exit 1
+        fi
+        
+        log_info "Testing package: $(basename "$package_file")"
         
         # Test in clean Ubuntu container
         if docker run --rm -v "$DIST_DIR:/packages" ubuntu:22.04 /bin/bash -c "
