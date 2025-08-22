@@ -5,8 +5,17 @@ permissions:
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '*.md'
+      - '.gitignore'
+      - '.github/workflows/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '*.md'
+      - '.gitignore'
+      - '.github/workflows/**'
+
 env:
   PACKAGE_NAME: pds-funcs
 jobs:

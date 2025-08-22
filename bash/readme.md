@@ -1,5 +1,9 @@
 # Bash module
 
+## TODO
+
+- Create a wrapper function to determine which distro we use and which architecture we are on. because this is required by so many of the install functions it seems only right we wrap it instead of implementing it in each script where it is required
+
 ## Architecture
 
 The PDS Bash module is designed to provide an extensible and organized file structure for managing a wide range of Bash functions. These functions are tailored to streamline the setup and configuration of development environments, making it easier for developers and system administrators to automate repetitive tasks and maintain consistency across systems.
