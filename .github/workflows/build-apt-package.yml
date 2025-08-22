@@ -8,13 +8,11 @@ on:
     paths-ignore:
       - '*.md'
       - '.gitignore'
-      - '.github/workflows/**'
   pull_request:
     branches: [main]
     paths-ignore:
       - '*.md'
       - '.gitignore'
-      - '.github/workflows/**'
 
 env:
   PACKAGE_NAME: pds-funcs
@@ -150,7 +148,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
+          tag_name: v${{ needs.version.outputs.semVer }}
           release_name: PDS v${{ needs.version.outputs.semVer }}
           body_path: release-notes.md
           draft: false

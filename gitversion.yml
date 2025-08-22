@@ -9,6 +9,13 @@ strategies:
 - TrackReleaseBranches   # this ensures that commits from release branches are tracked and included in the versioning process.
 - VersionInBranchName
 
+# Custom version bump messages
+major-version-bump-message: '(BREAKING CHANGE|^[a-z]+(\([^)]+\))?!: )'
+minor-version-bump-message: '^feat(\([^)]+\))?: '
+patch-version-bump-message: '^(fix|perf|refactor|revert)(\([^)]+\))?: '
+no-bump-message: '^(chore|docs|style|test|ci)(\([^)]+\))?: '
+commit-message-incrementing: MergeMessageOnly # Only commit message is taking into account, history in PR is ignored, seems best for terraform IMO
+
 branches:
   main:
     regex: ^master$|^main$
