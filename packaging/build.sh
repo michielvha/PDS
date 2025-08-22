@@ -195,9 +195,18 @@ validate_package() {
         "./usr/bin/pds"
     )
     
+    log_info "Checking package contents..."
+    local package_contents
+    if ! package_contents=$(dpkg-deb -c "$package_file" 2>&1); then
+        log_error "Failed to read package contents: $package_contents"
+        exit 1
+    fi
+    
     for file in "${required_files[@]}"; do
-        if ! dpkg-deb -c "$package_file" | grep -q "$file"; then
+        if ! echo "$package_contents" | grep -q "$file"; then
             log_error "Required file missing from package: $file"
+            log_info "Package contents:"
+            echo "$package_contents" | head -20
             exit 1
         fi
     done
