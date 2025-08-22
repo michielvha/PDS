@@ -1,4 +1,4 @@
-name: Build PDS Package
+name: Build PDS apt Package
 permissions:
   id-token: write
   contents: write
