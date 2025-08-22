@@ -6,16 +6,27 @@
 ubuntu_postdeployment() {
 	echo "🔤 Running ubuntu postdeployment function for customizing the OS according to my preferences"
 
+	# shellcheck disable=SC1090 # Dynamic sourcing from remote URLs is intentional
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/install_jetbrains_font.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/set_gnome_fonts.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/ui/setup_gnome_extras.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_vscode.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_zen.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_azcli.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_lens.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/shell/zsh.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/system/install_docker.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/software/go.sh)
+	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_kubectl.sh)
 
 
