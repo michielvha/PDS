@@ -2,7 +2,7 @@ name: pds-funcs
 version: 1.0.0
 section: utils
 priority: optional
-maintainer: Michiel van Hoof <michiel@michielvh.nl>
+maintainer: Michiel VH <it.mvha@gmail.com>
 description: |
   PDS (Personal Development Scripts) - Debian function library
   A comprehensive collection of Bash functions for software installation,
@@ -75,4 +75,4 @@ scripts:
 
 # Package metadata
 homepage: https://github.com/michielvha/PDS
-vendor: Michiel van Hoof
+vendor: Michiel VH
