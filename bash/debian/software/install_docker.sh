@@ -15,6 +15,7 @@ install_docker() {
 	sudo chmod a+r /etc/apt/keyrings/docker.asc
 
 	# Add the repository to Apt sources:
+	# shellcheck disable=SC1091 # /etc/os-release is a system file and always present
 	echo \
 	"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
 	$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
