@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # Set default library directory (this will contain your bash/debian structure)
-PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds-funcs}"
+PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
 # Read version from file if available, fallback to default
 if [ -r "${PDS_LIB_DIR}/VERSION" ]; then
     PDS_VERSION="$(cat "${PDS_LIB_DIR}/VERSION")"

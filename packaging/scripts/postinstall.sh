@@ -9,13 +9,13 @@ echo
 echo "✅ PDS functions have been installed successfully!"
 echo
 echo "📂 Functions are available in:"
-echo "   • Software installation: /usr/share/pds-funcs/software/"
-echo "   • UI/Theme setup: /usr/share/pds-funcs/ui/"
-echo "   • Deployment: /usr/share/pds-funcs/deploy/"
+echo "   • Software installation: /usr/share/pds/software/"
+echo "   • UI/Theme setup: /usr/share/pds/ui/"
+echo "   • Deployment: /usr/share/pds/deploy/"
 echo
 echo "🔧 Usage:"
 echo "   • Open a new shell to auto-load functions"
-echo "   • Or run: source /usr/share/pds-funcs/init.sh"
+echo "   • Or run: source /usr/share/pds/init.sh"
 echo "   • Use 'pds help' to see available commands"
 echo "   • Use 'pds list' to see all functions"
 echo

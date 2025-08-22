@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds-funcs}"
+PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
 
 # Read version from file if available, fallback to default
 if [ -r "${PDS_LIB_DIR}/VERSION" ]; then
@@ -276,18 +276,18 @@ doctor_check() {
     local issues=0
     
     # Check if init script exists
-    if [ -f /usr/share/pds-funcs/init.sh ]; then
-        echo "✅ Init script found: /usr/share/pds-funcs/init.sh"
+    if [ -f /usr/share/pds/init.sh ]; then
+        echo "✅ Init script found: /usr/share/pds/init.sh"
     else
-        echo "❌ Init script missing: /usr/share/pds-funcs/init.sh"
+        echo "❌ Init script missing: /usr/share/pds/init.sh"
         ((issues++))
     fi
     
     # Check if profile.d script exists
-    if [ -f /etc/profile.d/pds-funcs.sh ]; then
-        echo "✅ Profile script found: /etc/profile.d/pds-funcs.sh"
+    if [ -f /etc/profile.d/pds.sh ]; then
+        echo "✅ Profile script found: /etc/profile.d/pds.sh"
     else
-        echo "❌ Profile script missing: /etc/profile.d/pds-funcs.sh"
+        echo "❌ Profile script missing: /etc/profile.d/pds.sh"
         ((issues++))
     fi
     
@@ -341,9 +341,9 @@ doctor_check() {
 
 # Function to manually load PDS
 load_pds() {
-    if [ -f /usr/share/pds-funcs/init.sh ]; then
+    if [ -f /usr/share/pds/init.sh ]; then
         # shellcheck disable=SC1091
-        source /usr/share/pds-funcs/init.sh
+        source /usr/share/pds/init.sh
         echo "✅ PDS functions loaded successfully!"
     else
         echo "❌ PDS init script not found. Is PDS installed?"
@@ -355,9 +355,9 @@ load_pds() {
 show_info() {
     echo "PDS (Personal Development Scripts) v${PDS_VERSION}"
     echo "================================================="
-    echo "Installation path: /usr/share/pds-funcs/"
+    echo "Installation path: /usr/share/pds/"
     echo "Library path: $PDS_LIB_DIR"
-    echo "Profile script: /etc/profile.d/pds-funcs.sh"
+    echo "Profile script: /etc/profile.d/pds.sh"
     echo
     echo "GitHub: https://github.com/michielvha/PDS"
     echo

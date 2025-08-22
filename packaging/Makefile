@@ -1,7 +1,7 @@
 .PHONY: build clean install test help
 
 # Package configuration
-PACKAGE_NAME := pds-funcs
+PACKAGE_NAME := pds
 VERSION := 1.0.0
 ARCH := all
 DIST_DIR := dist

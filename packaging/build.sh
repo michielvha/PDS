@@ -5,7 +5,7 @@ set -euo pipefail
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-PACKAGE_NAME="pds-funcs"
+PACKAGE_NAME="pds"
 VERSION="${VERSION:-1.0.0}"
 DIST_DIR="$SCRIPT_DIR/dist"
 
@@ -199,9 +199,9 @@ validate_package() {
     
     # Check for required files in package
     local required_files=(
-        "./usr/share/pds-funcs/init.sh"
-        "./usr/share/pds-funcs/VERSION"
-        "./etc/profile.d/pds-funcs.sh"
+        "./usr/share/pds/init.sh"
+        "./usr/share/pds/VERSION"
+        "./etc/profile.d/pds.sh"
         "./usr/bin/pds"
     )
     
