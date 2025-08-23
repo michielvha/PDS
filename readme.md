@@ -1,4 +1,4 @@
-# Personal Deploy Script
+# Portable Deploy Suite
 
 This repository contains all my deployment functions and documentation, supporting both **Windows** (`pwsh`), **linux** `bash` and **macOS** (`darwin`).
 

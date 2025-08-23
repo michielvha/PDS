@@ -1,4 +1,4 @@
-## PDS (Personal Development Scripts) v{{VERSION}}
+## PDS (Portable Deploy Suite) v{{VERSION}}
 
 ### Installation
 
@@ -26,8 +26,7 @@ install_packer      # Install HashiCorp Packer
 
 ### What's Included
 
-- **Software Installation Functions**: Docker, VS Code, kubectl, Azure CLI, and more
-- **HashiCorp Tools**: Packer, Terraform, Vault, Consul installation functions
+- **Software Installation Functions**: Docker, VS Code, kubectl, Azure CLI, HashiCorp tools and more
 - **UI/Theme Setup**: Font and theme installation for GNOME
 - **Development Environment**: Git and shell configuration tools
 - **CLI Helper**: `pds` command for function discovery and management
