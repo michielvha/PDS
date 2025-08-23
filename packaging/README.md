@@ -156,38 +156,6 @@ sudo apt update
 sudo apt install pds-funcs
 ```
 
-## Automation with CI/CD
-
-Example GitHub Actions workflow:
-
-```yaml
-name: Build and Publish Package
-on:
-  push:
-    tags: ['v*']
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install nfpm
-        run: |
-          wget https://github.com/goreleaser/nfpm/releases/download/v2.32.0/nfpm_amd64.deb
-          sudo dpkg -i nfpm_amd64.deb
-          
-      - name: Build package
-        run: |
-          cd packaging
-          make build
-          
-      - name: Upload to repository
-        run: |
-          # Upload to your APT repository
-          # This depends on your chosen hosting solution
-```
-
 ## Function Categories
 
 ### Software Installation (`software/`)
@@ -208,15 +176,6 @@ jobs:
 
 ### Deployment (`deploy/`)
 - `postdeployment.sh` - Post-deployment configuration scripts
-
-## Benefits Over Raw GitHub Sourcing
-
-✅ **Security**: GPG-signed packages, no network sourcing in shells  
-✅ **Reliability**: Local files, works offline, no network dependencies  
-✅ **Versioning**: Proper semantic versioning with rollback capability  
-✅ **Fleet Management**: Easy deployment across multiple systems  
-✅ **Trust**: Auditable, reproducible installations  
-✅ **Integration**: Works with existing APT workflows and automation  
 
 ## Troubleshooting
 
@@ -246,7 +205,3 @@ jobs:
 - Run `pds doctor` to check installation
 - Check `/var/log/dpkg.log` for installation issues
 - Visit [GitHub Issues](https://github.com/michielvha/PDS/issues)
-
-## License
-
-MIT License - see LICENSE file for details.
