@@ -1,6 +1,6 @@
 # PDS APT Package
 
-This directory contains the packaging configuration to build PDS (Personal Development Scripts) as a proper Debian/Ubuntu APT package.
+This directory contains the packaging configuration to build PDS (Portable Deploy Suite) as a proper Debian/Ubuntu APT package.
 
 ## Overview
 
