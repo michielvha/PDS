@@ -5,11 +5,17 @@ permissions:
 on:
   push:
     branches: [main]
+    paths:
+      - packaging/**
+      - bash/debian   # TODO: include more than just this path when we support multi distro
     paths-ignore:
       - '*.md'
       - '.gitignore'
   pull_request:
     branches: [main]
+    paths:
+      - packaging/**
+      - bash/debian   # same here
     paths-ignore:
       - '*.md'
       - '.gitignore'
