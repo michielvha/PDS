@@ -13,17 +13,15 @@ on:
       - main
     paths:
       - 'pwsh/scripts/**'
-    paths-ignore:
-      - '*.md'
-      - '.gitignore'
+      - '!**/*.md'
+      - '!.gitignore'
   pull_request:
     branches:
       - main
     paths:
       - 'pwsh/scripts/**'
-    paths-ignore:
-      - '*.md'
-      - '.gitignore'
+      - '!**/*.md'
+      - '!.gitignore'
 
 jobs:
   build:

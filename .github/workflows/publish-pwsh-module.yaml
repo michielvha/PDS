@@ -10,17 +10,15 @@ on:
       - main
     paths:
       - 'pwsh/module/**'
-    paths-ignore:
-      - '*.md'
-      - '.gitignore'
+      - '!**/*.md'
+      - '!.gitignore'
   pull_request:
     branches:
       - main
     paths:
       - 'pwsh/module/**'
-    paths-ignore:
-      - '*.md'
-      - '.gitignore'
+      - '!**/*.md'
+      - '!.gitignore'
 jobs:
   publish:
     runs-on: windows-latest
