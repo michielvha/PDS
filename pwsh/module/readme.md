@@ -11,8 +11,6 @@ here we need to create the docs for the module we created, define all the functi
 - Do some research about useful modules
 - take inspiration from past works. => Go Through/Cleanup all old scripts, add to github, ... **CLEANUP**
 
-### TODO: 
-
 #### Implement these useful functions into module
 
 - set aliases, docker compose up -d (dcu) & docker compose down (dcd)
@@ -32,7 +30,7 @@ here we need to create the docs for the module we created, define all the functi
 - add testing of functions using [Pester](https://github.com/PowerShell/PowerShell/tree/master/test/powershell)
   - also maybe add to pipeline
 
-## Done
+<!-- ## Done
 
 - Enable longpaths support in registry.
 
@@ -52,6 +50,7 @@ here we need to create the docs for the module we created, define all the functi
     New-ModuleManifest -Path PDS.psd1 -FunctionsToExport '*' -Author "MKTHEPLUGG" -Description 'Personal Deploy Script' -CompanyName 'meti.pro'
     ````
 
+-->
 
 ### Reference
 
