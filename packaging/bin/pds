@@ -74,27 +74,25 @@ list_functions() {
         echo "Platform: Debian"
         echo "================"
         
+        # List all subdirectories in debian
         for category_dir in "$PDS_LIB_DIR/debian"/*; do
             if [ -d "$category_dir" ]; then
-                local category_name
+                local category_name script_count
                 category_name=$(basename "$category_dir")
-                
-                local script_count
                 script_count=$(find "$category_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
                 
                 if [ "$script_count" -gt 0 ]; then
                     echo
-                    echo "Category: $(echo "${category_name^}" | sed 's/_/ /g')"
+                    echo "Category: $category_name"
                     echo "$(printf -- '-%.0s' $(seq 1 $((${#category_name} + 10))))"
                     
+                    # List all scripts in this category
                     for script in "$category_dir"/*.sh; do
                         if [ -f "$script" ]; then
-                            local script_name
-                            script_name=$(basename "$script" .sh)
-                            echo "  $script_name"
+                            echo "  $(basename "$script" .sh)"
                         fi
                     done
-                    ((category_count++))
+                    category_count=$((category_count + 1))
                 fi
             fi
         done
@@ -106,27 +104,25 @@ list_functions() {
         echo "Platform: Common"
         echo "================"
         
+        # List all subdirectories in common
         for category_dir in "$PDS_LIB_DIR/common"/*; do
             if [ -d "$category_dir" ]; then
-                local category_name
+                local category_name script_count
                 category_name=$(basename "$category_dir")
-                
-                local script_count
                 script_count=$(find "$category_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
                 
                 if [ "$script_count" -gt 0 ]; then
                     echo
-                    echo "Category: $(echo "${category_name^}" | sed 's/_/ /g')"
+                    echo "Category: $category_name"
                     echo "$(printf -- '-%.0s' $(seq 1 $((${#category_name} + 10))))"
                     
+                    # List all scripts in this category
                     for script in "$category_dir"/*.sh; do
                         if [ -f "$script" ]; then
-                            local script_name
-                            script_name=$(basename "$script" .sh)
-                            echo "  $script_name"
+                            echo "  $(basename "$script" .sh)"
                         fi
                     done
-                    ((category_count++))
+                    category_count=$((category_count + 1))
                 fi
             fi
         done
@@ -161,7 +157,6 @@ search_functions() {
                         local script_name
                         script_name=$(basename "$script" .sh)
                         
-                        # Search in function names and comments
                         local matches
                         matches=$(grep -i -E "(function.*$search_term|$search_term.*\(\)|#.*$search_term)" "$script" 2>/dev/null || true)
                         
@@ -191,7 +186,6 @@ search_functions() {
                         local script_name
                         script_name=$(basename "$script" .sh)
                         
-                        # Search in function names and comments
                         local matches
                         matches=$(grep -i -E "(function.*$search_term|$search_term.*\(\)|#.*$search_term)" "$script" 2>/dev/null || true)
                         
@@ -242,7 +236,6 @@ show_function() {
                         echo "File: $script"
                         echo
                         
-                        # Extract the function
                         awk "/^[[:space:]]*${func_name}[[:space:]]*\(/,/^}/" "$script"
                         found=true
                         break 3
@@ -267,7 +260,6 @@ show_function() {
                         echo "File: $script"
                         echo
                         
-                        # Extract the function
                         awk "/^[[:space:]]*${func_name}[[:space:]]*\(/,/^}/" "$script"
                         found=true
                         break 3
@@ -329,16 +321,14 @@ doctor_check() {
         ((issues++))
     fi
     
-    # Check if functions are loaded - try a few common function names
-    local test_functions=("detect_distro" "detect_platform" "install_go" "install_aws_cli" "docker_command" "install_packer")
+    # Check if functions are loaded - try some common function names
     local functions_loaded=false
     
-    for func in "${test_functions[@]}"; do
-        if declare -f "$func" >/dev/null 2>&1; then
-            functions_loaded=true
-            break
-        fi
-    done
+    # Check for functions that should exist
+    if declare -f detect_distro >/dev/null 2>&1 || \
+       declare -f install_docker >/dev/null 2>&1; then
+        functions_loaded=true
+    fi
     
     if [ "$functions_loaded" = true ]; then
         echo "✅ Functions are loaded in current shell"
