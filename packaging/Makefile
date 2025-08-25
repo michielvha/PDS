@@ -53,7 +53,7 @@ test: build ## Test the package installation in a Docker container
 
 lint: ## Run shellcheck on all scripts
 	@echo "Running shellcheck on scripts..."
-	@find ../bash/debian -name "*.sh" -exec shellcheck {} \; || true
+	@find ../bash -name "*.sh" -exec shellcheck {} \; || true
 	@shellcheck init.sh bin/pds profile.d/pds.sh scripts/*.sh
 	@echo "✅ Linting completed"
 
@@ -70,7 +70,22 @@ info: ## Show package information
 	@echo "Architecture: $(ARCH)"
 	@echo "Build directory: $(DIST_DIR)"
 	@echo "Source functions:"
-	@find ../bash/debian -name "*.sh" -type f | wc -l | xargs echo "  Total scripts:"
-	@find ../bash/debian/software -name "*.sh" -type f 2>/dev/null | wc -l | xargs echo "  Software scripts:"
-	@find ../bash/debian/ui -name "*.sh" -type f 2>/dev/null | wc -l | xargs echo "  UI scripts:"
-	@find ../bash/debian/deploy -name "*.sh" -type f 2>/dev/null | wc -l | xargs echo "  Deploy scripts:"
+	@find ../bash -name "*.sh" -type f | wc -l | xargs echo "  Total scripts:"
+	@if [ -d ../bash/debian ]; then \
+		find ../bash/debian -name "*.sh" -type f | wc -l | xargs echo "  Debian scripts:"; \
+		for dir in $$(find ../bash/debian -mindepth 1 -type d 2>/dev/null); do \
+			count=$$(find "$$dir" -maxdepth 1 -name "*.sh" -type f | wc -l); \
+			if [ "$$count" -gt 0 ]; then \
+				echo "    $$(basename $$dir): $$count scripts"; \
+			fi; \
+		done; \
+	fi
+	@if [ -d ../bash/common ]; then \
+		find ../bash/common -name "*.sh" -type f | wc -l | xargs echo "  Common scripts:"; \
+		for dir in $$(find ../bash/common -mindepth 1 -type d 2>/dev/null); do \
+			count=$$(find "$$dir" -maxdepth 1 -name "*.sh" -type f | wc -l); \
+			if [ "$$count" -gt 0 ]; then \
+				echo "    $$(basename $$dir): $$count scripts"; \
+			fi; \
+		done; \
+	fi
