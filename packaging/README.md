@@ -120,6 +120,27 @@ The package is configured in `nfpm.yaml`:
 
 ## Distribution
 
+### Docker Container (Recommended)
+
+The easiest way to host your APT repository is using the provided Docker container:
+
+```bash
+# Pull and run the container
+docker run -d \
+  --name pds-apt-repo \
+  -p 8080:80 \
+  your-username/pds-apt-repo:latest
+
+# Add repository to your system
+curl -fsSL http://localhost:8080/pds-repo.gpg | sudo tee /usr/share/keyrings/pds-repo.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/pds-repo.gpg] http://localhost:8080/apt/ stable main" | sudo tee /etc/apt/sources.list.d/pds-repo.list
+
+# Install PDS
+sudo apt update && sudo apt install pds
+```
+
+See [DOCKER.md](./DOCKER.md) for detailed Docker documentation.
+
 ### Setting Up Your Own APT Repository
 
 1. **Using aptly** (recommended for self-hosting):
