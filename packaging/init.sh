@@ -35,9 +35,8 @@ pds_info() {
     if [ -d "${PDS_LIB_DIR}/debian" ]; then
         echo "  Debian-specific:"
         while IFS= read -r -d '' subdir; do
-            local category
+            local category count
             category=$(basename "$subdir")
-            local count
             count=$(find "$subdir" -maxdepth 1 -name "*.sh" -type f | wc -l)
             if [ "$count" -gt 0 ]; then
                 echo "    - $category: $count functions"
@@ -49,9 +48,8 @@ pds_info() {
     if [ -d "${PDS_LIB_DIR}/common" ]; then
         echo "  Common (cross-platform):"
         while IFS= read -r -d '' subdir; do
-            local category
+            local category count
             category=$(basename "$subdir")
-            local count
             count=$(find "$subdir" -maxdepth 1 -name "*.sh" -type f | wc -l)
             if [ "$count" -gt 0 ]; then
                 echo "    - $category: $count functions"
@@ -62,26 +60,27 @@ pds_info() {
 
 # Load all library files recursively from debian and common directories
 if [ -d "$PDS_LIB_DIR" ]; then
-    # Define the main directories to load from
-    main_dirs=("$PDS_LIB_DIR/debian" "$PDS_LIB_DIR/common")
+    # Load files from debian directory
+    if [ -d "$PDS_LIB_DIR/debian" ]; then
+        while IFS= read -r -d '' lib_file; do
+            pds_source_file "$lib_file"
+        done < <(find "$PDS_LIB_DIR/debian" -name "*.sh" -type f -print0)
+    fi
     
-    for main_dir in "${main_dirs[@]}"; do
-        if [ -d "$main_dir" ]; then
-            # Load all .sh files recursively from this directory
-            while IFS= read -r -d '' lib_file; do
-                pds_source_file "$lib_file"
-            done < <(find "$main_dir" -name "*.sh" -type f -print0)
-        fi
-    done
-    
-    # Clean up the temporary variable
-    unset main_dirs main_dir
+    # Load files from common directory
+    if [ -d "$PDS_LIB_DIR/common" ]; then
+        while IFS= read -r -d '' lib_file; do
+            pds_source_file "$lib_file"
+        done < <(find "$PDS_LIB_DIR/common" -name "*.sh" -type f -print0)
+    fi
 else
     echo "Warning: PDS library directory not found: $PDS_LIB_DIR" >&2
 fi
 
 # Clean up variables
-unset lib_file PDS_LIB_DIR
+unset lib_file
 
-# Export helper function
-export -f pds_info 2>/dev/null || true
+# Export helper function safely
+if declare -F pds_info >/dev/null 2>&1; then
+    export -f pds_info 2>/dev/null || true
+fi

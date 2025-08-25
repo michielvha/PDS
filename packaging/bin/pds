@@ -320,7 +320,7 @@ doctor_check() {
     if declare -f install_docker >/dev/null 2>&1; then
         echo "✅ Functions are loaded in current shell"
     else
-        echo "⚠️  Functions not loaded in current shell (run 'source /usr/share/pds-funcs/init.sh')"
+        echo "⚠️  Functions not loaded in current shell (run 'source /usr/share/pds/init.sh')"
     fi
     
     # Check environment variables
