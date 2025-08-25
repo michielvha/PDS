@@ -77,3 +77,24 @@ set_fractional_scaling() {
         echo "This script is intended for Wayland sessions only."
     fi
 }
+
+
+# Function: restricted_ssh_security_profile
+# Description: Enable restricted security profile for SSH
+# NIS2 Compliance: Implements cybersecurity risk management measures as required by
+#                  EU Directive 2022/2555 (NIS2), specifically:
+#                  - Article 21(2)(g): Basic cyber hygiene practices
+#                  - Article 21(2)(i): Access control policies and human resources security
+# Note: For full NIS2 compliance, consider implementing MFA on top of these settings
+# References: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022L2555
+function restricted_ssh_security_profile() {
+  # Disable password authentication and root login, enable public key authentication.
+  # These configurations reduce attack surface and implement stronger authentication
+  # mechanisms aligned with NIS2 cybersecurity requirements for critical infrastructure.
+  sudo sed -i -E '
+      s/^#?PasswordAuthentication yes/PasswordAuthentication no/
+      s/^#?PermitRootLogin prohibit-password/PermitRootLogin no/
+      s/^#?PubkeyAuthentication yes/PubkeyAuthentication yes/
+  ' /etc/ssh/sshd_config
+  echo "🔒 Restricted SSH security profile will be applied on next login."
+}
