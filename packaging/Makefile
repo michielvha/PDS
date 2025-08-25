@@ -15,6 +15,12 @@ help: ## Show this help message
 build: clean ## Build the .deb package
 	@echo "Building $(PACKAGE_NAME) v$(VERSION)..."
 	@mkdir -p $(DIST_DIR)
+	@mkdir -p usr/share/pds
+	@# Create VERSION file if it doesn't exist (for local builds)
+	@if [ ! -f usr/share/pds/VERSION ]; then \
+		echo "$(VERSION)" > usr/share/pds/VERSION; \
+		echo "Created temporary VERSION file for local build"; \
+	fi
 	@chmod +x scripts/postinstall.sh scripts/preremove.sh
 	@chmod +x bin/pds
 	@nfpm pkg --packager deb --config nfpm.yaml --target $(DIST_DIR)/
@@ -23,6 +29,13 @@ build: clean ## Build the .deb package
 clean: ## Clean build artifacts
 	@echo "Cleaning build artifacts..."
 	@rm -rf $(DIST_DIR)
+	@# Remove temporary VERSION file if it exists
+	@if [ -f usr/share/pds/VERSION ]; then \
+		rm -f usr/share/pds/VERSION; \
+		rmdir usr/share/pds 2>/dev/null || true; \
+		rmdir usr/share 2>/dev/null || true; \
+		rmdir usr 2>/dev/null || true; \
+	fi
 	@echo "✅ Cleaned"
 
 install: build ## Install the package locally (requires sudo)
