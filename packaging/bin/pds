@@ -84,7 +84,8 @@ list_functions() {
                 if [ "$script_count" -gt 0 ]; then
                     echo
                     echo "Category: $category_name"
-                    echo "$(printf -- '-%.0s' $(seq 1 $((${#category_name} + 10))))"
+                    printf -- '-%.0s' $(seq 1 $((${#category_name} + 10)))
+                    echo
                     
                     # List all scripts in this category
                     for script in "$category_dir"/*.sh; do
@@ -114,7 +115,8 @@ list_functions() {
                 if [ "$script_count" -gt 0 ]; then
                     echo
                     echo "Category: $category_name"
-                    echo "$(printf -- '-%.0s' $(seq 1 $((${#category_name} + 10))))"
+                    printf -- '-%.0s' $(seq 1 $((${#category_name} + 10)))
+                    echo
                     
                     # List all scripts in this category
                     for script in "$category_dir"/*.sh; do
