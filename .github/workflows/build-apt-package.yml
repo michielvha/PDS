@@ -8,14 +8,16 @@ on:
     branches: [main]
     paths:
       - packaging/**
-      - bash/debian   # TODO: include more than just this path when we support multi distro
+      - bash/debian
+      - bash/common
       - '!**/*.md'
       - '!.gitignore'
   pull_request:
     branches: [main]
     paths:
       - packaging/**
-      - bash/debian   # same here
+      - bash/debian
+      - bash/common
       - '!**/*.md'
       - '!.gitignore'
 env:
