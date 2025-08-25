@@ -1,7 +1,7 @@
 #!/bin/bash
 # PDS (Personal Development Scripts) - Main initialization script
 # This script safely loads all PDS function libraries
-set -euo pipefail
+set -eo pipefail
 
 # Set default library directory (this will contain your bash/debian structure)
 PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
@@ -17,7 +17,10 @@ pds_source_file() {
     local file="$1"
     if [ -r "$file" ]; then
         # shellcheck disable=SC1090
-        source "$file"
+        source "$file" 2>/dev/null || {
+            echo "Warning: Error sourcing PDS library file: $file" >&2
+            return 1
+        }
         return 0
     else
         echo "Warning: PDS library file not readable: $file" >&2

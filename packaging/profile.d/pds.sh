@@ -9,7 +9,9 @@ if [ -n "${BASH_VERSION:-}" ] && [[ $- == *i* ]]; then
         # Check if PDS is installed and load it
         if [ -r /usr/share/pds/init.sh ]; then
             # shellcheck disable=SC1091
-            source /usr/share/pds/init.sh
+            source /usr/share/pds/init.sh 2>/dev/null || {
+                echo "Warning: Failed to load PDS functions" >&2
+            }
             
             # Show a brief welcome message on first load in a session
             if [ -z "${PDS_LOADED:-}" ]; then

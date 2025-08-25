@@ -21,8 +21,11 @@ alias knr='kubectl get pods --field-selector=status.phase!=Running' # Get pods n
 alias dcrenew='docker compose down && docker compose up -d'
 
 # Install bash-completion if not already installed
-# Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion\
-type _init_completion &>/dev/null || { sudo apt install bash-completion; }
+# Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#enable-shell-autocompletion
+type _init_completion &>/dev/null || { sudo apt install bash-completion 2>/dev/null || true; }
 
-# Automatically source kubectl completion
-source <(kubectl completion bash)
+# Automatically source kubectl completion if kubectl is available
+if command -v kubectl >/dev/null 2>&1; then
+    # shellcheck disable=SC1090
+    source <(kubectl completion bash) 2>/dev/null || true
+fi
