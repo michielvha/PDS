@@ -68,84 +68,69 @@ list_functions() {
     
     local category_count=0
     
-    # Dynamically discover all directories and subdirectories
-    for base_dir in "$PDS_LIB_DIR"/*; do
-        if [ -d "$base_dir" ]; then
-            local base_name
-            base_name=$(basename "$base_dir")
-            
-            # Skip non-function directories
-            case "$base_name" in
-                VERSION|*.bak|*.tmp) continue ;;
-            esac
-            
-            echo
-            echo "Platform: $(echo "${base_name^}" | sed 's/_/ /g')"
-            echo "$(printf '=%.0s' $(seq 1 $((${#base_name} + 10))))"
-            
-            # Look for subdirectories (categories)
-            for category_dir in "$base_dir"/*; do
-                if [ -d "$category_dir" ]; then
-                    local category_name
-                    category_name=$(basename "$category_dir")
-                    
-                    # Count scripts in this category
-                    local script_count
-                    script_count=$(find "$category_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
-                    
-                    if [ "$script_count" -gt 0 ]; then
-                        echo
-                        echo "Category: $(echo "${category_name^}" | sed 's/_/ /g')"
-                        echo "$(printf -- '-%.0s' $(seq 1 $((${#category_name} + 10))))"
-                        
-                        for script in "$category_dir"/*.sh; do
-                            if [ -f "$script" ]; then
-                                local script_name
-                                script_name=$(basename "$script" .sh)
-                                echo "  $script_name"
-                                
-                                # Extract function names from this script
-                                grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$script" 2>/dev/null | \
-                                while IFS= read -r line; do
-                                    local func_name
-                                    func_name=$(echo "$line" | sed 's/[[:space:]]*\(\).*//' | xargs)
-                                    printf "    %-25s\n" "$func_name"
-                                done
-                            fi
-                        done
-                        ((category_count++))
-                    fi
-                fi
-            done
-            
-            # Also check for scripts directly in the base directory
-            local direct_script_count
-            direct_script_count=$(find "$base_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
-            
-            if [ "$direct_script_count" -gt 0 ]; then
-                echo
-                echo "Category: ${base_name^} (Direct Scripts)"
-                echo "$(printf -- '-%.0s' $(seq 1 $((${#base_name} + 17))))"
+    # List debian functions
+    if [ -d "$PDS_LIB_DIR/debian" ]; then
+        echo
+        echo "Platform: Debian"
+        echo "================"
+        
+        for category_dir in "$PDS_LIB_DIR/debian"/*; do
+            if [ -d "$category_dir" ]; then
+                local category_name
+                category_name=$(basename "$category_dir")
                 
-                for script in "$base_dir"/*.sh; do
-                    if [ -f "$script" ]; then
-                        local script_name
-                        script_name=$(basename "$script" .sh)
-                        echo "  $script_name"
-                        
-                        # Extract function names from this script
-                        grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$script" 2>/dev/null | \
-                        while IFS= read -r line; do
-                            local func_name
-                            func_name=$(echo "$line" | sed 's/[[:space:]]*\(\).*//' | xargs)
-                            printf "    %-25s\n" "$func_name"
-                        done
-                    fi
-                done
-                ((category_count++))
+                local script_count
+                script_count=$(find "$category_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
+                
+                if [ "$script_count" -gt 0 ]; then
+                    echo
+                    echo "Category: $(echo "${category_name^}" | sed 's/_/ /g')"
+                    echo "$(printf -- '-%.0s' $(seq 1 $((${#category_name} + 10))))"
+                    
+                    for script in "$category_dir"/*.sh; do
+                        if [ -f "$script" ]; then
+                            local script_name
+                            script_name=$(basename "$script" .sh)
+                            echo "  $script_name"
+                        fi
+                    done
+                    ((category_count++))
+                fi
             fi
-        fi
-    done
+        done
+    fi
+    
+    # List common functions
+    if [ -d "$PDS_LIB_DIR/common" ]; then
+        echo
+        echo "Platform: Common"
+        echo "================"
+        
+        for category_dir in "$PDS_LIB_DIR/common"/*; do
+            if [ -d "$category_dir" ]; then
+                local category_name
+                category_name=$(basename "$category_dir")
+                
+                local script_count
+                script_count=$(find "$category_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
+                
+                if [ "$script_count" -gt 0 ]; then
+                    echo
+                    echo "Category: $(echo "${category_name^}" | sed 's/_/ /g')"
+                    echo "$(printf -- '-%.0s' $(seq 1 $((${#category_name} + 10))))"
+                    
+                    for script in "$category_dir"/*.sh; do
+                        if [ -f "$script" ]; then
+                            local script_name
+                            script_name=$(basename "$script" .sh)
+                            echo "  $script_name"
+                        fi
+                    done
+                    ((category_count++))
+                fi
+            fi
+        done
+    fi
     
     echo
     echo "Total categories: $category_count"
@@ -164,67 +149,65 @@ search_functions() {
     
     local found_any=false
     
-    # Search in all directories dynamically
-    for base_dir in "$PDS_LIB_DIR"/*; do
-        if [ -d "$base_dir" ]; then
-            local base_name
-            base_name=$(basename "$base_dir")
-            
-            # Skip non-function directories
-            case "$base_name" in
-                VERSION|*.bak|*.tmp) continue ;;
-            esac
-            
-            # Search in subdirectories
-            for category_dir in "$base_dir"/*; do
-                if [ -d "$category_dir" ]; then
-                    local category_name
-                    category_name=$(basename "$category_dir")
-                    
-                    for script in "$category_dir"/*.sh; do
-                        if [ -f "$script" ]; then
-                            local script_name
-                            script_name=$(basename "$script" .sh)
-                            
-                            # Search in function names and comments
-                            local matches
-                            matches=$(grep -i -E "(function.*$search_term|$search_term.*\(\)|#.*$search_term)" "$script" 2>/dev/null || true)
-                            
-                            if [ -n "$matches" ]; then
-                                echo
-                                echo "In $base_name/$category_name/$script_name:"
-                                echo "$matches" | while IFS= read -r line; do
-                                    echo "  $line"
-                                done
-                                found_any=true
-                            fi
+    # Search in debian directory
+    if [ -d "$PDS_LIB_DIR/debian" ]; then
+        for category_dir in "$PDS_LIB_DIR/debian"/*; do
+            if [ -d "$category_dir" ]; then
+                local category_name
+                category_name=$(basename "$category_dir")
+                
+                for script in "$category_dir"/*.sh; do
+                    if [ -f "$script" ]; then
+                        local script_name
+                        script_name=$(basename "$script" .sh)
+                        
+                        # Search in function names and comments
+                        local matches
+                        matches=$(grep -i -E "(function.*$search_term|$search_term.*\(\)|#.*$search_term)" "$script" 2>/dev/null || true)
+                        
+                        if [ -n "$matches" ]; then
+                            echo
+                            echo "In debian/$category_name/$script_name:"
+                            echo "$matches" | while IFS= read -r line; do
+                                echo "  $line"
+                            done
+                            found_any=true
                         fi
-                    done
-                fi
-            done
-            
-            # Search in direct scripts in base directory
-            for script in "$base_dir"/*.sh; do
-                if [ -f "$script" ]; then
-                    local script_name
-                    script_name=$(basename "$script" .sh)
-                    
-                    # Search in function names and comments
-                    local matches
-                    matches=$(grep -i -E "(function.*$search_term|$search_term.*\(\)|#.*$search_term)" "$script" 2>/dev/null || true)
-                    
-                    if [ -n "$matches" ]; then
-                        echo
-                        echo "In $base_name/$script_name:"
-                        echo "$matches" | while IFS= read -r line; do
-                            echo "  $line"
-                        done
-                        found_any=true
                     fi
-                fi
-            done
-        fi
-    done
+                done
+            fi
+        done
+    fi
+    
+    # Search in common directory
+    if [ -d "$PDS_LIB_DIR/common" ]; then
+        for category_dir in "$PDS_LIB_DIR/common"/*; do
+            if [ -d "$category_dir" ]; then
+                local category_name
+                category_name=$(basename "$category_dir")
+                
+                for script in "$category_dir"/*.sh; do
+                    if [ -f "$script" ]; then
+                        local script_name
+                        script_name=$(basename "$script" .sh)
+                        
+                        # Search in function names and comments
+                        local matches
+                        matches=$(grep -i -E "(function.*$search_term|$search_term.*\(\)|#.*$search_term)" "$script" 2>/dev/null || true)
+                        
+                        if [ -n "$matches" ]; then
+                            echo
+                            echo "In common/$category_name/$script_name:"
+                            echo "$matches" | while IFS= read -r line; do
+                                echo "  $line"
+                            done
+                            found_any=true
+                        fi
+                    fi
+                done
+            fi
+        done
+    fi
     
     if [ "$found_any" = false ]; then
         echo "No matches found for: $search_term"
@@ -244,57 +227,55 @@ show_function() {
     
     local found=false
     
-    # Search in all directories dynamically
-    for base_dir in "$PDS_LIB_DIR"/*; do
-        if [ -d "$base_dir" ]; then
-            local base_name
-            base_name=$(basename "$base_dir")
-            
-            # Skip non-function directories
-            case "$base_name" in
-                VERSION|*.bak|*.tmp) continue ;;
-            esac
-            
-            # Search in subdirectories
-            for category_dir in "$base_dir"/*; do
-                if [ -d "$category_dir" ]; then
-                    local category_name
-                    category_name=$(basename "$category_dir")
-                    
-                    for script in "$category_dir"/*.sh; do
-                        if [ -f "$script" ] && grep -q "^[[:space:]]*${func_name}[[:space:]]*(" "$script" 2>/dev/null; then
-                            local script_name
-                            script_name=$(basename "$script" .sh)
-                            echo "Found in $base_name/$category_name/$script_name"
-                            echo "File: $script"
-                            echo
-                            
-                            # Extract the function
-                            awk "/^[[:space:]]*${func_name}[[:space:]]*\(/,/^}/" "$script"
-                            found=true
-                            break 3
-                        fi
-                    done
-                fi
-            done
-            
-            # Search in direct scripts in base directory
-            for script in "$base_dir"/*.sh; do
-                if [ -f "$script" ] && grep -q "^[[:space:]]*${func_name}[[:space:]]*(" "$script" 2>/dev/null; then
-                    local script_name
-                    script_name=$(basename "$script" .sh)
-                    echo "Found in $base_name/$script_name"
-                    echo "File: $script"
-                    echo
-                    
-                    # Extract the function
-                    awk "/^[[:space:]]*${func_name}[[:space:]]*\(/,/^}/" "$script"
-                    found=true
-                    break 2
-                fi
-            done
-        fi
-    done
+    # Search in debian directories
+    if [ -d "$PDS_LIB_DIR/debian" ]; then
+        for category_dir in "$PDS_LIB_DIR/debian"/*; do
+            if [ -d "$category_dir" ]; then
+                local category_name
+                category_name=$(basename "$category_dir")
+                
+                for script in "$category_dir"/*.sh; do
+                    if [ -f "$script" ] && grep -q "^[[:space:]]*${func_name}[[:space:]]*(" "$script" 2>/dev/null; then
+                        local script_name
+                        script_name=$(basename "$script" .sh)
+                        echo "Found in debian/$category_name/$script_name"
+                        echo "File: $script"
+                        echo
+                        
+                        # Extract the function
+                        awk "/^[[:space:]]*${func_name}[[:space:]]*\(/,/^}/" "$script"
+                        found=true
+                        break 3
+                    fi
+                done
+            fi
+        done
+    fi
+    
+    # Search in common directories if not found
+    if [ "$found" = false ] && [ -d "$PDS_LIB_DIR/common" ]; then
+        for category_dir in "$PDS_LIB_DIR/common"/*; do
+            if [ -d "$category_dir" ]; then
+                local category_name
+                category_name=$(basename "$category_dir")
+                
+                for script in "$category_dir"/*.sh; do
+                    if [ -f "$script" ] && grep -q "^[[:space:]]*${func_name}[[:space:]]*(" "$script" 2>/dev/null; then
+                        local script_name
+                        script_name=$(basename "$script" .sh)
+                        echo "Found in common/$category_name/$script_name"
+                        echo "File: $script"
+                        echo
+                        
+                        # Extract the function
+                        awk "/^[[:space:]]*${func_name}[[:space:]]*\(/,/^}/" "$script"
+                        found=true
+                        break 3
+                    fi
+                done
+            fi
+        done
+    fi
     
     if [ "$found" = false ]; then
         echo "Function '$func_name' not found in any PDS library."
@@ -330,45 +311,26 @@ doctor_check() {
     if [ -d "$PDS_LIB_DIR" ]; then
         echo "✅ Library directory found: $PDS_LIB_DIR"
         
-        # Dynamically count functions in all directories
-        for base_dir in "$PDS_LIB_DIR"/*; do
-            if [ -d "$base_dir" ]; then
-                local base_name
-                base_name=$(basename "$base_dir")
-                
-                # Skip non-function directories
-                case "$base_name" in
-                    VERSION|*.bak|*.tmp) continue ;;
-                esac
-                
-                local total_functions=0
-                
-                # Count functions in subdirectories
-                for category_dir in "$base_dir"/*; do
-                    if [ -d "$category_dir" ]; then
-                        local category_count
-                        category_count=$(find "$category_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
-                        total_functions=$((total_functions + category_count))
-                    fi
-                done
-                
-                # Count functions in base directory
-                local direct_count
-                direct_count=$(find "$base_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
-                total_functions=$((total_functions + direct_count))
-                
-                if [ "$total_functions" -gt 0 ]; then
-                    echo "   - $(echo "${base_name^}" | sed 's/_/ /g') functions: $total_functions"
-                fi
-            fi
-        done
+        # Count debian functions
+        if [ -d "$PDS_LIB_DIR/debian" ]; then
+            local debian_count
+            debian_count=$(find "$PDS_LIB_DIR/debian" -name "*.sh" -type f | wc -l)
+            echo "   - Debian functions: $debian_count"
+        fi
+        
+        # Count common functions
+        if [ -d "$PDS_LIB_DIR/common" ]; then
+            local common_count
+            common_count=$(find "$PDS_LIB_DIR/common" -name "*.sh" -type f | wc -l)
+            echo "   - Common functions: $common_count"
+        fi
     else
         echo "❌ Library directory missing: $PDS_LIB_DIR"
         ((issues++))
     fi
     
     # Check if functions are loaded - try a few common function names
-    local test_functions=("install_docker" "install_vscode" "aws_configure" "detect_distro")
+    local test_functions=("detect_distro" "detect_platform" "install_go" "install_aws_cli" "docker_command" "install_packer")
     local functions_loaded=false
     
     for func in "${test_functions[@]}"; do
@@ -425,51 +387,45 @@ show_info() {
     if [ -d "$PDS_LIB_DIR" ]; then
         echo "Installed function categories:"
         
-        # Dynamically show all directories and their function counts
-        for base_dir in "$PDS_LIB_DIR"/*; do
-            if [ -d "$base_dir" ]; then
-                local base_name
-                base_name=$(basename "$base_dir")
-                
-                # Skip non-function directories
-                case "$base_name" in
-                    VERSION|*.bak|*.tmp) continue ;;
-                esac
-                
-                local total_functions=0
-                local categories=()
-                
-                # Count functions in subdirectories
-                for category_dir in "$base_dir"/*; do
-                    if [ -d "$category_dir" ]; then
-                        local category_name
-                        category_name=$(basename "$category_dir")
-                        local category_count
-                        category_count=$(find "$category_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
-                        
-                        if [ "$category_count" -gt 0 ]; then
-                            categories+=("$category_name: $category_count")
-                            total_functions=$((total_functions + category_count))
-                        fi
+        # Show debian functions
+        if [ -d "$PDS_LIB_DIR/debian" ]; then
+            local debian_total=0
+            echo "  - Debian:"
+            for category_dir in "$PDS_LIB_DIR/debian"/*; do
+                if [ -d "$category_dir" ]; then
+                    local category_name
+                    category_name=$(basename "$category_dir")
+                    local category_count
+                    category_count=$(find "$category_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
+                    
+                    if [ "$category_count" -gt 0 ]; then
+                        echo "    └── $category_name: $category_count"
+                        debian_total=$((debian_total + category_count))
                     fi
-                done
-                
-                # Count functions in base directory
-                local direct_count
-                direct_count=$(find "$base_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
-                if [ "$direct_count" -gt 0 ]; then
-                    categories+=("direct: $direct_count")
-                    total_functions=$((total_functions + direct_count))
                 fi
-                
-                if [ "$total_functions" -gt 0 ]; then
-                    echo "  - $(echo "${base_name^}" | sed 's/_/ /g'): $total_functions functions"
-                    for category in "${categories[@]}"; do
-                        echo "    └── $category"
-                    done
+            done
+            echo "    Total debian functions: $debian_total"
+        fi
+        
+        # Show common functions
+        if [ -d "$PDS_LIB_DIR/common" ]; then
+            local common_total=0
+            echo "  - Common:"
+            for category_dir in "$PDS_LIB_DIR/common"/*; do
+                if [ -d "$category_dir" ]; then
+                    local category_name
+                    category_name=$(basename "$category_dir")
+                    local category_count
+                    category_count=$(find "$category_dir" -maxdepth 1 -name "*.sh" -type f | wc -l)
+                    
+                    if [ "$category_count" -gt 0 ]; then
+                        echo "    └── $category_name: $category_count"
+                        common_total=$((common_total + category_count))
+                    fi
                 fi
-            fi
-        done
+            done
+            echo "    Total common functions: $common_total"
+        fi
     fi
 }
 
