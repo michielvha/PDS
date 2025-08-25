@@ -1,6 +1,8 @@
+#!/bin/bash
+
 # TODO: Rework this old snippet to current standards.
 # This script installs QEMU and Virt-Manager on WSL2 with Debian or Ubuntu.
-#!/bin/bash
+
 # RUN AS ROOT
 apt-get update
 

@@ -53,7 +53,7 @@ check_prerequisites() {
         for tool in "${missing_tools[@]}"; do
             case $tool in
                 nfpm)
-                    echo "  curl -sfL https://install.goreleaser.com/github.com/goreleaser/nfpm.sh | sh" # TODO: modify; this one does not work check how installed
+                    echo " echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list && sudo apt update && sudo apt install nfpm"
                     ;;
                 make)
                     echo "  sudo apt-get install build-essential"

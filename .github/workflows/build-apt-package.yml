@@ -162,6 +162,7 @@ jobs:
             --notes-file release-notes.md \
             ./release/${{ env.PACKAGE_NAME }}_${{ needs.version.outputs.semVer }}_all.deb
 
+# TODO: look into using aptly and hosting the files either on gh pages or edgeforge.eu so we can actually distribute this 
 # Optional: Auto-update APT repository
 # deploy-repo:
 #   name: Update APT Repository
