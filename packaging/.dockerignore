@@ -1,0 +1,40 @@
+# Documentation
+*.md
+README*
+DOCKER.md
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# macOS
+.DS_Store
+
+# Build artifacts (keep dist/ for packages)
+# dist/
+
+# Logs
+*.log
+
+# Temporary files
+.tmp
+tmp/
+
+# Node modules (if any)
+node_modules/
+
+# Python cache (if any)
+__pycache__/
+*.pyc
+
+# Other packaging formats
+*.rpm
+*.tar.gz
+*.zip
+
+# Version files
+VERSION

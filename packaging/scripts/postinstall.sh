@@ -1,5 +1,6 @@
 #!/bin/bash
 # PDS Post-installation script
+# TODO: update this to match current implementation
 set -e
 
 echo "========================================"
