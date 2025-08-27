@@ -26,7 +26,7 @@ configure_kubectl_plugins() {
 	       grep -qxF "complete -F __start_kubectl k" "$PROFILE_FILE" || echo "complete -F __start_kubectl k" >> "$PROFILE_FILE"
 	   fi
 	
-        # TODO: rework below into this function
+        # TODO: rework below into this function()
 	   # install krew (kubectl plugin manager) ✅
 	   (
 	   set -x; cd "$(mktemp -d)" &&
