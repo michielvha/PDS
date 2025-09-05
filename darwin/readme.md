@@ -15,10 +15,18 @@ We use [Homebrew](https://brew.sh) as the primary package manager. The [`install
 - kubectl
 - Helm
 - Kustomize
+- BlackHole-2ch
+- GitVersion
+- GoReleaser
 - Visual Studio Code
 - ChatGPT
 - Tailscale
 - Microsoft Teams
+- OBS
+- Zen Browser
+- Lens
+- Git Credential Manager Core
+- [bat](https://github.com/sharkdp/bat)
 
 ## Functions
 
