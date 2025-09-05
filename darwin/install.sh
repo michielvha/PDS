@@ -26,7 +26,8 @@ brew install arc \
      blackhole-2ch \
      gitversion \
      goreleaser \
-     kubectl
+     kubectl \
+     bat
 
 
 # Install GUI Homebrew packages
