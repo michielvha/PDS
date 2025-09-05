@@ -70,7 +70,8 @@ $packagesToInstall = @(
     "yq",
     "powertoys",
     "ngrok",
-    "awk"
+    "awk",
+    "bat"
 )
 
 # TODO: Evalute packages:
