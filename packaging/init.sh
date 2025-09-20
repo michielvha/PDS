@@ -1,7 +1,7 @@
 #!/bin/bash
 # PDS (Personal Development Scripts) - Main initialization script
 # This script safely loads all PDS function libraries
-set -eo pipefail
+# NOTE: Don't use 'set -e' here as it can crash interactive shells
 
 # Set default library directory (this will contain your bash/debian structure)
 PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
@@ -17,8 +17,12 @@ pds_source_file() {
     local file="$1"
     if [ -r "$file" ]; then
         # shellcheck disable=SC1090
-        source "$file"
-        return 0
+        if source "$file" 2>/dev/null; then
+            return 0
+        else
+            echo "Warning: Failed to load PDS library file: $file" >&2
+            return 1
+        fi
     else
         echo "Warning: PDS library file not readable: $file" >&2
         return 1
@@ -47,27 +51,27 @@ if [ -d "$PDS_LIB_DIR" ]; then
     # Source software installation functions
     if [ -d "$PDS_LIB_DIR/software" ]; then
         for lib_file in "$PDS_LIB_DIR/software"/*.sh; do
-            if [ -f "$lib_file" ]; then
-                pds_source_file "$lib_file"
-            fi
+            # Check if the glob matched any files
+            [ -f "$lib_file" ] || continue
+            pds_source_file "$lib_file"
         done
     fi
     
     # Source UI/theme functions
     if [ -d "$PDS_LIB_DIR/ui" ]; then
         for lib_file in "$PDS_LIB_DIR/ui"/*.sh; do
-            if [ -f "$lib_file" ]; then
-                pds_source_file "$lib_file"
-            fi
+            # Check if the glob matched any files
+            [ -f "$lib_file" ] || continue
+            pds_source_file "$lib_file"
         done
     fi
     
     # Source deployment functions
     if [ -d "$PDS_LIB_DIR/deploy" ]; then
         for lib_file in "$PDS_LIB_DIR/deploy"/*.sh; do
-            if [ -f "$lib_file" ]; then
-                pds_source_file "$lib_file"
-            fi
+            # Check if the glob matched any files
+            [ -f "$lib_file" ] || continue
+            pds_source_file "$lib_file"
         done
     fi
 else
