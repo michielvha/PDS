@@ -1,7 +1,7 @@
 #!/bin/bash
 # PDS (Personal Development Scripts) - Main initialization script
 # This script safely loads all PDS function libraries
-set -euo pipefail
+set -eo pipefail
 
 # Set default library directory (this will contain your bash/debian structure)
 PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
