@@ -1,7 +1,8 @@
 #!/bin/bash
 # PDS (Personal Development Scripts) - Main initialization script
 # This script safely loads all PDS function libraries
-set -eo pipefail
+
+# NOTE: Don't use 'set -e' here as it can crash interactive shells
 
 # Set default library directory (this will contain your bash/debian structure)
 PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
@@ -17,17 +18,17 @@ pds_source_file() {
     local file="$1"
     if [ -r "$file" ]; then
         # shellcheck disable=SC1090
-        source "$file" 2>/dev/null || {
-            echo "Warning: Error sourcing PDS library file: $file" >&2
+        if source "$file" 2>/dev/null; then
+            return 0
+        else
+            echo "Warning: Failed to load PDS library file: $file" >&2
             return 1
-        }
-        return 0
+        fi
     else
         echo "Warning: PDS library file not readable: $file" >&2
         return 1
     fi
 }
-
 # Function to show PDS info
 pds_info() {
     echo "PDS (Personal Development Scripts) v${PDS_VERSION}"
@@ -75,6 +76,32 @@ if [ -d "$PDS_LIB_DIR" ]; then
         while IFS= read -r -d '' lib_file; do
             pds_source_file "$lib_file"
         done < <(find "$PDS_LIB_DIR/common" -name "*.sh" -type f -print0)
+=======
+    # Source software installation functions
+    if [ -d "$PDS_LIB_DIR/software" ]; then
+        for lib_file in "$PDS_LIB_DIR/software"/*.sh; do
+            # Check if the glob matched any files
+            [ -f "$lib_file" ] || continue
+            pds_source_file "$lib_file"
+        done
+    fi
+    
+    # Source UI/theme functions
+    if [ -d "$PDS_LIB_DIR/ui" ]; then
+        for lib_file in "$PDS_LIB_DIR/ui"/*.sh; do
+            # Check if the glob matched any files
+            [ -f "$lib_file" ] || continue
+            pds_source_file "$lib_file"
+        done
+    fi
+    
+    # Source deployment functions
+    if [ -d "$PDS_LIB_DIR/deploy" ]; then
+        for lib_file in "$PDS_LIB_DIR/deploy"/*.sh; do
+            # Check if the glob matched any files
+            [ -f "$lib_file" ] || continue
+            pds_source_file "$lib_file"
+        done
     fi
 else
     echo "Warning: PDS library directory not found: $PDS_LIB_DIR" >&2

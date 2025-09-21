@@ -2,6 +2,10 @@
 
 | Function | Description |
 |---|---|
+| get_os_release | Gets the detailed OS release information (ubuntu, debian, fedora, arch, etc.) |
+| get_package_manager | Determines the appropriate package manager for the current OS (apt, dnf, pacman, etc.) |
+| install_bat | Installs the bat command-line tool with syntax highlighting across various Linux distributions and systems |
+| setup_bat_alias | Sets up alias for batcat -> bat if needed on Ubuntu/Debian systems |
 | install_go | Installs the latest version of Golang and configures the environment for the current user. |
 | set_go_env | Configures the Go environment variables for the current user. |
 | setup_edgectl_dev_env | Sets up the development environment for edgectl with Go installed for the root user. Using root user because edgectl requires root privileges to run. |

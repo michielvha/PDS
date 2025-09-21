@@ -4,6 +4,7 @@
 
 # Function: install_go
 # Description: Installs the latest version of Golang and configures the environment for the current user.
+#              Supports multiple architectures: x86_64 (amd64), aarch64/arm64, armv6l, armv7l, i386/i686.
 # TODO: allow to manually specify which version ?
 install_go() {
 	echo "🚀 Fetching the latest Go version..."
@@ -17,8 +18,37 @@ install_go() {
 		exit 1
 	fi
 
+	# Detect OS and architecture
+	OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+	ARCH=$(uname -m)
+
+	# Map architecture names to Go's naming convention
+	case "$ARCH" in
+		x86_64)
+			GO_ARCH="amd64"
+			;;
+		aarch64|arm64)
+			GO_ARCH="arm64"
+			;;
+		armv6l)
+			GO_ARCH="armv6l"
+			;;
+		armv7l)
+			GO_ARCH="armv6l"  # Go uses armv6l for both armv6 and armv7
+			;;
+		i386|i686)
+			GO_ARCH="386"
+			;;
+		*)
+			echo "❌ Unsupported architecture: $ARCH"
+			exit 1
+			;;
+	esac
+
+	echo "🔍 Detected system: $OS-$GO_ARCH"
+
 	# Define download URL and filename
-	GO_TARBALL="go${GO_VERSION}.linux-amd64.tar.gz"
+	GO_TARBALL="go${GO_VERSION}.${OS}-${GO_ARCH}.tar.gz"
 	DOWNLOAD_URL="https://go.dev/dl/${GO_TARBALL}"
 
 	echo "📥 Downloading Go ${GO_VERSION} from ${DOWNLOAD_URL}..."
