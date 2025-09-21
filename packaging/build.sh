@@ -53,7 +53,7 @@ check_prerequisites() {
         for tool in "${missing_tools[@]}"; do
             case $tool in
                 nfpm)
-                    echo "  curl -sfL https://install.goreleaser.com/github.com/goreleaser/nfpm.sh | sh"
+                    echo " echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list && sudo apt update && sudo apt install nfpm"
                     ;;
                 make)
                     echo "  sudo apt-get install build-essential"
@@ -70,23 +70,37 @@ check_prerequisites() {
 validate_source() {
     log_info "Validating source structure..."
     
-    local source_dirs=(
-        "$PROJECT_ROOT/bash/debian/software"
-        "$PROJECT_ROOT/bash/debian/ui"
-        "$PROJECT_ROOT/bash/debian/deploy"
+    local base_dirs=(
+        "$PROJECT_ROOT/bash/debian"
+        "$PROJECT_ROOT/bash/common"
     )
     
-    for dir in "${source_dirs[@]}"; do
-        if [[ ! -d "$dir" ]]; then
-            log_error "Source directory not found: $dir"
+    local total_scripts=0
+    
+    for base_dir in "${base_dirs[@]}"; do
+        if [[ ! -d "$base_dir" ]]; then
+            log_error "Source directory not found: $base_dir"
             exit 1
         fi
         
         local script_count
-        script_count=$(find "$dir" -name "*.sh" -type f | wc -l)
-        log_info "Found $script_count scripts in $(basename "$dir")"
+        script_count=$(find "$base_dir" -name "*.sh" -type f | wc -l)
+        total_scripts=$((total_scripts + script_count))
+        log_info "Found $script_count scripts in $(basename "$base_dir")"
+        
+        # Show subdirectory breakdown if there are subdirectories
+        while IFS= read -r -d '' subdir; do
+            local subdir_count
+            subdir_count=$(find "$subdir" -maxdepth 1 -name "*.sh" -type f | wc -l)
+            if [[ $subdir_count -gt 0 ]]; then
+                local relative_path
+                relative_path=${subdir#$PROJECT_ROOT/bash/}
+                log_info "  - $relative_path: $subdir_count scripts"
+            fi
+        done < <(find "$base_dir" -mindepth 1 -type d -print0)
     done
     
+    log_info "Total scripts found: $total_scripts"
     log_success "Source structure validation passed"
 }
 
@@ -106,12 +120,17 @@ run_linting() {
             fi
         done
         
-        # Lint source scripts
-        while IFS= read -r -d '' script; do
-            if ! shellcheck "$script"; then
-                lint_failed=true
+        # Lint source scripts from all bash directories
+        local bash_dirs=("$PROJECT_ROOT/bash/debian" "$PROJECT_ROOT/bash/common")
+        for bash_dir in "${bash_dirs[@]}"; do
+            if [[ -d "$bash_dir" ]]; then
+                while IFS= read -r -d '' script; do
+                    if ! shellcheck "$script"; then
+                        lint_failed=true
+                    fi
+                done < <(find "$bash_dir" -name "*.sh" -type f -print0)
             fi
-        done < <(find "$PROJECT_ROOT/bash/debian" -name "*.sh" -type f -print0)
+        done
         
         if $lint_failed; then
             log_warning "Linting found issues, but continuing build..."

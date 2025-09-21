@@ -17,7 +17,7 @@ packaging/
 ├── bin/
 │   └── pds               # CLI helper tool
 ├── profile.d/
-│   └── pds-funcs.sh      # Auto-loader for interactive shells
+│   └── pds.sh      # Auto-loader for interactive shells
 └── scripts/
     ├── postinstall.sh    # Post-installation messages
     └── preremove.sh      # Pre-removal cleanup

@@ -4,17 +4,24 @@ section: utils
 priority: optional
 maintainer: Michiel VH <it.mvha@gmail.com>
 description: |
-  PDS (Personal Development Scripts) - Debian function library
+  PDS (Personal Development Scripts) - Comprehensive function library
   A comprehensive collection of Bash functions for software installation,
-  UI/theme setup, and system deployment tasks. Functions are automatically
-  loaded in interactive shells for immediate use.
+  UI/theme setup, system deployment tasks, and common utilities. Functions 
+  are automatically loaded in interactive shells for immediate use.
   
-  Includes functions for:
+  Includes Debian-specific functions for:
   - Software installation (Docker, VS Code, kubectl, etc.)
   - HashiCorp tools (Packer, Terraform, Vault, etc.)  
   - UI/theme setup (fonts, themes, GNOME configuration)
   - Development environment setup
   - System deployment and configuration
+  
+  And common cross-platform functions for:
+  - Cloud providers (AWS, Azure)
+  - Shell utilities and bootstrapping
+  - Software installation helpers
+  - Git hooks and utilities
+  - WSL configuration
 license: MIT
 arch: all
 platform: linux
@@ -29,18 +36,14 @@ depends:
 # Files to include in the package
 contents:
   # Copy the entire bash/debian structure to /usr/share/pds/
-  - src: ../bash/debian/software
-    dst: /usr/share/pds/software
+  - src: ../bash/debian
+    dst: /usr/share/pds/debian
     file_info: 
       mode: 0644
   
-  - src: ../bash/debian/ui
-    dst: /usr/share/pds/ui
-    file_info:
-      mode: 0644
-      
-  - src: ../bash/debian/deploy
-    dst: /usr/share/pds/deploy
+  # Copy the entire bash/common structure to /usr/share/pds/common/
+  - src: ../bash/common
+    dst: /usr/share/pds/common
     file_info:
       mode: 0644
   
@@ -70,6 +73,17 @@ contents:
   
   # Documentation
   - src: ../bash/debian/readme.md
+    dst: /usr/share/doc/pds/README.debian.md
+    file_info:
+      mode: 0644
+      
+  - src: ../bash/common/readme.md
+    dst: /usr/share/doc/pds/README.common.md
+    file_info:
+      mode: 0644
+      
+  # Root readme for the project
+  - src: ../readme.md
     dst: /usr/share/doc/pds/README.md
     file_info:
       mode: 0644
