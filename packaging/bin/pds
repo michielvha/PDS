@@ -101,13 +101,18 @@ list_functions() {
                         
                         for lib_file in "$category_dir"/*.sh; do
                             if [ -f "$lib_file" ]; then
+                                # Count functions in this file
+                                local file_func_count
+                                file_func_count=$(grep -c -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$lib_file" 2>/dev/null || echo "0")
+                                category_func_count=$((category_func_count + file_func_count))
+                                
+                                # Display function names
                                 grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$lib_file" 2>/dev/null | \
                                 sed 's/^[[:space:]]*//' | \
                                 sed 's/[[:space:]]*().*//' | \
                                 while IFS= read -r func_name; do
                                     if [ -n "$func_name" ] && [[ "$func_name" != *"#"* ]]; then
                                         printf "  %-30s\n" "$func_name"
-                                        category_func_count=$((category_func_count + 1))
                                     fi
                                 done
                             fi
