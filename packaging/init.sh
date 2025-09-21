@@ -1,7 +1,6 @@
 #!/bin/bash
 # PDS (Personal Development Scripts) - Main initialization script
 # This script safely loads all PDS function libraries
-
 # NOTE: Don't use 'set -e' here as it can crash interactive shells
 
 # Set default library directory (this will contain your bash/debian structure)
@@ -29,54 +28,26 @@ pds_source_file() {
         return 1
     fi
 }
+
 # Function to show PDS info
 pds_info() {
     echo "PDS (Personal Development Scripts) v${PDS_VERSION}"
     echo "Library directory: ${PDS_LIB_DIR}"
     echo "Available function categories:"
     
-    # Show debian-specific functions
-    if [ -d "${PDS_LIB_DIR}/debian" ]; then
-        echo "  Debian-specific:"
-        while IFS= read -r -d '' subdir; do
-            local category count
-            category=$(basename "$subdir")
-            count=$(find "$subdir" -maxdepth 1 -name "*.sh" -type f | wc -l)
-            if [ "$count" -gt 0 ]; then
-                echo "    - $category: $count functions"
-            fi
-        done < <(find "${PDS_LIB_DIR}/debian" -mindepth 1 -type d -print0)
+    if [ -d "${PDS_LIB_DIR}/software" ]; then
+        echo "  - software: $(find "${PDS_LIB_DIR}/software" -name "*.sh" -type f | wc -l) functions"
     fi
-    
-    # Show common functions
-    if [ -d "${PDS_LIB_DIR}/common" ]; then
-        echo "  Common (cross-platform):"
-        while IFS= read -r -d '' subdir; do
-            local category count
-            category=$(basename "$subdir")
-            count=$(find "$subdir" -maxdepth 1 -name "*.sh" -type f | wc -l)
-            if [ "$count" -gt 0 ]; then
-                echo "    - $category: $count functions"
-            fi
-        done < <(find "${PDS_LIB_DIR}/common" -mindepth 1 -type d -print0)
+    if [ -d "${PDS_LIB_DIR}/ui" ]; then
+        echo "  - ui: $(find "${PDS_LIB_DIR}/ui" -name "*.sh" -type f | wc -l) functions"
+    fi
+    if [ -d "${PDS_LIB_DIR}/deploy" ]; then
+        echo "  - deploy: $(find "${PDS_LIB_DIR}/deploy" -name "*.sh" -type f | wc -l) functions"
     fi
 }
 
-# Load all library files recursively from debian and common directories
+# Load all library files from the debian structure
 if [ -d "$PDS_LIB_DIR" ]; then
-    # Load files from debian directory
-    if [ -d "$PDS_LIB_DIR/debian" ]; then
-        while IFS= read -r -d '' lib_file; do
-            pds_source_file "$lib_file"
-        done < <(find "$PDS_LIB_DIR/debian" -name "*.sh" -type f -print0)
-    fi
-    
-    # Load files from common directory
-    if [ -d "$PDS_LIB_DIR/common" ]; then
-        while IFS= read -r -d '' lib_file; do
-            pds_source_file "$lib_file"
-        done < <(find "$PDS_LIB_DIR/common" -name "*.sh" -type f -print0)
-=======
     # Source software installation functions
     if [ -d "$PDS_LIB_DIR/software" ]; then
         for lib_file in "$PDS_LIB_DIR/software"/*.sh; do
@@ -108,9 +79,7 @@ else
 fi
 
 # Clean up variables
-unset lib_file
+unset lib_file PDS_LIB_DIR
 
-# Export helper function safely
-if declare -F pds_info >/dev/null 2>&1; then
-    export -f pds_info 2>/dev/null || true
-fi
+# Export helper function
+export -f pds_info 2>/dev/null || true
