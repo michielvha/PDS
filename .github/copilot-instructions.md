@@ -65,6 +65,7 @@
 - Use consistent error handling patterns
 - Document any platform-specific behaviors or limitations
 - Ensure changes are backward compatible when possible
+- When you make a change, update or create changelog.md in the root directory just to keep a record of any changes made.
 
 #### Portability
 - Consider platform differences from the start
