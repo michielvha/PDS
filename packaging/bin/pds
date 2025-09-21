@@ -2,7 +2,7 @@
 # PDS Functions CLI Helper
 # Usage: pds [command] [options]
 
-set -euo pipefail
+set -e
 
 PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
 
@@ -68,74 +68,28 @@ list_functions() {
     
     local category_count=0
     
-    # List software functions
-    if [ -d "$PDS_LIB_DIR/software" ]; then
-        echo
-        echo "Category: Software Installation"
-        echo "------------------------------"
-        for script in "$PDS_LIB_DIR/software"/*.sh; do
-            if [ -f "$script" ]; then
-                local script_name
-                script_name=$(basename "$script" .sh)
-                echo "  $script_name"
-                
-                # Extract function names from this script
-                grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$script" | \
-                while IFS= read -r line; do
-                    local func_name
-                    func_name=$(echo "$line" | sed 's/[[:space:]]*\(\).*//' | xargs)
-                    printf "    %-25s\n" "$func_name"
-                done
-            fi
-        done
-        ((category_count++))
-    fi
-    
-    # List UI functions
-    if [ -d "$PDS_LIB_DIR/ui" ]; then
-        echo
-        echo "Category: UI/Theme Setup"
-        echo "-----------------------"
-        for script in "$PDS_LIB_DIR/ui"/*.sh; do
-            if [ -f "$script" ]; then
-                local script_name
-                script_name=$(basename "$script" .sh)
-                echo "  $script_name"
-                
-                # Extract function names from this script
-                grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$script" | \
-                while IFS= read -r line; do
-                    local func_name
-                    func_name=$(echo "$line" | sed 's/[[:space:]]*\(\).*//' | xargs)
-                    printf "    %-25s\n" "$func_name"
-                done
-            fi
-        done
-        ((category_count++))
-    fi
-    
-    # List deploy functions
-    if [ -d "$PDS_LIB_DIR/deploy" ]; then
-        echo
-        echo "Category: Deployment"
-        echo "-------------------"
-        for script in "$PDS_LIB_DIR/deploy"/*.sh; do
-            if [ -f "$script" ]; then
-                local script_name
-                script_name=$(basename "$script" .sh)
-                echo "  $script_name"
-                
-                # Extract function names from this script
-                grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$script" | \
-                while IFS= read -r line; do
-                    local func_name
-                    func_name=$(echo "$line" | sed 's/[[:space:]]*\(\).*//' | xargs)
-                    printf "    %-25s\n" "$func_name"
-                done
-            fi
-        done
-        ((category_count++))
-    fi
+    # List functions from library files
+    for lib_file in "$PDS_LIB_DIR"/*.sh; do
+        if [ -f "$lib_file" ]; then
+            local category_name
+            category_name=$(basename "$lib_file" .sh)
+            
+            echo
+            echo "Category: ${category_name^}"
+            printf '%*s\n' "${#category_name}" '' | tr ' ' '-'
+            echo "----------"
+            
+            grep -E "^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)" "$lib_file" 2>/dev/null | \
+            sed 's/^[[:space:]]*//' | \
+            sed 's/[[:space:]]*().*//' | \
+            while IFS= read -r func_name; do
+                if [ -n "$func_name" ] && [[ "$func_name" != *"#"* ]]; then
+                    printf "  %-30s\n" "$func_name"
+                fi
+            done
+            ((category_count++))
+        fi
+    done
     
     echo
     echo "Total categories: $category_count"
