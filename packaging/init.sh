@@ -5,12 +5,6 @@
 
 # Set default library directory (this will contain your bash/debian structure)
 PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
-# Read version from file if available, fallback to default
-if [ -r "${PDS_LIB_DIR}/VERSION" ]; then
-    PDS_VERSION="$(cat "${PDS_LIB_DIR}/VERSION")"
-else
-    PDS_VERSION="dev"
-fi
 
 # Function to safely source a file
 pds_source_file() {
@@ -29,57 +23,30 @@ pds_source_file() {
     fi
 }
 
-# Function to show PDS info
-pds_info() {
-    echo "PDS (Personal Development Scripts) v${PDS_VERSION}"
-    echo "Library directory: ${PDS_LIB_DIR}"
-    echo "Available function categories:"
-    
-    if [ -d "${PDS_LIB_DIR}/software" ]; then
-        echo "  - software: $(find "${PDS_LIB_DIR}/software" -name "*.sh" -type f | wc -l) functions"
-    fi
-    if [ -d "${PDS_LIB_DIR}/ui" ]; then
-        echo "  - ui: $(find "${PDS_LIB_DIR}/ui" -name "*.sh" -type f | wc -l) functions"
-    fi
-    if [ -d "${PDS_LIB_DIR}/deploy" ]; then
-        echo "  - deploy: $(find "${PDS_LIB_DIR}/deploy" -name "*.sh" -type f | wc -l) functions"
-    fi
-}
-
-# Load all library files from the debian structure
+# Load all library files from the dynamic directory structure
 if [ -d "$PDS_LIB_DIR" ]; then
-    # Source software installation functions
-    if [ -d "$PDS_LIB_DIR/software" ]; then
-        for lib_file in "$PDS_LIB_DIR/software"/*.sh; do
-            # Check if the glob matched any files
-            [ -f "$lib_file" ] || continue
-            pds_source_file "$lib_file"
-        done
-    fi
-    
-    # Source UI/theme functions
-    if [ -d "$PDS_LIB_DIR/ui" ]; then
-        for lib_file in "$PDS_LIB_DIR/ui"/*.sh; do
-            # Check if the glob matched any files
-            [ -f "$lib_file" ] || continue
-            pds_source_file "$lib_file"
-        done
-    fi
-    
-    # Source deployment functions
-    if [ -d "$PDS_LIB_DIR/deploy" ]; then
-        for lib_file in "$PDS_LIB_DIR/deploy"/*.sh; do
-            # Check if the glob matched any files
-            [ -f "$lib_file" ] || continue
-            pds_source_file "$lib_file"
-        done
-    fi
+    # Dynamically discover platform directories (debian, common, kali, etc.)
+    for platform_dir in "$PDS_LIB_DIR"/*; do
+        if [ -d "$platform_dir" ] && [ "$(basename "$platform_dir")" != "." ] && [ "$(basename "$platform_dir")" != ".." ]; then
+            # Skip if it's just a file
+            [ -d "$platform_dir" ] || continue
+            
+            # Source all .sh files in each category directory within this platform
+            for category_dir in "$platform_dir"/*; do
+                if [ -d "$category_dir" ]; then
+                    # Source all .sh files in this category directory
+                    for lib_file in "$category_dir"/*.sh; do
+                        # Check if the glob matched any files
+                        [ -f "$lib_file" ] || continue
+                        pds_source_file "$lib_file"
+                    done
+                fi
+            done
+        fi
+    done
 else
     echo "Warning: PDS library directory not found: $PDS_LIB_DIR" >&2
 fi
 
 # Clean up variables
-unset lib_file PDS_LIB_DIR
-
-# Export helper function
-export -f pds_info 2>/dev/null || true
+unset lib_file category_dir platform_dir PDS_LIB_DIR
