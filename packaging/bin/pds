@@ -95,7 +95,6 @@ list_functions() {
                         echo
                         echo "Category: $combined_name"
                         printf '%*s\n' "${#combined_name}" '' | tr ' ' '-'
-                        echo "----------"
                         
                         local category_func_count=0
                         
