@@ -34,7 +34,7 @@
     Clones all repositories from the MyProject project to C:\AzureDevOps\MyProject
 
 .EXAMPLE
-    Get-AzureDevOpsLibrary -Organization "contoso" -Project "MyProject" -Username "john@contoso.com" -PersonalAccessToken "abc123..." -DestinationPath "D:\Repos"
+    Get-AzureDevOpsLibrary -Organization "your-org" -Project "your-project" -Username "your-email@domain.com" -PersonalAccessToken "your-pat" -DestinationPath "D:\Repos"
     
     Clones all repositories to the specified destination path D:\Repos
 
@@ -214,5 +214,3 @@ function Get-AzureDevOpsLibrary {
     }
 }
 
-# Example usage (uncomment to use):
-# Get-AzureDevOpsLibrary -Organization "your-org" -Project "your-project" -Username "your-email@domain.com" -PersonalAccessToken "your-pat"
