@@ -3,3 +3,5 @@
 
 # Alias for Iterm: open current context
 alias iterm='open -a iTerm .'
+# Alias for kubelogin: required if installed via brew
+alias kubelogin="kubectl oidc-login"
