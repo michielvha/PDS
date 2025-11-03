@@ -26,8 +26,12 @@ brew install arc \
      blackhole-2ch \
      gitversion \
      goreleaser \
-     kubectl \
      bat
+
+# install kubectl + Azure kubelogin to /opt/homebrew/bin
+az aks install-cli \
+  --install-location /opt/homebrew/bin/kubectl \
+  --kubelogin-install-location /opt/homebrew/bin/kubelogin
 
 
 # Install GUI Homebrew packages
