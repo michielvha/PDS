@@ -25,6 +25,10 @@ Below is a list of software and tools supported by the custom PowerShell functio
 - `Firefox`
 - `awscli`
 
+### Software installed via scoop
+
+- `base64`
+
 ### Custom PowerShell Functions
 1. **Install-Choco**: Installs Chocolatey if not already installed.
 2. **Install-ChocoPackages**: Installs a list of Chocolatey packages from an array.
