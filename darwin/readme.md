@@ -72,3 +72,8 @@ Available setup [functions](functions.sh):
 - TODO Tree / TODO Highlight
 - Go (Official Extension)
 
+## Invert scroll
+
+when using trackpad inverted scrolling is great but with a mouse it feels unnatural, change it via:
+
+`system settings -> mouse / mousepad -> scroll & zoom -> unselect natural scrolling`
