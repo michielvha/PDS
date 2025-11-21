@@ -77,3 +77,7 @@ Available setup [functions](functions.sh):
 when using trackpad inverted scrolling is great but with a mouse it feels unnatural, change it via:
 
 `system settings -> mouse / mousepad -> scroll & zoom -> unselect natural scrolling`
+
+## Create packer template
+
+TODO: Look at implementation for runners using this great example: https://github.com/motionbug/macad.uk2025
