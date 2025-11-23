@@ -151,6 +151,40 @@ install_hyprland() {
 			return 1
 		}
 
+		# Build and install hyprlang (required dependency for hypridle and other components)
+		echo -e "${C_BLUE}[*]${C_RESET} Building hyprlang..."
+		git clone --recursive https://github.com/hyprwm/hyprlang.git || { 
+			echo -e "${C_RED}[-]${C_RESET} Failed to clone hyprlang repository"
+			rm -rf "$tmp_dir"
+			return 1
+		}
+
+		cd hyprlang || { 
+			echo -e "${C_RED}[-]${C_RESET} Failed to enter hyprlang directory"
+			rm -rf "$tmp_dir"
+			return 1
+		}
+
+		make all || { 
+			echo -e "${C_RED}[-]${C_RESET} Failed to build hyprlang"
+			cd - > /dev/null || true
+			rm -rf "$tmp_dir"
+			return 1
+		}
+
+		sudo make install || { 
+			echo -e "${C_RED}[-]${C_RESET} Failed to install hyprlang"
+			cd - > /dev/null || true
+			rm -rf "$tmp_dir"
+			return 1
+		}
+
+		cd "$tmp_dir" || { 
+			echo -e "${C_RED}[-]${C_RESET} Failed to return to temp directory"
+			rm -rf "$tmp_dir"
+			return 1
+		}
+
 		# Build and install Hyprland
 		echo -e "${C_BLUE}[*]${C_RESET} Building Hyprland..."
 		git clone --recursive https://github.com/hyprwm/Hyprland.git || { 
@@ -179,6 +213,29 @@ install_hyprland() {
 			return 1
 		}
 
+		cd - > /dev/null || true
+		rm -rf "$tmp_dir"
+	fi
+
+	# Check if hyprlang is installed (required for hypridle and other components)
+	if ! pkg-config --exists hyprlang 2>/dev/null; then
+		echo -e "${C_BLUE}[*]${C_RESET} hyprlang not found, building from source..."
+		tmp_dir=$(mktemp -d)
+		cd "$tmp_dir" || {
+			echo -e "${C_YELLOW}[!]${C_RESET} Failed to create temp directory for hyprlang"
+		}
+		
+		if git clone --recursive https://github.com/hyprwm/hyprlang.git 2>/dev/null; then
+			cd hyprlang || {
+				cd - > /dev/null || true
+				rm -rf "$tmp_dir"
+			}
+			
+			if make all 2>/dev/null; then
+				sudo make install 2>/dev/null && echo -e "${C_GREEN}[+]${C_RESET} hyprlang installed"
+			fi
+		fi
+		
 		cd - > /dev/null || true
 		rm -rf "$tmp_dir"
 	fi
@@ -251,9 +308,9 @@ EOF
 	return 0
 }
 
-# Function: rice
+# Function: rice_shell_ninja
 # Description: Installs the Hyprland rice configuration from shell-ninja/hyprconf-v2
-rice() {
+rice_shell_ninja() {
 	echo -e "${C_BLUE}[*]${C_RESET} Installing Hyprland rice configuration..."
 
 	# Check if Hyprland is installed
@@ -366,6 +423,144 @@ rice() {
 	echo -e "${C_CYAN}[i]${C_RESET} Once logged in, press SUPER + Shift + H to see all keybinds"
 	echo -e "${C_CYAN}[i]${C_RESET} Update anytime with SUPER + Shift + U"
 	echo -e "${C_CYAN}[i]${C_RESET} Use 'select_hypr_theme' to change themes if needed"
+}
+
+# Function: rice
+# Description: Installs JaKooLit's Ubuntu-Hyprland rice configuration (recommended for Ubuntu 24.04)
+rice() {
+	echo -e "${C_BLUE}[*]${C_RESET} Installing JaKooLit's Ubuntu-Hyprland rice configuration..."
+
+	# Check if Hyprland is installed
+	if ! command -v Hyprland &> /dev/null && ! command -v hyprland &> /dev/null; then
+		echo -e "${C_YELLOW}[!]${C_RESET} Hyprland is not installed. Please run install_hyprland first."
+		return 1
+	fi
+
+	# Check for old shell-ninja rice installation
+	local old_backup="$HOME/.config/backup_hyprconfV2-${USER}"
+	if [[ -d "$old_backup" ]] || [[ -d "$HOME/.config/hypr/Wallpapers" ]]; then
+		echo -e "${C_YELLOW}[!]${C_RESET} Detected previous shell-ninja rice installation"
+		echo -e "${C_CYAN}[i]${C_RESET} JaKooLit installer will backup existing configs automatically"
+		echo -e "${C_CYAN}[i]${C_RESET} Your old configs are safe in: $old_backup"
+		echo ""
+		read -p "Continue with JaKooLit installation? (Y/n): " -n 1 -r
+		echo ""
+		if [[ $REPLY =~ ^[Nn]$ ]]; then
+			echo -e "${C_CYAN}[i]${C_RESET} Cancelled."
+			return 0
+		fi
+	fi
+
+	# Detect Ubuntu version
+	local ubuntu_version=""
+	if [[ -f /etc/os-release ]]; then
+		ubuntu_version=$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1,2)
+	fi
+
+	# Default to 24.04 if detection fails
+	if [[ -z "$ubuntu_version" ]]; then
+		echo -e "${C_YELLOW}[!]${C_RESET} Could not detect Ubuntu version, defaulting to 24.04"
+		ubuntu_version="24.04"
+	fi
+
+	echo -e "${C_BLUE}[*]${C_RESET} Detected Ubuntu version: $ubuntu_version"
+	echo -e "${C_BLUE}[*]${C_RESET} Cloning JaKooLit/Ubuntu-Hyprland repository (branch: $ubuntu_version)..."
+
+	# Clone the repository
+	local install_dir="$HOME/Ubuntu-Hyprland-${ubuntu_version}"
+	if [[ -d "$install_dir" ]]; then
+		echo -e "${C_YELLOW}[!]${C_RESET} Directory $install_dir already exists"
+		read -p "Remove and re-clone? (y/N): " -n 1 -r
+		echo ""
+		if [[ $REPLY =~ ^[Yy]$ ]]; then
+			rm -rf "$install_dir"
+		else
+			echo -e "${C_CYAN}[i]${C_RESET} Using existing directory"
+		fi
+	fi
+
+	if [[ ! -d "$install_dir" ]]; then
+		git clone -b "$ubuntu_version" --depth=1 https://github.com/JaKooLit/Ubuntu-Hyprland.git "$install_dir" || {
+			echo -e "${C_RED}[-]${C_RESET} Failed to clone repository"
+			return 1
+		}
+	fi
+
+	cd "$install_dir" || {
+		echo -e "${C_RED}[-]${C_RESET} Failed to enter installation directory"
+		return 1
+	}
+
+	# Make install script executable
+	if [[ -f "install.sh" ]]; then
+		chmod +x install.sh
+		echo -e "${C_BLUE}[*]${C_RESET} Running interactive installer..."
+		echo -e "${C_CYAN}[i]${C_RESET} The installer will guide you through the setup process"
+		echo -e "${C_CYAN}[i]${C_RESET} You can also use 'auto-install.sh' for automated installation"
+		echo ""
+		./install.sh
+	elif [[ -f "auto-install.sh" ]]; then
+		chmod +x auto-install.sh
+		echo -e "${C_BLUE}[*]${C_RESET} Running automated installer..."
+		./auto-install.sh
+	else
+		echo -e "${C_RED}[-]${C_RESET} No installer script found in repository"
+		return 1
+	fi
+
+	echo ""
+	echo -e "${C_GREEN}[+]${C_RESET} Installation complete!"
+	echo -e "${C_CYAN}[i]${C_RESET} Log out and select Hyprland as your session from your login manager"
+	echo -e "${C_CYAN}[i]${C_RESET} Once logged in, press SUPER + H to see all keybinds"
+	echo -e "${C_CYAN}[i]${C_RESET} Installation directory: $install_dir"
+	echo -e "${C_CYAN}[i]${C_RESET} To reinstall specific components, cd to the directory and run: ./install-scripts/<script-name>.sh"
+	echo -e "${C_CYAN}[i]${C_RESET} To wipe and reinstall: wipe_jakoolit_rice"
+}
+
+# Function: wipe_jakoolit_rice
+# Description: Removes JaKooLit rice installation to allow clean reinstall
+wipe_jakoolit_rice() {
+	echo -e "${C_BLUE}[*]${C_RESET} Wiping JaKooLit rice installation..."
+
+	# Detect Ubuntu version
+	local ubuntu_version=""
+	if [[ -f /etc/os-release ]]; then
+		ubuntu_version=$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1,2)
+	fi
+
+	if [[ -z "$ubuntu_version" ]]; then
+		ubuntu_version="24.04"
+	fi
+
+	local install_dir="$HOME/Ubuntu-Hyprland-${ubuntu_version}"
+	local hypr_config="$HOME/.config/hypr"
+
+	echo -e "${C_YELLOW}[!]${C_RESET} This will remove:"
+	echo -e "  ${C_CYAN}-${C_RESET} Installation directory: $install_dir"
+	echo -e "  ${C_CYAN}-${C_RESET} Hyprland config: $hypr_config"
+	echo ""
+	read -p "Continue? (y/N): " -n 1 -r
+	echo ""
+	
+	if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+		echo -e "${C_CYAN}[i]${C_RESET} Cancelled."
+		return 0
+	fi
+
+	# Remove installation directory
+	if [[ -d "$install_dir" ]]; then
+		rm -rf "$install_dir"
+		echo -e "${C_GREEN}[+]${C_RESET} Removed $install_dir"
+	fi
+
+	# Remove hypr config (installer will recreate it)
+	if [[ -d "$hypr_config" ]]; then
+		rm -rf "$hypr_config"
+		echo -e "${C_GREEN}[+]${C_RESET} Removed $hypr_config"
+	fi
+
+	echo -e "${C_GREEN}[+]${C_RESET} Wipe complete!"
+	echo -e "${C_CYAN}[i]${C_RESET} You can now run 'rice' to reinstall"
 }
 
 # Function: select_hypr_theme
