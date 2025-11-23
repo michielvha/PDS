@@ -265,12 +265,45 @@ rice() {
 	# Install required dependencies for the installer script
 	echo -e "${C_BLUE}[*]${C_RESET} Installing required dependencies..."
 	sudo apt update
-	if ! sudo apt install -y crudini 2>/dev/null; then
-		echo -e "${C_YELLOW}[!]${C_RESET} crudini not available in repositories"
-		echo -e "${C_CYAN}[i]${C_RESET} Theme selection may not work properly without crudini"
-		echo -e "${C_CYAN}[i]${C_RESET} You can install it manually later if needed"
-	else
-		echo -e "${C_GREEN}[+]${C_RESET} crudini installed"
+	
+	# Install essential dependencies
+	local deps=(
+		"parallel"
+		"crudini"
+		"pciutils"  # for lspci
+		"systemd"   # for hostnamectl (usually installed)
+		"tar"
+		"sed"
+		"grep"
+		"coreutils"
+	)
+	
+	for dep in "${deps[@]}"; do
+		if ! dpkg -l | grep -q "^ii.*$dep "; then
+			sudo apt install -y "$dep" 2>/dev/null || {
+				if [[ "$dep" == "crudini" ]]; then
+					echo -e "${C_YELLOW}[!]${C_RESET} crudini not available (optional, for Qt theme config)"
+				else
+					echo -e "${C_YELLOW}[!]${C_RESET} Failed to install $dep"
+				fi
+			}
+		fi
+	done
+
+	# Install gum (optional, for fancy display - script has fallback)
+	if ! command -v gum &> /dev/null; then
+		echo -e "${C_BLUE}[*]${C_RESET} Installing gum (optional, for better display)..."
+		# Try to install from GitHub release if not in repos
+		if ! sudo apt install -y gum 2>/dev/null; then
+			local gum_url="https://github.com/charmbracelet/gum/releases/latest/download/gum_0.14.0_linux_amd64.deb"
+			local gum_deb=$(mktemp)
+			if wget -q "$gum_url" -O "$gum_deb" 2>/dev/null; then
+				sudo dpkg -i "$gum_deb" 2>/dev/null || sudo apt install -f -y
+				rm -f "$gum_deb"
+			else
+				echo -e "${C_CYAN}[i]${C_RESET} gum not installed (optional, script will use fallback)"
+			fi
+		fi
 	fi
 
 	# Clone the repository
@@ -278,14 +311,32 @@ rice() {
 	echo -e "${C_BLUE}[*]${C_RESET} Cloning hyprconf-v2 repository..."
 	git clone --depth=1 https://github.com/shell-ninja/hyprconf-v2.git "$tmp_dir/hyprconf-v2"
 
+	# Fix script issues before running
+	echo -e "${C_BLUE}[*]${C_RESET} Fixing script issues..."
+	cd "$tmp_dir/hyprconf-v2" || exit 1
+	
+	# Fix the _____ line error (line 188) - comment out uncommented separator lines
+	sed -i 's/^_____/#_____/' hyprconf-v2.sh 2>/dev/null || true
+	
+	# Add Ubuntu/Debian support for package installation in the install() function
+	# Find the install function and add apt support
+	if ! grep -q "command -v apt" hyprconf-v2.sh; then
+		# Add apt support after zypper
+		sed -i '/elif command -v zypper/a\
+    elif command -v apt &> /dev/null; then\
+        sudo apt install -y $1' hyprconf-v2.sh 2>/dev/null || true
+	fi
+	
+	# Update package check to work with apt/dpkg
+	# Replace the package check logic to include dpkg
+	sed -i 's|if sudo pacman -Q "$pkg"|if (sudo pacman -Q "$pkg" 2>/dev/null || dpkg -l | grep -q "^ii.*$pkg")|' hyprconf-v2.sh 2>/dev/null || true
+	
+	chmod +x hyprconf-v2.sh
+
 	# Run the installer
 	echo -e "${C_BLUE}[*]${C_RESET} Running installer script..."
 	echo -e "${C_YELLOW}[!]${C_RESET} Note: The installer defaults to 'Catppuccin' theme (no prompt)"
 	echo -e "${C_CYAN}[i]${C_RESET} After installation, use 'select_hypr_theme' to change themes"
-	cd "$tmp_dir/hyprconf-v2" || exit 1
-	chmod +x hyprconf-v2.sh
-	# Fix the script error on line 188 before running
-	sed -i 's/^_____/#_____/' hyprconf-v2.sh 2>/dev/null || true
 	./hyprconf-v2.sh
 
 	# Clean up
