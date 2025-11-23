@@ -547,20 +547,98 @@ wipe_jakoolit_rice() {
 		return 0
 	fi
 
-	# Remove installation directory
+	# Remove installation directory (always use sudo)
 	if [[ -d "$install_dir" ]]; then
-		rm -rf "$install_dir"
-		echo -e "${C_GREEN}[+]${C_RESET} Removed $install_dir"
+		sudo rm -rf "$install_dir" 2>/dev/null && echo -e "${C_GREEN}[+]${C_RESET} Removed $install_dir" || {
+			echo -e "${C_YELLOW}[!]${C_RESET} Some files could not be removed. You may need to manually check: $install_dir"
+		}
 	fi
 
 	# Remove hypr config (installer will recreate it)
+	if [[ -d "$hypr_config" ]]; then
+		sudo rm -rf "$hypr_config" 2>/dev/null && echo -e "${C_GREEN}[+]${C_RESET} Removed $hypr_config" || {
+			echo -e "${C_YELLOW}[!]${C_RESET} Some files could not be removed. You may need to manually check: $hypr_config"
+		}
+	fi
+
+	echo -e "${C_GREEN}[+]${C_RESET} Wipe complete!"
+	echo -e "${C_CYAN}[i]${C_RESET} You can now run 'rice' to reinstall"
+}
+
+# Function: wipe_shell_ninja_rice
+# Description: Removes shell-ninja hyprconf-v2 rice installation
+wipe_shell_ninja_rice() {
+	echo -e "${C_BLUE}[*]${C_RESET} Wiping shell-ninja rice installation..."
+
+	local backup_dir="$HOME/.config/backup_hyprconfV2-${USER}"
+	local archive_dir="$HOME/.config/archive_hyprconfV2-${USER}"
+	local hypr_config="$HOME/.config/hypr"
+	local wallpapers_dir="$HOME/.config/hypr/Wallpapers"
+
+	echo -e "${C_YELLOW}[!]${C_RESET} This will remove:"
+	echo -e "  ${C_CYAN}-${C_CYAN} Hyprland config: $hypr_config"
+	if [[ -d "$backup_dir" ]]; then
+		echo -e "  ${C_CYAN}-${C_RESET} Backup directory: $backup_dir"
+	fi
+	if [[ -d "$archive_dir" ]]; then
+		echo -e "  ${C_CYAN}-${C_RESET} Archive directory: $archive_dir"
+	fi
+	echo ""
+	read -p "Continue? (y/N): " -n 1 -r
+	echo ""
+	
+	if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+		echo -e "${C_CYAN}[i]${C_RESET} Cancelled."
+		return 0
+	fi
+
+	# Remove hypr config
 	if [[ -d "$hypr_config" ]]; then
 		rm -rf "$hypr_config"
 		echo -e "${C_GREEN}[+]${C_RESET} Removed $hypr_config"
 	fi
 
+	# Remove backup directory
+	if [[ -d "$backup_dir" ]]; then
+		rm -rf "$backup_dir"
+		echo -e "${C_GREEN}[+]${C_RESET} Removed $backup_dir"
+	fi
+
+	# Remove archive directory
+	if [[ -d "$archive_dir" ]]; then
+		rm -rf "$archive_dir"
+		echo -e "${C_GREEN}[+]${C_RESET} Removed $archive_dir"
+	fi
+
+	# Check for other shell-ninja related configs
+	local other_configs=(
+		"$HOME/.config/rofi"
+		"$HOME/.config/waybar"
+		"$HOME/.config/kitty"
+		"$HOME/.config/swaync"
+		"$HOME/.config/wlogout"
+	)
+
+	local found_any=false
+	for config in "${other_configs[@]}"; do
+		if [[ -d "$config" ]] && [[ -L "$config" || -f "$config" ]]; then
+			found_any=true
+			break
+		fi
+	done
+
+	if [[ "$found_any" == true ]]; then
+		echo -e "${C_YELLOW}[!]${C_RESET} Found other config directories that may be from shell-ninja rice"
+		echo -e "${C_CYAN}[i]${C_RESET} These were not removed automatically. Check manually if needed:"
+		for config in "${other_configs[@]}"; do
+			if [[ -d "$config" ]]; then
+				echo -e "  ${C_CYAN}-${C_RESET} $config"
+			fi
+		done
+	fi
+
 	echo -e "${C_GREEN}[+]${C_RESET} Wipe complete!"
-	echo -e "${C_CYAN}[i]${C_RESET} You can now run 'rice' to reinstall"
+	echo -e "${C_CYAN}[i]${C_RESET} Shell-ninja rice has been removed"
 }
 
 # Function: select_hypr_theme
