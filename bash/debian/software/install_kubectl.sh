@@ -18,49 +18,91 @@ install_kubectl() {
 	sudo apt update
 	sudo apt install -y kubectl
 
-	# TODO: auto completion configuration ⚠️
- 	# TODO: add to plugin https://github.com/keisku/kubectl-explore
-  	# TODO: Maybe change the way we handle this instead of checking imperatively just generate a config file below a caution block and check if the caution block exists 
 	# Detect shell and set file to update
-	#    SHELL_NAME=$(basename "$SHELL")
-	#    [[ "$SHELL_NAME" == "zsh" ]] && PROFILE_FILE="$HOME/.zshrc" || PROFILE_FILE="$HOME/.bashrc"
-	#
-	#    # Ensure autocompletion is set
-	#    grep -qxF "source <(kubectl completion $SHELL_NAME)" "$PROFILE_FILE" || echo "source <(kubectl completion $SHELL_NAME)" >> "$PROFILE_FILE"
-	#
-	#    # Ensure alias 'k=kubectl' is set
-	#    grep -qxF "alias k=kubectl" "$PROFILE_FILE" || echo "alias k=kubectl" >> "$PROFILE_FILE"
-	#
-	#    # Ensure completion for alias 'k'
-	#    if [[ "$SHELL_NAME" == "zsh" ]]; then
-	#        grep -qxF "compdef __start_kubectl k" "$PROFILE_FILE" || echo "compdef __start_kubectl k" >> "$PROFILE_FILE"
-	#    else
-	#        grep -qxF "complete -F __start_kubectl k" "$PROFILE_FILE" || echo "complete -F __start_kubectl k" >> "$PROFILE_FILE"
-	#    fi
-	#
-	#    # install krew (kubectl plugin manager) ✅
-	#    (
-	#    set -x; cd "$(mktemp -d)" &&
-	#    OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
-	#    ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
-	#    KREW="krew-${OS}_${ARCH}" &&
-	#    curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
-	#    tar zxvf "${KREW}.tar.gz" &&
-	#    ./"${KREW}" install krew
-	#    )
-	#    # Ensure binary is added to $PATH
-	#    grep -qxF 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' "$PROFILE_FILE" || echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> "$PROFILE_FILE"
-	#
-	#    # apply changes
-	#    source $PROFILE_FILE
-	#
-	#    # install kubectl plugins
-	#    kubectl krew update
-	#    # view secrets
-	#    kubectl krew install view-secret
-	#    # stern
-	#    kubectl krew install stern
-	#
-	#    # source $PROFILE_FILE
-	#    echo "Installation complete. "  # Restart your terminal or run 'source $PROFILE_FILE' to apply changes.
+	local SHELL_NAME
+	if [[ -n "$ZSH_VERSION" ]]; then
+		SHELL_NAME="zsh"
+		PROFILE_FILE="$HOME/.zshrc"
+	elif [[ -n "$BASH_VERSION" ]]; then
+		SHELL_NAME="bash"
+		PROFILE_FILE="$HOME/.bashrc"
+	else
+		# Fallback to checking $SHELL
+		SHELL_NAME=$(basename "$SHELL" 2>/dev/null || echo "bash")
+		[[ "$SHELL_NAME" == "zsh" ]] && PROFILE_FILE="$HOME/.zshrc" || PROFILE_FILE="$HOME/.bashrc"
+	fi
+
+	# Ensure profile file exists
+	[[ -f "$PROFILE_FILE" ]] || touch "$PROFILE_FILE"
+
+	# Ensure autocompletion is set
+	if ! grep -qxF "source <(kubectl completion $SHELL_NAME)" "$PROFILE_FILE" 2>/dev/null; then
+		echo "source <(kubectl completion $SHELL_NAME)" >> "$PROFILE_FILE"
+	fi
+
+	# Ensure alias 'k=kubectl' is set
+	if ! grep -qxF "alias k=kubectl" "$PROFILE_FILE" 2>/dev/null; then
+		echo "alias k=kubectl" >> "$PROFILE_FILE"
+	fi
+
+	# Ensure completion for alias 'k'
+	if [[ "$SHELL_NAME" == "zsh" ]]; then
+		if ! grep -qxF "compdef __start_kubectl k" "$PROFILE_FILE" 2>/dev/null; then
+			echo "compdef __start_kubectl k" >> "$PROFILE_FILE"
+		fi
+	else
+		if ! grep -qxF "complete -F __start_kubectl k" "$PROFILE_FILE" 2>/dev/null; then
+			echo "complete -F __start_kubectl k" >> "$PROFILE_FILE"
+		fi
+	fi
+
+	# Install krew (kubectl plugin manager)
+	if ! command -v kubectl-krew &> /dev/null && [[ ! -f "$HOME/.krew/bin/kubectl-krew" ]]; then
+		echo "Installing krew (kubectl plugin manager)..."
+		local tmp_dir
+		tmp_dir=$(mktemp -d)
+		cd "$tmp_dir" || return 1
+		
+		local OS ARCH KREW
+		OS="$(uname | tr '[:upper:]' '[:lower:]')"
+		ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')"
+		KREW="krew-${OS}_${ARCH}"
+		
+		if curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" && \
+		   tar zxvf "${KREW}.tar.gz" && \
+		   ./"${KREW}" install krew; then
+			echo "krew installed successfully"
+		else
+			echo "Warning: Failed to install krew"
+		fi
+		
+		cd - > /dev/null || true
+		rm -rf "$tmp_dir"
+	fi
+
+	# Ensure binary is added to $PATH
+	if ! grep -qxF 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' "$PROFILE_FILE" 2>/dev/null; then
+		echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> "$PROFILE_FILE"
+	fi
+
+	# Add krew to current session PATH if not already there
+	export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
+	# Install kubectl plugins (only if krew is available)
+	if command -v kubectl-krew &> /dev/null || [[ -f "$HOME/.krew/bin/kubectl-krew" ]]; then
+		echo "Installing kubectl plugins..."
+		kubectl krew update 2>/dev/null || true
+		
+		# Install plugins
+		local plugins=("neat" "view-secret" "stern")
+		for plugin in "${plugins[@]}"; do
+			if kubectl krew install "$plugin" 2>/dev/null; then
+				echo "Installed $plugin plugin"
+			else
+				echo "Warning: Failed to install $plugin plugin"
+			fi
+		done
+	fi
+
+	echo "Installation complete. Restart your terminal or run 'source $PROFILE_FILE' to apply changes."
 }
