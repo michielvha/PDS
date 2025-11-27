@@ -38,7 +38,7 @@ fi
 
 zi light romkatv/powerlevel10k
 
-[[ ! -f ~/.p10k.zsh ]] || ~/.p10k.zsh #import p10k config
+[[ ! -f ~/.p10k.zsh ]] || source  ~/.p10k.zsh #import p10k config
 
 ### --- Plugins ---
 zi light zsh-users/zsh-syntax-highlighting
@@ -51,8 +51,9 @@ zi light agkozak/zsh-z
 zi light ohmyzsh/ohmyzsh
 zi snippet OMZP::docker
 zi snippet OMZP::history
-source "$HOME/.zi/plugins/ohmyzsh---ohmyzsh/plugins/git/git.plugin.zsh"
+zi snippet OMZP::git
 
+### --- Autocomplete ---
 zi light marlonrichert/zsh-autocomplete
 zstyle ':autocomplete:*' default-context history-incremental-search-backward
 zstyle ':autocomplete:*' min-input 1
@@ -60,11 +61,14 @@ setopt HIST_FIND_NO_DUPS
 
 # --- Enable kubectl autocompletion for zsh ---
 #autoload -Uz compinit && compinit # zi enables this automatically.
-source <(kubectl completion zsh)
-
-# alias + auto complete for alias
-alias k='kubectl'
-compdef __start_kubectl k
+if (( $+commands[kubectl] )); then
+  # Only source if compdef is defined (meaning completion system is active)
+  if (( $+functions[compdef] )); then
+     source <(kubectl completion zsh)
+     alias k='kubectl'
+     compdef __start_kubectl k
+  fi
+fi
 
 # --- Various ---
 # TODO: 'neofetch' here will trigger p10k config error if ran before prompt is set. we'd have to wrap it in a precmd hook. as shown below.
