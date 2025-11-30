@@ -9,6 +9,71 @@ update_system_cron_entry() {
     echo "0 0 * * * root apt update -y && apt upgrade -y" | sudo tee -a /etc/crontab > /dev/null
 }
 
+# Function: setup_auto_update_weekly_debian
+# Description: Configure system to auto-update weekly using /etc/cron.weekly
+#              This uses anacron (if installed) to ensure updates run even if
+#              the system was off at the scheduled time.
+setup_auto_update_weekly_debian() {
+    local script_path="/etc/cron.weekly/auto-system-update"
+
+    echo "Configuring weekly system updates..."
+
+    # Create the script
+    # We use 'cat' with a heredoc to write the content.
+    # DEBIAN_FRONTEND=noninteractive prevents prompts (like config file overwrites)
+    cat <<EOF | sudo tee "$script_path" > /dev/null
+#!/bin/bash
+# Auto-generated system update script
+
+# Ensure non-interactive mode to prevent hangs
+export DEBIAN_FRONTEND=noninteractive
+
+# Update package list && Upgrade packages
+apt update -y && apt upgrade -y
+
+# Clean up
+apt autoremove -y && apt autoclean -y
+EOF
+
+    # Make executable
+    sudo chmod +x "$script_path"
+
+    echo "✅ Weekly auto-update script created at: $script_path"
+}
+
+# Function: setup_auto_update_weekly_fedora
+# Description: Configure system to auto-update weekly using /etc/cron.weekly
+#              This uses anacron (if installed) to ensure updates run even if
+#              the system was off at the scheduled time.
+setup_auto_update_weekly_fedora() {
+    local script_path="/etc/cron.weekly/auto-system-update"
+
+    echo "Configuring weekly system updates..."
+
+    # Create the script
+    # We use 'cat' with a heredoc to write the content.
+    # DNF_FRONTEND=noninteractive prevents prompts (like config file overwrites)
+    cat <<EOF | sudo tee "$script_path" > /dev/null
+#!/bin/bash
+# Auto-generated system update script
+
+# Ensure non-interactive mode to prevent hangs
+export DNF_FRONTEND=noninteractive
+
+# Update package list && Upgrade packages
+dnf update -y && dnf upgrade -y
+
+# Clean up
+dnf autoremove -y && dnf clean all
+EOF
+
+    # Make executable
+    sudo chmod +x "$script_path"
+
+    echo "✅ Weekly auto-update script created at: $script_path"
+}
+
+
 # Function: full_upgrade
 # Description: Full system upgrade with one command
 full_upgrade() {
