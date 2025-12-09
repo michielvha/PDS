@@ -7,7 +7,7 @@
 install_kubectl() {
 	# Currently only supports ubuntu using either zsh & bash
 	local VERSION="${1:-1.32}"
-	# ✅
+	
 	sudo apt update -y
 	sudo apt install -y apt-transport-https ca-certificates curl gnupg
 	sudo mkdir -p -m 755 /etc/apt/keyrings
@@ -104,5 +104,8 @@ install_kubectl() {
 		done
 	fi
 
-	echo "Installation complete. Restart your terminal or run 'source $PROFILE_FILE' to apply changes."
+	echo "Installation complete. Restart your terminal or run 'source $PROFILE_FILE' to apply changes."	
+
+	# Install kustomize
+	curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
 }
