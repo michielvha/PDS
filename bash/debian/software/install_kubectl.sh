@@ -1,5 +1,5 @@
 #!/bin/bash
-# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_kubectl.sh) | bash - `
+# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_kubectl.sh)`
 
 # Function: install_kubectl
 # Description: Installs and configures kubectl
