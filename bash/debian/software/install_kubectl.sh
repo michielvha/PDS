@@ -106,6 +106,8 @@ install_kubectl() {
 
 	echo "Installation complete. Restart your terminal or run 'source $PROFILE_FILE' to apply changes."	
 
-	# Install kustomize
-	curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
 }
+
+
+# TODO: make proper install script for kustomize
+# curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
