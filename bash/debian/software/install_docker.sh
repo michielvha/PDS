@@ -32,4 +32,19 @@ install_docker() {
 	sudo usermod -aG docker "$USER"
 	# Enable Docker to start on boot
 	sudo systemctl enable docker
+	
+	# Prompt user about starting new shell
+	echo ""
+	echo "User added to docker group successfully!"
+	echo "Group changes require a new shell session to take effect."
+	echo ""
+	read -p "Would you like to start a new shell now? (y/n): " -n 1 -r
+	echo ""
+	
+	if [[ $REPLY =~ ^[Yy]$ ]]; then
+	    echo "Starting new shell with docker group..."
+	    newgrp docker
+	else
+	    echo "Skipping. Please log out and log back in, or run 'newgrp docker' manually."
+	fi
 }
