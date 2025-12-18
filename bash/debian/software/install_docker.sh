@@ -42,8 +42,8 @@ install_docker() {
 	echo ""
 	
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
-	    echo "Starting new shell with docker group..."
-	    newgrp docker
+	    echo "Starting new shell"
+		exec su -l $USER
 	else
 	    echo "Skipping. Please log out and log back in, or run 'newgrp docker' manually."
 	fi
