@@ -42,10 +42,10 @@ zi light romkatv/powerlevel10k
 
 ### --- Plugins ---
 zi light zsh-users/zsh-syntax-highlighting
-zi light zsh-users/zsh-autosuggestions
 zi light zsh-users/zsh-history-substring-search
+# zi light zsh-users/zsh-autosuggestions # seems to conflict with zsh-autocomplete
 # zi light zsh-users/zsh-completions # This plugin is not needed, as we use zsh-autocomplete instead.
-zi light agkozak/zsh-z
+zi light agkozak/zsh-z # Jump quickly to directories that you have visited "frecently." A native Zsh port of z.sh with added features. 
 
 # Installs stuff in ~/zi/plugins that needs to be manually sourced.
 zi light ohmyzsh/ohmyzsh
