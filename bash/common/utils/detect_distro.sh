@@ -39,7 +39,7 @@ get_package_manager() {
         ubuntu|debian)
             echo "apt"
             ;;
-        fedora|centos|rhel)
+        fedora|centos|rhel|ol|rocky|almalinux|amzn)
             command -v dnf >/dev/null 2>&1 && echo "dnf" || echo "yum"
             ;;
         arch|manjaro)
