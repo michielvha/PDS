@@ -1,11 +1,11 @@
-## PDS (Portable Deploy Suite) v{{VERSION}}
+## PDS (Portable Deploy Suite) {{VERSION}}
 
 ### Installation
 
 #### Direct Installation
 ```bash
 # Download and install
-wget https://github.com/{{REPOSITORY}}/releases/download/v{{VERSION}}/{{PACKAGE_NAME}}_{{VERSION}}_all.deb
+wget https://github.com/{{REPOSITORY}}/releases/download/{{VERSION}}/{{PACKAGE_NAME}}_{{VERSION}}_all.deb
 sudo dpkg -i {{PACKAGE_NAME}}_{{VERSION}}_all.deb
 sudo apt-get install -f
 ```
