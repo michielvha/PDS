@@ -15,7 +15,7 @@ install_go() {
 	# Validate version extraction
 	if [[ -z "$GO_VERSION" ]]; then
 		echo "❌ Failed to retrieve the latest Go version."
-		exit 1
+		return 1
 	fi
 
 	# Detect OS and architecture
@@ -41,7 +41,7 @@ install_go() {
 			;;
 		*)
 			echo "❌ Unsupported architecture: $ARCH"
-			exit 1
+			return 1
 			;;
 	esac
 
@@ -52,11 +52,24 @@ install_go() {
 	DOWNLOAD_URL="https://go.dev/dl/${GO_TARBALL}"
 
 	echo "📥 Downloading Go ${GO_VERSION} from ${DOWNLOAD_URL}..."
-	curl -LO "${DOWNLOAD_URL}"
+	if ! curl -LO "${DOWNLOAD_URL}"; then
+		echo "❌ Failed to download Go ${GO_VERSION}."
+		return 1
+	fi
+
+	# Validate download
+	if [[ ! -f "${GO_TARBALL}" ]]; then
+		echo "❌ Download file not found: ${GO_TARBALL}"
+		return 1
+	fi
 
 	echo "📦 Extracting Go ${GO_VERSION}..."
 	sudo rm -rf /usr/local/go
-	sudo tar -C /usr/local -xzf "${GO_TARBALL}"
+	if ! sudo tar -C /usr/local -xzf "${GO_TARBALL}"; then
+		echo "❌ Failed to extract Go ${GO_VERSION}."
+		rm -f "${GO_TARBALL}"
+		return 1
+	fi
 	rm "${GO_TARBALL}" # Remove tarball after installation
 
 	echo "✅ Go ${GO_VERSION} installed successfully!"
@@ -69,8 +82,12 @@ install_go() {
 		echo 'export GOBIN=$GOPATH/bin'
 		echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH'
 	} >>~/.bashrc
-	# shellcheck source=/dev/null
-	source ~/.bashrc # Apply changes
+	# Apply environment variables to current shell (don't source .bashrc as it may cause issues)
+	export GOPATH=$HOME/go
+	export GOBIN=$GOPATH/bin
+	export PATH=$GOBIN:/usr/local/go/bin:$PATH
+	
+	mkdir -p "$GOBIN" 2>/dev/null || true
 
 	echo "🚀 Go installed! Run 'go version' to check."
 }
