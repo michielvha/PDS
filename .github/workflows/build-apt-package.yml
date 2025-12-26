@@ -34,8 +34,6 @@ jobs:
         with:
           fetch-depth: 0 # GitVersion needs full history
       - name: Tag with GitVersion
-        # Call your custom GitVersion action to determine version and tag
-
         id: gitversion
         uses: michielvha/gitversion-tag-action@v6
         with:
