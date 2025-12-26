@@ -8,6 +8,7 @@ echo "========================================"
 echo
 
 # Source the PDS init script for interactive shells
+# shellcheck disable=SC2016
 PDS_INIT_SOURCE='# PDS auto-loading (added by pds package)
 if [ -r /usr/share/pds/init.sh ] && [ -z "${PDS_DISABLE:-}" ]; then
     . /usr/share/pds/init.sh 2>/dev/null || true
