@@ -296,11 +296,23 @@ doctor_check() {
         ((issues++))
     fi
     
-    # Check if functions are loaded
-    if declare -f install_docker >/dev/null 2>&1; then
-        echo "✅ Functions are loaded in current shell"
+    # Check if functions can be loaded (pds runs in subshell, so we test loading here)
+    if [ -f /usr/share/pds/init.sh ]; then
+        # Source the init script to test if functions load correctly
+        # shellcheck disable=SC1091
+        if source /usr/share/pds/init.sh 2>/dev/null; then
+            if declare -f install_docker >/dev/null 2>&1; then
+                echo "✅ Functions can be loaded successfully"
+            else
+                echo "⚠️  Init script sourced but functions not found (possible init script issue)"
+                ((issues++))
+            fi
+        else
+            echo "⚠️  Failed to source init script (check for errors)"
+            ((issues++))
+        fi
     else
-        echo "⚠️  Functions not loaded in current shell (run 'source /usr/share/pds/init.sh')"
+        echo "⚠️  Cannot test function loading (init script missing)"
     fi
     
     # Check environment variables
