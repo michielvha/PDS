@@ -10,13 +10,25 @@ install_go() {
 	echo "🚀 Fetching the latest Go version..."
 
 	# Get the latest Go version dynamically from the official site + Extract just the version number (e.g., go1.21.5 -> 1.21.5)
-	GO_VERSION=$(curl -s https://go.dev/VERSION?m=text | head -n 1 | awk '{print $1}' | sed 's/go//')
-
-	# Validate version extraction
-	if [[ -z "$GO_VERSION" ]]; then
-		echo "❌ Failed to retrieve the latest Go version."
+	# Use a more robust method that works in both bash and zsh
+	local version_response
+	version_response=$(curl -s -f https://go.dev/VERSION?m=text 2>/dev/null)
+	
+	if [[ -z "$version_response" ]] || [[ "$version_response" != "go"* ]]; then
+		echo "❌ Failed to retrieve the latest Go version from go.dev"
 		return 1
 	fi
+	
+	# Extract version - handle both single line and multi-line responses
+	GO_VERSION=$(echo "$version_response" | head -n 1 | awk '{print $1}' | sed 's/^go//' | tr -d '\n\r')
+	
+	# Validate version extraction
+	if [[ -z "$GO_VERSION" ]] || [[ ! "$GO_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)? ]]; then
+		echo "❌ Failed to parse Go version. Response: $version_response"
+		return 1
+	fi
+	
+	echo "📋 Latest Go version: ${GO_VERSION}"
 
 	# Detect OS and architecture
 	OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -77,12 +89,47 @@ install_go() {
 	# Set up GOPATH and GOBIN
 	echo "🔧 Configuring Go environment variables..."
 
-	{
-		echo 'export GOPATH=$HOME/go'
-		echo 'export GOBIN=$GOPATH/bin'
-		echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH'
-	} >>~/.bashrc
-	# Apply environment variables to current shell (don't source .bashrc as it may cause issues)
+	# Detect user's shell and use appropriate config file
+	local detected_shell="bash"  # default
+	case "${SHELL:-}" in
+		*zsh*)
+			detected_shell="zsh"
+			;;
+		*bash*)
+			detected_shell="bash"
+			;;
+		*)
+			# Fallback: check config files
+			if [ -f "$HOME/.zshrc" ] && [ ! -f "$HOME/.bashrc" ]; then
+				detected_shell="zsh"
+			fi
+			;;
+	esac
+	
+	case "$detected_shell" in
+		zsh)
+			SHELL_RC="$HOME/.zshrc"
+			;;
+		bash|*)
+			SHELL_RC="$HOME/.bashrc"
+			;;
+	esac
+
+	# Check if Go environment is already configured
+	if ! grep -q "GOPATH=\$HOME/go" "$SHELL_RC" 2>/dev/null; then
+		{
+			echo ''
+			echo '# Go environment setup'
+			echo 'export GOPATH=$HOME/go'
+			echo 'export GOBIN=$GOPATH/bin'
+			echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH'
+		} >>"$SHELL_RC"
+		echo "✅ Go environment added to $SHELL_RC"
+	else
+		echo "ℹ️  Go environment already configured in $SHELL_RC"
+	fi
+
+	# Apply environment variables to current shell (don't source config file as it may cause issues)
 	export GOPATH=$HOME/go
 	export GOBIN=$GOPATH/bin
 	export PATH=$GOBIN:/usr/local/go/bin:$PATH
@@ -96,13 +143,45 @@ install_go() {
 set_go_env() {
 	echo "🔧 Setting Go environment variables for user: $USER"
 
-	{
-		echo ''
-		echo '# Go environment setup'
-		echo 'export GOPATH=$HOME/go'
-		echo 'export GOBIN=$GOPATH/bin'
-		echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH'
-	} >>~/.bashrc
+	# Detect user's shell and use appropriate config file
+	local detected_shell="bash"  # default
+	case "${SHELL:-}" in
+		*zsh*)
+			detected_shell="zsh"
+			;;
+		*bash*)
+			detected_shell="bash"
+			;;
+		*)
+			# Fallback: check config files
+			if [ -f "$HOME/.zshrc" ] && [ ! -f "$HOME/.bashrc" ]; then
+				detected_shell="zsh"
+			fi
+			;;
+	esac
+	
+	case "$detected_shell" in
+		zsh)
+			SHELL_RC="$HOME/.zshrc"
+			;;
+		bash|*)
+			SHELL_RC="$HOME/.bashrc"
+			;;
+	esac
+
+	# Check if Go environment is already configured
+	if ! grep -q "GOPATH=\$HOME/go" "$SHELL_RC" 2>/dev/null; then
+		{
+			echo ''
+			echo '# Go environment setup'
+			echo 'export GOPATH=$HOME/go'
+			echo 'export GOBIN=$GOPATH/bin'
+			echo 'export PATH=$GOBIN:/usr/local/go/bin:$PATH'
+		} >>"$SHELL_RC"
+		echo "✅ Go environment added to $SHELL_RC"
+	else
+		echo "ℹ️  Go environment already configured in $SHELL_RC"
+	fi
 
 	# Apply it immediately
 	export GOPATH=$HOME/go
