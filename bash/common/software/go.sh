@@ -10,24 +10,14 @@ install_go() {
 	echo "🚀 Fetching the latest Go version..."
 
 	# Get the latest Go version dynamically from the official site + Extract just the version number (e.g., go1.21.5 -> 1.21.5)
-	# Use a more robust method that works in both bash and zsh
-	local version_response
-	version_response=$(curl -s -f https://go.dev/VERSION?m=text 2>/dev/null)
+	# Quote the URL to handle special characters properly (zsh interprets ? as glob pattern)
+	GO_VERSION=$(curl -s 'https://go.dev/VERSION?m=text' | head -n 1 | awk '{print $1}' | sed 's/^go//')
 	
-	if [[ -z "$version_response" ]] || [[ "$version_response" != "go"* ]]; then
-		echo "❌ Failed to retrieve the latest Go version from go.dev"
+	if [[ -z "$GO_VERSION" ]]; then
+		echo "❌ Failed to retrieve the latest Go version."
 		return 1
 	fi
-	
-	# Extract version - handle both single line and multi-line responses
-	GO_VERSION=$(echo "$version_response" | head -n 1 | awk '{print $1}' | sed 's/^go//' | tr -d '\n\r')
-	
-	# Validate version extraction
-	if [[ -z "$GO_VERSION" ]] || [[ ! "$GO_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)? ]]; then
-		echo "❌ Failed to parse Go version. Response: $version_response"
-		return 1
-	fi
-	
+
 	echo "📋 Latest Go version: ${GO_VERSION}"
 
 	# Detect OS and architecture
