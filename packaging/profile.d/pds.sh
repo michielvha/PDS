@@ -1,9 +1,23 @@
-#!/bin/bash
-# PDS Functions Auto-loader for interactive Bash shells
+#!/bin/sh
+# PDS Functions Auto-loader for interactive shells
 # This script is placed in /etc/profile.d/ to automatically load PDS functions
+# Supports both Bash and Zsh shells
 
-# Only load for interactive Bash shells
-if [ -n "${BASH_VERSION:-}" ] && [[ $- == *i* ]]; then
+# Only load for interactive shells (bash or zsh)
+# Profile.d scripts are sourced for login shells, which are interactive
+# Check for shell type: bash or zsh
+if [ -n "${BASH_VERSION:-}" ]; then
+    # Bash: check if interactive (profile.d scripts are sourced for login shells)
+    # Use case statement for POSIX compatibility when checking $- for 'i'
+    case $- in
+        *i*) is_interactive=1 ;;
+    esac
+elif [ -n "${ZSH_VERSION:-}" ]; then
+    # Zsh: profile.d scripts are sourced for login shells (interactive)
+    is_interactive=1
+fi
+
+if [ -n "${is_interactive:-}" ]; then
     # Allow users to opt-out by setting PDS_DISABLE=1
     if [ -z "${PDS_DISABLE:-}" ]; then
         # Check if PDS is installed and load it
