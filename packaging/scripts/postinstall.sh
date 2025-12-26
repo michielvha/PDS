@@ -15,14 +15,14 @@ if [ -r /usr/share/pds/init.sh ] && [ -z "${PDS_DISABLE:-}" ]; then
 fi
 # End of PDS auto-loading'
 
-# Add to /etc/zsh/zshrc if zsh is available
-if [ -f /etc/zsh/zshrc ]; then
-    if ! grep -q "# PDS auto-loading" /etc/zsh/zshrc 2>/dev/null; then
-        echo "" >> /etc/zsh/zshrc
-        echo "$PDS_INIT_SOURCE" >> /etc/zsh/zshrc
-        echo "✅ Added PDS auto-loading to /etc/zsh/zshrc"
+# Add to /etc/zshrc if zsh is available
+if [ -f /etc/zshrc ]; then
+    if ! grep -q "# PDS auto-loading" /etc/zshrc 2>/dev/null; then
+        echo "" >> /etc/zshrc
+        echo "$PDS_INIT_SOURCE" >> /etc/zshrc
+        echo "✅ Added PDS auto-loading to /etc/zshrc"
     else
-        echo "ℹ️  PDS auto-loading already configured in /etc/zsh/zshrc"
+        echo "ℹ️  PDS auto-loading already configured in /etc/zshrc"
     fi
 fi
 
