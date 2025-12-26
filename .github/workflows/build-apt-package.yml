@@ -8,16 +8,16 @@ on:
     branches: [main]
     paths:
       - packaging/**
-      - bash/debian
-      - bash/common
+      - bash/debian/**
+      - bash/common/**
       - '!**/*.md'
       - '!.gitignore'
   pull_request:
     branches: [main]
     paths:
       - packaging/**
-      - bash/debian
-      - bash/common
+      - bash/debian/**
+      - bash/common/**
       - '!**/*.md'
       - '!.gitignore'
 env:
