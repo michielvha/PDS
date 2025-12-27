@@ -2,15 +2,16 @@
 # shellcheck disable=SC2016
 # Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/software/go.sh) `
 
-# Source utility functions
-# shellcheck source=/dev/null
-source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_arch.sh 2>/dev/null || echo "# detect_arch.sh not available")
-
 # Function: install_go
 # Description: Installs the latest version of Golang and configures the environment for the current user.
 #              Supports multiple architectures: x86_64 (amd64), aarch64/arm64, armv6l, armv7l, i386/i686.
 # TODO: allow to manually specify which version ?
 install_go() {
+
+	# Source utility functions
+	# shellcheck source=/dev/null
+	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_arch.sh 2>/dev/null || echo "# detect_arch.sh not available")
+
 	echo "🚀 Fetching the latest Go version..."
 
 	# Get the latest Go version dynamically from the official site + Extract just the version number (e.g., go1.21.5 -> 1.21.5)
@@ -208,6 +209,10 @@ setup_edgectl_dev_env() {
 # Description: Installs the latest version of golangci-lint for any platform/architecture.
 #              Uses the official binary releases from GitHub for platform-agnostic installation.
 install_golangci_lint() {
+	# Source utility functions
+	# shellcheck source=/dev/null
+	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_arch.sh 2>/dev/null || echo "# detect_arch.sh not available")
+
 	echo "🚀 Installing golangci-lint..."
 
 	# Detect OS and architecture using common utilities
