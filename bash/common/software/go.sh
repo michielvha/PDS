@@ -2,6 +2,10 @@
 # shellcheck disable=SC2016
 # Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/software/go.sh) `
 
+# Source utility functions
+# shellcheck source=/dev/null
+source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_arch.sh 2>/dev/null || echo "# detect_arch.sh not available")
+
 # Function: install_go
 # Description: Installs the latest version of Golang and configures the environment for the current user.
 #              Supports multiple architectures: x86_64 (amd64), aarch64/arm64, armv6l, armv7l, i386/i686.
@@ -20,32 +24,15 @@ install_go() {
 
 	echo "📋 Latest Go version: ${GO_VERSION}"
 
-	# Detect OS and architecture
-	OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-	ARCH=$(uname -m)
-
-	# Map architecture names to Go's naming convention
-	case "$ARCH" in
-		x86_64)
-			GO_ARCH="amd64"
-			;;
-		aarch64|arm64)
-			GO_ARCH="arm64"
-			;;
-		armv6l)
-			GO_ARCH="armv6l"
-			;;
-		armv7l)
-			GO_ARCH="armv6l"  # Go uses armv6l for both armv6 and armv7
-			;;
-		i386|i686)
-			GO_ARCH="386"
-			;;
-		*)
-			echo "❌ Unsupported architecture: $ARCH"
-			return 1
-			;;
-	esac
+	# Detect OS and architecture using common utilities
+	local OS
+	local GO_ARCH
+	OS=$(detect_os)
+	GO_ARCH=$(map_arch_to_go)
+	
+	if [[ $? -ne 0 ]]; then
+		return 1
+	fi
 
 	echo "🔍 Detected system: $OS-$GO_ARCH"
 
@@ -215,4 +202,84 @@ setup_edgectl_dev_env() {
 	
 	echo "✅ edgectl development environment set up for root user."
 	echo "Note: Root user can now run 'go version' to verify the installation."
+}
+
+# Function: install_golangci_lint
+# Description: Installs the latest version of golangci-lint for any platform/architecture.
+#              Uses the official binary releases from GitHub for platform-agnostic installation.
+install_golangci_lint() {
+	echo "🚀 Installing golangci-lint..."
+
+	# Detect OS and architecture using common utilities
+	local OS
+	local LINT_ARCH
+	OS=$(detect_os)
+	LINT_ARCH=$(map_arch_to_standard)
+	
+	if [[ $? -ne 0 ]]; then
+		return 1
+	fi
+
+	echo "🔍 Detected system: $OS-$LINT_ARCH"
+
+	# Get the latest version from GitHub API
+	echo "🔍 Fetching latest golangci-lint version..."
+	local LATEST_VERSION
+	LATEST_VERSION=$(curl -s 'https://api.github.com/repos/golangci/golangci-lint/releases/latest' | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+	if [[ -z "$LATEST_VERSION" ]]; then
+		echo "❌ Failed to fetch the latest version."
+		return 1
+	fi
+
+	echo "📦 Latest version: $LATEST_VERSION"
+
+	# Construct download URL
+	local BINARY_NAME
+	local DOWNLOAD_URL
+	BINARY_NAME="golangci-lint-${LATEST_VERSION#v}-${OS}-${LINT_ARCH}"
+	DOWNLOAD_URL="https://github.com/golangci/golangci-lint/releases/download/${LATEST_VERSION}/${BINARY_NAME}.tar.gz"
+
+	echo "📥 Downloading from ${DOWNLOAD_URL}..."
+
+	# Create temporary directory
+	local TMP_DIR
+	TMP_DIR=$(mktemp -d)
+	cd "$TMP_DIR" || return 1
+
+	# Download and extract
+	if ! curl -sSfL "$DOWNLOAD_URL" -o golangci-lint.tar.gz; then
+		echo "❌ Failed to download golangci-lint"
+		rm -rf "$TMP_DIR"
+		return 1
+	fi
+
+	tar -xzf golangci-lint.tar.gz
+
+	# Install to GOBIN if it exists, otherwise /usr/local/bin
+	local INSTALL_DIR
+	if [[ -n "$GOBIN" ]] && [[ -d "$GOBIN" ]]; then
+		INSTALL_DIR="$GOBIN"
+		echo "📂 Installing to $GOBIN..."
+		mv "${BINARY_NAME}/golangci-lint" "$GOBIN/"
+		chmod +x "$GOBIN/golangci-lint"
+	else
+		INSTALL_DIR="/usr/local/bin"
+		echo "📂 Installing to /usr/local/bin (requires sudo)..."
+		sudo mv "${BINARY_NAME}/golangci-lint" /usr/local/bin/
+		sudo chmod +x /usr/local/bin/golangci-lint
+	fi
+
+	# Cleanup
+	cd - > /dev/null || return 1
+	rm -rf "$TMP_DIR"
+
+	# Verify installation
+	if command -v golangci-lint &>/dev/null; then
+		echo "✅ golangci-lint installed successfully!"
+		golangci-lint --version
+	else
+		echo "❌ Installation failed - golangci-lint not found in PATH"
+		return 1
+	fi
 }
