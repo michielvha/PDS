@@ -10,6 +10,12 @@ setup_gnome_extras() {
 	sudo apt update
 	sudo apt install -y gnome-tweaks gnome-shell-extensions gnome-shell-extension-prefs curl jq
 
+	# Enable User Themes extension (required for custom Shell themes in Tweaks)
+	echo "🎨 Enabling User Themes extension..."
+	gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com 2>/dev/null || \
+	gnome-extensions enable user-theme 2>/dev/null || \
+	echo "⚠️  Could not enable User Themes extension (may need to be enabled manually)"
+
 	declare -A extensions=(
 		["dash-to-dock@micxgx.gmail.com"]=307
 		["blur-my-shell@aunetx"]=3193
@@ -57,5 +63,4 @@ setup_gnome_extras() {
 
 	# verify
 	# gsettings get org.gnome.shell enabled-extensions
-	# After install you need to enable 'user themes' in 'extensions' if you want to use a custom theme.
 }
