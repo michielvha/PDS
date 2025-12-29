@@ -4,5 +4,6 @@ sudo pacman -S zsh firefox git go nvm
 source /usr/share/nvm/init-nvm.sh >> ~/.bashrc
 source /usr/share/nvm/init-nvm.sh >> ~/.zshrc
 
-
 sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si
+
+yay cursor-bin
