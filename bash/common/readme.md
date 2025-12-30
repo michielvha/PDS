@@ -18,4 +18,5 @@
 | configure_zsh | Configures ZSH using Zi with plugins and settings for an enhanced shell experience |
 | set_default_zsh | Sets ZSH as the default shell for the current user |
 | install_nerd_fonts | Install the recommended fonts for Powerlevel10k and configure GNOME Terminal to use them |
+| configure_vscode_terminal_font | Configures VS Code/Cursor terminal to use MesloLGS NF font (nerd font) for the terminal only. Does not affect the editor font. Supports VS Code, Code OSS, and Cursor. |
 | pre_commit_hook | Pre-commit hook that automatically formats Go code using gofumpt |
