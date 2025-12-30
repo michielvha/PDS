@@ -16,7 +16,6 @@ TODO: Auto generate with links
 | install_librewolf | Installs librewolf browser |
 | install_kubectl | Installs and configures kubectl |
 | install_nvidia_ctk | Installs Nvidia container toolkit for container GPU support |
-| install_git_cm | Downloads and installs the git-credential-manager (GCM) for Linux with proper setup for headless/TTY environments using GPG encryption. |
 | install_lens | Installs and configures lens (Kubernetes IDE) on a Debian-based system. |
 | install_freelens | Installs FreeLens (Open-source alternative to Lens) on a Debian-based system. |
 | install_docker | Installs and configures Docker on Debian-based systems |

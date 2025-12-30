@@ -13,6 +13,7 @@
 | get_latest_github_binary | Downloads and installs the latest release of a binary from a specified GitHub repository. |
 | install_aws_cli | Installs and configures the AWS CLI |
 | install_azcli | Installs and configures the Azure CLI |
+| install_git_credman | Downloads and installs the git-credential-manager (GCM) for Linux with proper setup for headless/TTY environments using GPG encryption. Supports both Debian-based (.deb) and RPM-based (.rpm) distributions. |
 | install_zi | Installs and configures Zi, a package manager for ZSH |
 | configure_zsh | Configures ZSH using Zi with plugins and settings for an enhanced shell experience |
 | set_default_zsh | Sets ZSH as the default shell for the current user |

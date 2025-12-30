@@ -10,7 +10,6 @@
 | install_librewolf | Installs librewolf browser |
 | install_vscode | Installs Visual Studio Code on a Debian-based system by adding the Microsoft repository and installing the package. |
 | install_azcli | Installs and configures the Azure CLI |
-| install_git_cm | Downloads and installs the git-credential-manager (GCM) for Linux |
 | install_zen | Installs Zen Browser |
 | install_kubectl | Installs and configures kubectl |
 | verify_hashicorp_gpg_key | Downloads and verifies the HashiCorp GPG signing key by fetching the expected fingerprint from HashiCorp's website |
