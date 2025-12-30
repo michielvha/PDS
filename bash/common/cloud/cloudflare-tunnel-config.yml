@@ -47,6 +47,9 @@
 #   Otherwise:
 #     cloudflared tunnel run api-tunnel
 #
+#   Validate with: cloudflared tunnel --config ~/.cloudflared/config.yml ingress validate
+#   Check status with: systemctl --user status cloudflared@api-tunnel.service
+#
 # ============================================================================
 # MANUAL DEPLOYMENT (Alternative)
 # ============================================================================
