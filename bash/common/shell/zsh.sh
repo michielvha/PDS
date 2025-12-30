@@ -48,7 +48,7 @@ zi light zsh-users/zsh-history-substring-search
 zi light agkozak/zsh-z # Jump quickly to directories that you have visited "frecently." A native Zsh port of z.sh with added features. 
 
 # Installs stuff in ~/zi/plugins that needs to be manually sourced.
-zi light ohmyzsh/ohmyzsh
+#zi light ohmyzsh/ohmyzsh
 zi snippet OMZP::docker
 zi snippet OMZP::history
 zi snippet OMZP::git
