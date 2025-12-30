@@ -73,7 +73,7 @@
 # 3. Update credentials-file path in config.yml to match actual location
 #
 # 4. Test the config:
-#    cloudflared tunnel ingress validate --config ~/.cloudflared/config.yml
+#    cloudflared tunnel --config ~/.cloudflared/config.yml ingress validate
 #
 # 5. Run the tunnel:
 #    cloudflared tunnel run <tunnel-name>
@@ -93,7 +93,7 @@
 #
 # - Check tunnel status: cloudflared tunnel info <tunnel-name>
 # - View logs: sudo journalctl -u cloudflared@<tunnel-name>.service -f
-# - Test config: cloudflared tunnel ingress validate --config <config-path>
+# - Test config: cloudflared tunnel --config <config-path> ingress validate
 # - List tunnels: cloudflared tunnel list
 # - Delete tunnel: cloudflared tunnel delete <tunnel-name>
 #
@@ -265,6 +265,7 @@ deploy_cloudflare_tunnel_config() {
 
     if [[ -n "$cred_files" ]]; then
         echo "🔑 Found tunnel credential files, deploying..."
+        local main_cred_file=""
         while IFS= read -r cred_file; do
             local cred_filename
             cred_filename=$(basename "$cred_file")
@@ -278,18 +279,35 @@ deploy_cloudflare_tunnel_config() {
                 cp "$cred_file" "$target_cred"
                 chmod 600 "$target_cred"
             fi
+            
+            # Store the first credential file to update config path
+            if [[ -z "$main_cred_file" ]]; then
+                main_cred_file="$target_cred"
+            fi
+            
             echo "  ✅ Deployed: $cred_filename"
         done <<< "$cred_files"
+        
+        # Update credentials-file path in the deployed config
+        if [[ -n "$main_cred_file" ]]; then
+            echo "🔧 Updating credentials-file path in config..."
+            if [[ "$system_wide" == true ]]; then
+                sudo sed -i "s|credentials-file:.*|credentials-file: $main_cred_file|" "$config_path"
+            else
+                sed -i "s|credentials-file:.*|credentials-file: $main_cred_file|" "$config_path"
+            fi
+            echo "  ✅ Updated credentials-file path to: $main_cred_file"
+        fi
         echo ""
     fi
 
     # Validate config file syntax
     echo "🔍 Validating configuration..."
-    if cloudflared tunnel ingress validate --config "$config_path" &>/dev/null; then
+    if cloudflared tunnel --config "$config_path" ingress validate &>/dev/null; then
         echo "✅ Configuration is valid"
     else
         echo "⚠️  Configuration validation failed or cloudflared validation not available"
-        echo "💡 You can test manually with: cloudflared tunnel ingress validate --config $config_path"
+        echo "💡 You can test manually with: cloudflared tunnel --config $config_path ingress validate"
     fi
     echo ""
 
@@ -316,15 +334,15 @@ deploy_cloudflare_tunnel_config() {
         echo "🔧 Creating systemd service for tunnel: $tunnel_name"
         
         local service_name="cloudflared@${tunnel_name}.service"
-        local service_file="/etc/systemd/system/$service_name"
+        local service_file
+        local systemctl_cmd
+        local start_cmd
+        local status_cmd
+        local logs_cmd
         
         # Determine config path for service
         local service_config_path="$config_path"
-        if [[ "$system_wide" == false ]]; then
-            # For user services, we need to use the full path
-            service_config_path="$HOME/.cloudflared/config.yml"
-        fi
-
+        
         # Find cloudflared binary path
         local cloudflared_path
         cloudflared_path=$(command -v cloudflared)
@@ -333,15 +351,23 @@ deploy_cloudflare_tunnel_config() {
             return 1
         fi
 
-        # Create systemd service file
-        sudo tee "$service_file" > /dev/null <<EOF
+        if [[ "$system_wide" == true ]]; then
+            # System-wide service
+            service_file="/etc/systemd/system/$service_name"
+            systemctl_cmd="sudo systemctl"
+            start_cmd="sudo systemctl start $service_name"
+            status_cmd="sudo systemctl status $service_name"
+            logs_cmd="sudo journalctl -u $service_name -f"
+            
+            # Create systemd service file
+            sudo tee "$service_file" > /dev/null <<EOF
 [Unit]
 Description=Cloudflare Tunnel for ${tunnel_name}
 After=network.target
 
 [Service]
 Type=simple
-User=${system_wide:+root}${system_wide:-$USER}
+User=root
 ExecStart=${cloudflared_path} tunnel --config ${service_config_path} run ${tunnel_name}
 Restart=on-failure
 RestartSec=5s
@@ -349,19 +375,55 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 EOF
+            
+            # Reload systemd
+            sudo systemctl daemon-reload
+            
+            # Enable service
+            echo "🔌 Enabling service: $service_name"
+            sudo systemctl enable "$service_name"
+        else
+            # User service
+            local user_service_dir="$HOME/.config/systemd/user"
+            mkdir -p "$user_service_dir"
+            service_file="$user_service_dir/$service_name"
+            systemctl_cmd="systemctl --user"
+            start_cmd="systemctl --user start $service_name"
+            status_cmd="systemctl --user status $service_name"
+            logs_cmd="journalctl --user -u $service_name -f"
+            
+            # Create user systemd service file
+            tee "$service_file" > /dev/null <<EOF
+[Unit]
+Description=Cloudflare Tunnel for ${tunnel_name}
+After=network.target
 
-        # Reload systemd
-        sudo systemctl daemon-reload
-        
-        # Enable service
-        echo "🔌 Enabling service: $service_name"
-        sudo systemctl enable "$service_name"
+[Service]
+Type=simple
+ExecStart=${cloudflared_path} tunnel --config ${service_config_path} run ${tunnel_name}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
+EOF
+            
+            # Reload user systemd
+            systemctl --user daemon-reload
+            
+            # Enable service
+            echo "🔌 Enabling user service: $service_name"
+            systemctl --user enable "$service_name"
+            
+            # Enable lingering for user services to run at boot
+            sudo loginctl enable-linger "$USER" 2>/dev/null || true
+        fi
         
         echo "✅ Systemd service created and enabled"
         echo ""
-        echo "💡 To start the service: sudo systemctl start $service_name"
-        echo "💡 To check status: sudo systemctl status $service_name"
-        echo "💡 To view logs: sudo journalctl -u $service_name -f"
+        echo "💡 To start the service: $start_cmd"
+        echo "💡 To check status: $status_cmd"
+        echo "💡 To view logs: $logs_cmd"
     fi
 
     echo ""
@@ -376,7 +438,7 @@ EOF
         fi
     fi
     echo "   • View config: cat $config_path"
-    echo "   • Test config: cloudflared tunnel ingress validate --config $config_path"
+    echo "   • Test config: cloudflared tunnel --config $config_path ingress validate"
 }
 
 # examples

@@ -20,7 +20,7 @@
 #
 # STEP 4: Create DNS record
 #   Option A - Via CLI:
-#     cloudflared tunnel route dns api-tunnel api.yourdomain.com
+#     cloudflared tunnel route dns api-tunnel stackweaver.vhco.pro
 #   Option B - Via Cloudflare Dashboard:
 #     - Go to DNS > Records
 #     - Add CNAME: api -> <tunnel-id>.cfargotunnel.com
@@ -54,15 +54,15 @@
 # 1. Copy config: cp cloudflare-tunnel-config.yml ~/.cloudflared/config.yml
 # 2. Copy credentials: cp ~/.cloudflared/<tunnel-id>.json ~/.cloudflared/
 # 3. Update credentials-file path in config.yml
-# 4. Validate: cloudflared tunnel ingress validate --config ~/.cloudflared/config.yml
+# 4. Validate: cloudflared tunnel --config ~/.cloudflared/config.yml ingress validate
 # 5. Run: cloudflared tunnel run api-tunnel
 #
 # ============================================================================
 
-tunnel: stackweaver
+tunnel: api-tunnel
 # credentials-file will be set automatically when deployed
 # For now, use the path where cloudflared creates it (usually ~/.cloudflared/<tunnel-id>.json)
-credentials-file: /home/m/.cloudflared/119c58f2-fade-4e30-b84f-47c537a01991.json
+credentials-file: /home/m/.cloudflared/6fc16670-53c5-40fc-aaa3-8020c313643a.json
 
 ingress:
   # Forward API service from Docker stack
