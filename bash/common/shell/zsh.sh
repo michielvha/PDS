@@ -25,7 +25,7 @@ install_zi() {
 # Description: Configures ZSH using Zi with plugins and settings for an enhanced shell experience
 # TODO: Move to .zshrc file in this repository and create a function to add it to the /etc/zshrc file from github raw url, like we are doing in `set_bashrc`.
 configure_zsh() {
-  cat <<'EOF' | sudo tee /etc/zshrc
+  cat <<'EOF' | sudo tee ~/.zshrc  # ~/.p10k.zsh/etc/zshrc
 source /usr/local/share/zi/zi.zsh
 
 # --- Theme stuff ---
@@ -54,10 +54,11 @@ zi snippet OMZP::history
 zi snippet OMZP::git
 
 ### --- Autocomplete ---
-zi light marlonrichert/zsh-autocomplete
-zstyle ':autocomplete:*' default-context history-incremental-search-backward
-zstyle ':autocomplete:*' min-input 1
-setopt HIST_FIND_NO_DUPS
+# zi light marlonrichert/zsh-autocomplete
+# zstyle ':autocomplete:*' default-context history-incremental-search-backward
+# zstyle ':autocomplete:*' min-input 1
+# setopt HIST_FIND_NO_DUPS
+zi light michielvha/zsh-readline
 
 # --- Enable kubectl autocompletion for zsh ---
 #autoload -Uz compinit && compinit # zi enables this automatically.
@@ -80,6 +81,8 @@ EOF
   cat <<'EOF' | sudo tee /etc/skel/.zshrc
 source /etc/zshrc
 EOF
+
+cp ~/.zshrc /etc/zshrc
 }
 #TODO: Auto complete is not working in zsh, figure out why. Has to do with zsh-autocomplete, we need to figure out a way to have zsh completion work together with this plugin.
 # use this to fix p10k warning when calling neofetch in .zshrc
