@@ -9,7 +9,7 @@ system_bootstrap() {
     echo "🔧 installing packages..."
 
     sudo dnf update -y && sudo dnf upgrade -y
-    sudo dnf install -y git zsh 
+    sudo dnf install -y git zsh gh
 
     echo "🐳 installing docker..."
     source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/fedora/software/install_docker.sh)
