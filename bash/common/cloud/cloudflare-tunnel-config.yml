@@ -1,0 +1,74 @@
+# Cloudflare Tunnel Configuration
+# This config forwards the API service running in Docker on localhost:8022
+#
+# ============================================================================
+# COMPLETE SETUP WORKFLOW
+# ============================================================================
+#
+# STEP 1: Install cloudflared
+#   source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/software/install_cloudflared.sh)
+#   install_cloudflared
+#
+# STEP 2: Authenticate with Cloudflare
+#   cloudflared tunnel login
+#   (Opens browser to authenticate with your Cloudflare account)
+#
+# STEP 3: Create a tunnel
+#   cloudflared tunnel create api-tunnel
+#   (This creates credentials file at ~/.cloudflared/<tunnel-id>.json)
+#   Note the tunnel ID from the output or run: cloudflared tunnel list
+#
+# STEP 4: Create DNS record
+#   Option A - Via CLI:
+#     cloudflared tunnel route dns api-tunnel api.yourdomain.com
+#   Option B - Via Cloudflare Dashboard:
+#     - Go to DNS > Records
+#     - Add CNAME: api -> <tunnel-id>.cfargotunnel.com
+#
+# STEP 5: Update this config file
+#   - Update 'tunnel' name below (or use tunnel ID)
+#   - Update 'hostname' to your domain
+#   - Update 'credentials-file' path to match your tunnel ID
+#     (Find it: ls ~/.cloudflared/*.json)
+#   - Update 'service' port if your API runs on a different port
+#
+# STEP 6: Deploy the config
+#   source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/cloud/cloudflare.sh)
+#   deploy_cloudflare_tunnel_config ./cloudflare-tunnel-config.yml api-tunnel --enable-service
+#
+#   Options:
+#     --system          : Deploy to /etc/cloudflared/ (system-wide, requires root)
+#     --enable-service  : Create systemd service for automatic startup
+#
+# STEP 7: Start the tunnel
+#   If using --enable-service:
+#     sudo systemctl start cloudflared@api-tunnel.service
+#     sudo systemctl status cloudflared@api-tunnel.service
+#   Otherwise:
+#     cloudflared tunnel run api-tunnel
+#
+# ============================================================================
+# MANUAL DEPLOYMENT (Alternative)
+# ============================================================================
+#
+# 1. Copy config: cp cloudflare-tunnel-config.yml ~/.cloudflared/config.yml
+# 2. Copy credentials: cp ~/.cloudflared/<tunnel-id>.json ~/.cloudflared/
+# 3. Update credentials-file path in config.yml
+# 4. Validate: cloudflared tunnel ingress validate --config ~/.cloudflared/config.yml
+# 5. Run: cloudflared tunnel run api-tunnel
+#
+# ============================================================================
+
+tunnel: stackweaver
+# credentials-file will be set automatically when deployed
+# For now, use the path where cloudflared creates it (usually ~/.cloudflared/<tunnel-id>.json)
+credentials-file: /home/m/.cloudflared/119c58f2-fade-4e30-b84f-47c537a01991.json
+
+ingress:
+  # Forward API service from Docker stack
+  - hostname: stackweaver.vhco.pro
+    service: http://localhost:8022
+  
+  # Catch-all rule (must be last)
+  - service: http_status:404
+

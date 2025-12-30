@@ -61,11 +61,26 @@ install_cloudflared() {
             ;;
 
         fedora|rhel|centos|rocky|almalinux)
-            echo "Installing via rpm..."
-            local rpm_file="cloudflared-linux-$arch.rpm"
-            wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/"$rpm_file"
-            sudo rpm -i "$rpm_file"
-            rm "$rpm_file"
+            echo "Installing via official Cloudflare repository..."
+            # Add Cloudflare repository
+            if command -v dnf &> /dev/null; then
+                echo "Adding Cloudflare repository (stable)..."
+                curl -fsSL https://pkg.cloudflare.com/cloudflared.repo | sudo tee /etc/yum.repos.d/cloudflared.repo > /dev/null
+                echo "Updating repositories..."
+                sudo dnf update -y --quiet
+                echo "Installing cloudflared..."
+                sudo dnf install -y cloudflared
+            elif command -v yum &> /dev/null; then
+                echo "Adding Cloudflare repository (stable)..."
+                curl -fsSL https://pkg.cloudflare.com/cloudflared.repo | sudo tee /etc/yum.repos.d/cloudflared.repo > /dev/null
+                echo "Updating repositories..."
+                sudo yum update -y --quiet
+                echo "Installing cloudflared..."
+                sudo yum install -y cloudflared
+            else
+                echo "No dnf/yum found, installing binary directly..."
+                install_cloudflared_binary "$arch"
+            fi
             ;;
 
         arch|manjaro|endeavouros)
@@ -101,13 +116,17 @@ install_cloudflared() {
         echo ""
         echo "✅ Successfully installed: $version"
         echo ""
-        echo "Next steps:"
+        echo "📚 Next steps:"
         echo "  1. Authenticate: cloudflared tunnel login"
         echo "  2. Create tunnel: cloudflared tunnel create <name>"
-        echo "  3. Configure ~/.cloudflared/config.yml"
-        echo "  4. Run tunnel: cloudflared tunnel run <name>"
+        echo "  3. Create DNS route: cloudflared tunnel route dns <name> <hostname>"
+        echo "     (Or create CNAME manually in Cloudflare dashboard)"
+        echo "  4. Create config file and deploy:"
+        echo "     source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/cloud/cloudflare.sh)"
+        echo "     deploy_cloudflare_tunnel_config ./config.yml <name> --enable-service"
         echo ""
-        echo "Quick test: cloudflared tunnel --url http://localhost:8080"
+        echo "💡 For detailed instructions, see the documentation in cloudflare.sh"
+        echo "💡 Quick test (without tunnel): cloudflared tunnel --url http://localhost:8080"
     else
         echo "❌ Installation failed"
         return 1
