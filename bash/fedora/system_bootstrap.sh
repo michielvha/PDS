@@ -9,7 +9,7 @@ system_bootstrap() {
     echo "🔧 installing packages..."
 
     sudo dnf update -y && sudo dnf upgrade -y
-    sudo dnf install -y git zsh gh make @virtualization bridge-utils dnsmasq # qemu-system-aarch64 
+    sudo dnf install -y btop git zsh gh make @virtualization bridge-utils dnsmasq # qemu-system-aarch64 
 
     sudo systemctl enable --now libvirtd
     sudo usermod -aG libvirt $USER    
