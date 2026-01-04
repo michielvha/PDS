@@ -4,7 +4,7 @@ function Install-WSTerminal {
     Installs Windows Terminal if it is not already installed on the system.
 
 .DESCRIPTION
-    The `Install-WSTerminal` function checks if Windows Terminal is installed on the system by querying installed AppX packages. If Windows Terminal is not installed, the function will automatically fetch the latest version from the Microsoft Terminal GitHub repository, download the necessary prerequisites (VCLibs and Microsoft.UI.Xaml.2.8 framework), and install Windows Terminal using the MSIX bundle. If Windows Terminal is already installed, it outputs the current installed version.
+    The `Install-WSTerminal` function checks if Windows Terminal is installed on the system by querying installed AppX packages. If Windows Terminal is not installed, the function will automatically fetch the latest version from the Microsoft Terminal GitHub repository, ensure Windows App Runtime is installed (which includes Microsoft.UI.Xaml.2.8), and install Windows Terminal using the MSIX bundle. If Windows Terminal is already installed, it outputs the current installed version.
 
 .EXAMPLE
     Install-WSTerminal
@@ -15,7 +15,7 @@ function Install-WSTerminal {
     Author: Michiel VH
     Requires: Internet connection for downloading Windows Terminal if it is not already installed.
     Requires: Administrator privileges may be required for installing AppX packages.
-    This function downloads and installs the Visual C++ Runtime (VCLibs) and Microsoft.UI.Xaml.2.8 framework as prerequisites.
+    This function uses winget to install Windows App Runtime 1.8, which includes Microsoft.UI.Xaml.2.8 framework.
 
 .LINK
     https://github.com/microsoft/terminal
@@ -34,11 +34,68 @@ function Install-WSTerminal {
     Write-Output "Windows Terminal will be installed"
 
     try {
+        # Check and install Microsoft.UI.Xaml.2.8 framework (required dependency)
+        Write-Output "Checking for Microsoft.UI.Xaml.2.8 framework..."
+        $xamlFramework = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.UI.Xaml.2.8*" } | Select-Object -First 1
+        
+        if (-not $xamlFramework) {
+            Write-Output "Microsoft.UI.Xaml.2.8 framework not found. Installing Windows App Runtime 1.8 via winget..."
+            
+            # Use winget to install Windows App Runtime 1.8 (includes Microsoft.UI.Xaml.2.8)
+            $wingetAvailable = Get-Command -Name "winget" -ErrorAction SilentlyContinue
+            if (-not $wingetAvailable) {
+                throw "winget is not available. Please install winget first or install Windows App Runtime 1.8 manually from: https://apps.microsoft.com/store/detail/windows-app-runtime/9P9TQF7MRM4R"
+            }
+
+            Write-Output "Installing Windows App Runtime 1.8 via winget..."
+            $wingetOutput = winget install --id Microsoft.WindowsAppRuntime.1.8 --exact --accept-source-agreements --accept-package-agreements 2>&1
+            Write-Output $wingetOutput
+            
+            # Wait for installation to complete
+            Start-Sleep -Seconds 5
+            
+            # Verify installation
+            $xamlFramework = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.UI.Xaml.2.8*" } | Select-Object -First 1
+            if (-not $xamlFramework) {
+                throw "Windows App Runtime 1.8 installation failed or Microsoft.UI.Xaml.2.8 framework was not installed. Please install manually."
+            }
+            
+            Write-Output "Windows App Runtime 1.8 installed successfully."
+        }
+        else {
+            Write-Output "Microsoft.UI.Xaml.2.8 framework is already installed (version: $($xamlFramework.Version))."
+        }
+
+        # Download and install VCLibs (if needed)
+        Write-Output "Checking for Visual C++ Runtime prerequisites..."
+        $vclibs = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.VCLibs*" } | Select-Object -First 1
+        
+        if (-not $vclibs) {
+            Write-Output "Installing Visual C++ Runtime prerequisites..."
+            $vclibsPath = Join-Path -Path $env:TEMP -ChildPath "Microsoft.VCLibs.x64.14.00.Desktop.appx"
+            try {
+                Invoke-WebRequest -Uri "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx" -OutFile $vclibsPath -ErrorAction Stop
+                Add-AppxPackage -Path $vclibsPath -ErrorAction Stop
+                Write-Output "Visual C++ Runtime installed successfully."
+            }
+            catch {
+                Write-Warning "Failed to install VCLibs (may not be required): $_"
+            }
+            finally {
+                if (Test-Path $vclibsPath) {
+                    Remove-Item -Path $vclibsPath -Force -ErrorAction SilentlyContinue
+                }
+            }
+        }
+        else {
+            Write-Output "Visual C++ Runtime is already installed."
+        }
+
         # Fetch latest release from GitHub API
-        Write-Output "Fetching latest version from GitHub..."
+        Write-Output "Fetching latest Windows Terminal version from GitHub..."
         $release = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/terminal/releases/latest" -ErrorAction Stop
 
-        # Find the MSIX bundle asset (typically contains "WindowsTerminal" and ends with .msixbundle)
+        # Find the MSIX bundle asset
         $msixAsset = $release.assets | Where-Object { 
             $_.name -like "*WindowsTerminal*" -and $_.name -like "*.msixbundle" 
         } | Select-Object -First 1
@@ -50,129 +107,8 @@ function Install-WSTerminal {
         Write-Output "Found version: $($release.tag_name)"
         Write-Output "Downloading: $($msixAsset.name)"
 
-        # Download paths
-        $vclibsPath = Join-Path -Path $env:USERPROFILE -ChildPath "Microsoft.VCLibs.x64.14.00.Desktop.appx"
-        $msixPath = Join-Path -Path $env:USERPROFILE -ChildPath $msixAsset.name
-
-        # Download and install prerequisites (VCLibs)
-        Write-Output "Downloading Visual C++ Runtime prerequisites..."
-        try {
-            Invoke-WebRequest -Uri "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx" -OutFile $vclibsPath -ErrorAction Stop
-            Write-Output "Installing Visual C++ Runtime prerequisites..."
-            Add-AppxPackage -Path $vclibsPath -ErrorAction Stop
-        }
-        catch {
-            Write-Warning "Failed to install VCLibs prerequisites (may already be installed): $_"
-        }
-        finally {
-            # Clean up VCLibs file
-            if (Test-Path $vclibsPath) {
-                Remove-Item -Path $vclibsPath -Force -ErrorAction SilentlyContinue
-            }
-        }
-
-        # Check and install Microsoft.UI.Xaml.2.8 framework (required dependency)
-        Write-Output "Checking for Microsoft.UI.Xaml.2.8 framework..."
-        $xamlFramework = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.UI.Xaml.2.8*" } | Select-Object -First 1
-        
-        if (-not $xamlFramework) {
-            Write-Output "Microsoft.UI.Xaml.2.8 framework not found. Installing Windows App Runtime..."
-            
-            # Try winget first (most reliable) - try both 1.5 and 1.8 versions
-            $wingetAvailable = Get-Command -Name "winget" -ErrorAction SilentlyContinue
-            if ($wingetAvailable) {
-                try {
-                    # Try 1.8 first (newer version)
-                    Write-Output "Attempting to install Windows App Runtime 1.8 via winget..."
-                    $wingetOutput = winget install --id Microsoft.WindowsAppRuntime.1.8 --exact --accept-source-agreements --accept-package-agreements 2>&1
-                    Write-Output $wingetOutput
-                    
-                    # Wait a bit for installation to complete
-                    Start-Sleep -Seconds 5
-                    
-                    # Verify installation
-                    $xamlFramework = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.UI.Xaml.2.8*" } | Select-Object -First 1
-                    if (-not $xamlFramework) {
-                        # Try 1.5 as fallback
-                        Write-Output "Attempting to install Windows App Runtime 1.5 via winget (fallback)..."
-                        $wingetOutput = winget install --id Microsoft.WindowsAppRuntime.1.5 --exact --accept-source-agreements --accept-package-agreements 2>&1
-                        Write-Output $wingetOutput
-                        Start-Sleep -Seconds 5
-                        $xamlFramework = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.UI.Xaml.2.8*" } | Select-Object -First 1
-                    }
-                    
-                    if ($xamlFramework) {
-                        Write-Output "Windows App Runtime installed successfully via winget."
-                    }
-                }
-                catch {
-                    Write-Warning "winget installation failed: $_"
-                    $wingetAvailable = $null  # Force fallback
-                }
-            }
-            
-            # If winget didn't work or isn't available, try direct download (try 1.8 first, then 1.5)
-            if (-not $xamlFramework) {
-                Write-Output "Attempting direct download of Windows App Runtime..."
-                $warPath = Join-Path -Path $env:USERPROFILE -ChildPath "Microsoft.WindowsAppRuntime.1.8_x64.msix"
-                $warUrl = $null
-                
-                try {
-                    # Try 1.8 first (newer version, includes Microsoft.UI.Xaml.2.8)
-                    $warUrl = "https://aka.ms/Microsoft.WindowsAppRuntime.1.8_x64.msix"
-                    Write-Output "Downloading Windows App Runtime 1.8 from: $warUrl"
-                    Invoke-WebRequest -Uri $warUrl -OutFile $warPath -ErrorAction Stop
-                    
-                    Write-Output "Installing Windows App Runtime 1.8..."
-                    Add-AppxPackage -Path $warPath -ErrorAction Stop
-                    Write-Output "Windows App Runtime 1.8 installed successfully."
-                }
-                catch {
-                    # Fallback to 1.5
-                    Write-Warning "Failed to install Windows App Runtime 1.8. Trying version 1.5..."
-                    if (Test-Path $warPath) {
-                        Remove-Item -Path $warPath -Force -ErrorAction SilentlyContinue
-                    }
-                    
-                    try {
-                        $warPath = Join-Path -Path $env:USERPROFILE -ChildPath "Microsoft.WindowsAppRuntime.1.5_x64.msix"
-                        $warUrl = "https://aka.ms/Microsoft.WindowsAppRuntime.1.5_x64.msix"
-                        Write-Output "Downloading Windows App Runtime 1.5 from: $warUrl"
-                        Invoke-WebRequest -Uri $warUrl -OutFile $warPath -ErrorAction Stop
-                        
-                        Write-Output "Installing Windows App Runtime 1.5..."
-                        Add-AppxPackage -Path $warPath -ErrorAction Stop
-                        Write-Output "Windows App Runtime 1.5 installed successfully."
-                    }
-                    catch {
-                        Write-Error "Failed to install Windows App Runtime: $_"
-                        Write-Error "Please install it manually before proceeding:"
-                        Write-Error "1. Run: winget install Microsoft.WindowsAppRuntime.1.8"
-                        Write-Error "2. Or visit: https://apps.microsoft.com/store/detail/windows-app-runtime/9P9TQF7MRM4R"
-                        throw "Microsoft.UI.Xaml.2.8 framework is required but could not be installed automatically."
-                    }
-                }
-                finally {
-                    if (Test-Path $warPath) {
-                        Remove-Item -Path $warPath -Force -ErrorAction SilentlyContinue
-                    }
-                }
-                
-                # Verify installation
-                Start-Sleep -Seconds 3
-                $xamlFramework = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.UI.Xaml.2.8*" } | Select-Object -First 1
-            }
-            
-            # Final verification before proceeding
-            if (-not $xamlFramework) {
-                throw "Microsoft.UI.Xaml.2.8 framework is required but was not installed. Please install Windows App Runtime manually."
-            }
-        } else {
-            Write-Output "Microsoft.UI.Xaml.2.8 framework is already installed (version: $($xamlFramework.Version))."
-        }
-
         # Download Windows Terminal MSIX bundle
-        Write-Output "Downloading Windows Terminal..."
+        $msixPath = Join-Path -Path $env:USERPROFILE -ChildPath $msixAsset.name
         Invoke-WebRequest -Uri $msixAsset.browser_download_url -OutFile $msixPath -ErrorAction Stop
 
         # Install Windows Terminal
@@ -187,9 +123,8 @@ function Install-WSTerminal {
     }
     finally {
         # Clean up downloaded MSIX file
-        if (Test-Path $msixPath) {
+        if ($msixPath -and (Test-Path $msixPath)) {
             Remove-Item -Path $msixPath -Force -ErrorAction SilentlyContinue
         }
     }
 }
-
