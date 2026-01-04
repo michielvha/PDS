@@ -48,6 +48,67 @@ function Install-Winget {
             throw "winget requires Windows 10 version 1809 or later, or Windows 11. Current OS version: $($osInfo.Version)"
         }
 
+        # Check and install Windows App Runtime 1.8 (required dependency)
+        Write-Output "Checking for Windows App Runtime 1.8..."
+        $war18 = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.WindowsAppRuntime*" -and $_.Version -like "1.8.*" } | Select-Object -First 1
+        
+        if (-not $war18) {
+            Write-Output "Windows App Runtime 1.8 not found. Installing prerequisite..."
+            $war18Path = Join-Path -Path $env:TEMP -ChildPath "Microsoft.WindowsAppRuntime.1.8_x64.msix"
+            
+            try {
+                # Try direct download from Microsoft
+                $war18Url = "https://aka.ms/Microsoft.WindowsAppRuntime.1.8_x64.msix"
+                Write-Output "Downloading Windows App Runtime 1.8..."
+                Invoke-WebRequest -Uri $war18Url -OutFile $war18Path -ErrorAction Stop
+                
+                Write-Output "Installing Windows App Runtime 1.8..."
+                Add-AppxPackage -Path $war18Path -ErrorAction Stop
+                Write-Output "Windows App Runtime 1.8 installed successfully."
+            }
+            catch {
+                # Alternative: Try downloading from GitHub releases
+                Write-Warning "Failed to download from primary source. Trying alternative method..."
+                try {
+                    $releasesUrl = "https://api.github.com/repos/microsoft/windowsappruntime/releases/latest"
+                    $release = Invoke-RestMethod -Uri $releasesUrl -ErrorAction Stop
+                    $msixAsset = $release.assets | Where-Object { 
+                        $_.name -like "*WindowsAppRuntime*" -and $_.name -like "*1.8*" -and $_.name -like "*x64*" -and $_.name -like "*.msix" 
+                    } | Select-Object -First 1
+                    
+                    if ($msixAsset) {
+                        Write-Output "Downloading from GitHub releases..."
+                        Invoke-WebRequest -Uri $msixAsset.browser_download_url -OutFile $war18Path -ErrorAction Stop
+                        Add-AppxPackage -Path $war18Path -ErrorAction Stop
+                        Write-Output "Windows App Runtime 1.8 installed successfully."
+                    }
+                    else {
+                        throw "Could not find Windows App Runtime 1.8 package to download"
+                    }
+                }
+                catch {
+                    Write-Error "Failed to install Windows App Runtime 1.8: $_"
+                    Write-Error "Please install it manually from: https://apps.microsoft.com/store/detail/windows-app-runtime/9P9TQF7MRM4R"
+                    throw "Windows App Runtime 1.8 is required but could not be installed automatically."
+                }
+            }
+            finally {
+                if (Test-Path $war18Path) {
+                    Remove-Item -Path $war18Path -Force -ErrorAction SilentlyContinue
+                }
+            }
+            
+            # Verify installation
+            Start-Sleep -Seconds 3
+            $war18 = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.WindowsAppRuntime*" -and $_.Version -like "1.8.*" } | Select-Object -First 1
+            if (-not $war18) {
+                throw "Windows App Runtime 1.8 installation verification failed. Please install manually."
+            }
+        }
+        else {
+            Write-Output "Windows App Runtime 1.8 is already installed (version: $($war18.Version))."
+        }
+
         # Download App Installer package (includes winget)
         Write-Output "Downloading App Installer package..."
         $appInstallerPath = Join-Path -Path $env:TEMP -ChildPath "Microsoft.DesktopAppInstaller.msixbundle"
