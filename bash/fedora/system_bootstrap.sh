@@ -9,7 +9,7 @@ system_bootstrap() {
     echo "🔧 installing packages..."
 
     sudo dnf update -y && sudo dnf upgrade -y
-    sudo dnf install -y fastfetch yq bat btop git zsh gh make @virtualization bridge-utils dnsmasq openssh-server # qemu-system-aarch64 
+    sudo dnf install -y psql fastfetch yq bat btop git zsh gh make @virtualization bridge-utils dnsmasq openssh-server # qemu-system-aarch64 
 
     echo "🛠 setting up virtualization..."
     sudo systemctl enable --now libvirtd
