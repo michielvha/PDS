@@ -1,4 +1,6 @@
-sudo pacman -S zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose
+#!/bin/bash
+
+sudo pacman -S openssh zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose
 
 # Add nvm to profile
 source /usr/share/nvm/init-nvm.sh >> ~/.bashrc
@@ -13,3 +15,7 @@ sudo usermod -aG docker $USER
 sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si
 
 yay cursor-bin
+
+# Enable and start sshd
+sudo systemctl start sshd
+sudo systemctl enable sshd
