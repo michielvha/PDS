@@ -1,6 +1,7 @@
 #!/bin/bash
 
-sudo pacman -S openssh zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose
+sudo pacman -S openssh zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose github-cli
+sudo pacman -Syu
 
 # Add nvm to profile
 source /usr/share/nvm/init-nvm.sh >> ~/.bashrc
