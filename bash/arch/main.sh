@@ -3,6 +3,10 @@
 sudo pacman -S openssh zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose github-cli
 sudo pacman -Syu
 
+# add go to profile
+export PATH="$PATH:$(go env GOBIN):$(go env GOPATH)/bin" >> ~/.bashrc
+export PATH="$PATH:$(go env GOBIN):$(go env GOPATH)/bin" >> ~/.zshrc
+
 # Add nvm to profile
 source /usr/share/nvm/init-nvm.sh >> ~/.bashrc
 source /usr/share/nvm/init-nvm.sh >> ~/.zshrc
