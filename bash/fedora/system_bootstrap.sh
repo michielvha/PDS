@@ -17,4 +17,7 @@ system_bootstrap() {
     echo "🐳 installing docker..."
     source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/fedora/software/install_docker.sh)
     install_docker
+
+    # Custom prompt with blue username and path, purple hostname
+    echo "PS1='\[\033[0;34m\]\u@\[\033[0;35m\]\h:\[\033[0;34m\]\w\[\033[0m\]\$ '" > ~/.bashrc
 }
