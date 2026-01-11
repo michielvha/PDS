@@ -24,7 +24,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Publish PowerShell Module
-        uses: michielvha/publish-pwsh-module-action@v2
+        uses: michielvha/publish-pwsh-module-action@main
         with:
           psd1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psd1" # Updated with consistent backslashes
           psm1Path: "${{ github.workspace }}\\pwsh\\module\\PDS.psm1" # Updated with consistent backslashes
@@ -32,3 +32,4 @@ jobs:
           description: "Personal Deploy Script"
           rootModule: "PDS"
           companyName: "itmvha"
+

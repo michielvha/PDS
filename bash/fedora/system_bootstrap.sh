@@ -9,10 +9,14 @@ system_bootstrap() {
     echo "🔧 installing packages..."
 
     sudo dnf update -y && sudo dnf upgrade -y
-    sudo dnf install -y fastfetch yq bat btop git zsh gh make @virtualization bridge-utils dnsmasq # qemu-system-aarch64 
+    sudo dnf install -y psql fastfetch yq bat btop git zsh gh make @virtualization bridge-utils dnsmasq openssh-server # qemu-system-aarch64 
 
+    echo "🛠 setting up virtualization..."
     sudo systemctl enable --now libvirtd
-    sudo usermod -aG libvirt $USER    
+    sudo usermod -aG libvirt $USER
+
+    echo "🔐 setting up ssh server..."
+    sudo systemctl enable --now sshd
 
     echo "🐳 installing docker..."
     source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/fedora/software/install_docker.sh)
