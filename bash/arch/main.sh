@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo pacman -S openssh zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose github-cli
+sudo pacman -S openssh zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose github-cli dnsutils
 sudo pacman -Syu
 
 # add go to profile
