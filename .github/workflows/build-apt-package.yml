@@ -184,15 +184,35 @@ jobs:
           sudo apt-get install -y aptly gpg
       - name: Setup GPG key
         id: gpg
+        env:
+          GPG_TTY: $(tty)
         run: |
           mkdir -p ~/.gnupg
           chmod 700 ~/.gnupg
           
+          # Configure GPG for non-interactive use
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+          echo "batch" >> ~/.gnupg/gpg.conf
+          echo "no-tty" >> ~/.gnupg/gpg.conf
+          
+          # Create gpg-agent.conf if it doesn't exist
+          touch ~/.gnupg/gpg-agent.conf
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg-agent.conf
+          
+          # Restart gpg-agent to pick up new config
+          gpg-connect-agent reloadagent /bye || true
+          
           echo "Importing GPG private key from secret"
           echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
           
+          # Cache passphrase in gpg-agent for non-interactive use
           if [ -n "${{ secrets.GPG_PASSPHRASE }}" ]; then
-            echo "${{ secrets.GPG_PASSPHRASE }}" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --sign-key $(gpg --list-secret-keys --keyid-format LONG | grep -E "^(sec|ssb)" | head -1 | awk '{print $2}' | cut -d'/' -f2) || true
+            KEYGRIP=$(gpg --list-secret-keys --keyid-format LONG --with-keygrip | grep -A1 "^sec" | grep "Keygrip" | head -1 | awk '{print $3}')
+            if [ -n "$KEYGRIP" ]; then
+              echo "${{ secrets.GPG_PASSPHRASE }}" | gpg-connect-agent "PRESET_PASSPHRASE $KEYGRIP -1" /bye || true
+              echo "Passphrase cached in gpg-agent"
+            fi
           fi
           
           # Export public key
@@ -253,7 +273,12 @@ jobs:
           echo "Repository contents:"
           aptly repo show -with-packages pds
       - name: Publish repository
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
+          # Ensure GPG is configured for non-interactive use
+          export GPG_TTY=$(tty)
+          
           # Publish or update repository
           if aptly publish list | grep -q "stable"; then
             echo "Updating existing publication"
