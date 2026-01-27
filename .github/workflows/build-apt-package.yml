@@ -2,6 +2,7 @@ name: Build APT Package
 permissions:
   id-token: write
   contents: write
+  pages: write
 on:
   workflow_dispatch:
   push:
@@ -161,6 +162,137 @@ jobs:
             --notes-file release-notes.md \
             ./release/${{ env.PACKAGE_NAME }}_${{ env.VERSION }}_all.deb
 
+  deploy-apt-repo:
+    name: Deploy APT Repository
+    runs-on: ubuntu-latest
+    needs: [version, release]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set version
+        run: |
+          VERSION="${{ needs.version.outputs.semVer }}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Install aptly
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y aptly gpg
+      - name: Setup GPG key
+        id: gpg
+        run: |
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+          
+          echo "Importing GPG private key from secret"
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+          
+          if [ -n "${{ secrets.GPG_PASSPHRASE }}" ]; then
+            echo "${{ secrets.GPG_PASSPHRASE }}" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --sign-key $(gpg --list-secret-keys --keyid-format LONG | grep -E "^(sec|ssb)" | head -1 | awk '{print $2}' | cut -d'/' -f2) || true
+          fi
+          
+          # Export public key
+          gpg --armor --export > /tmp/pds-repo.gpg
+          echo "GPG key fingerprint:"
+          gpg --list-secret-keys --keyid-format LONG | grep -E "^(sec|ssb)"
+      - name: Restore aptly cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.aptly
+          key: aptly-repo-${{ runner.os }}-${{ github.repository }}
+      - name: Rebuild repository from releases (if cache missing)
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Cache not found, rebuilding repository from all GitHub releases"
+          
+          # Initialize aptly
+          aptly repo create -distribution=stable -component=main pds || true
+          
+          # Download all .deb files from releases
+          mkdir -p /tmp/releases
+          
+          # Get all releases with .deb files
+          gh release list --limit 100 --json tagName,assets | \
+            jq -r '.[] | select(.assets[]?.name | endswith(".deb")) | .tagName' | \
+            while read -r tag; do
+              echo "Downloading packages from release $tag"
+              gh release download "$tag" --pattern "*.deb" --dir /tmp/releases || true
+            done
+          
+          # Add all packages to repository
+          if [ -n "$(ls -A /tmp/releases/*.deb 2>/dev/null)" ]; then
+            aptly repo add pds /tmp/releases/*.deb || true
+            echo "Added packages from releases to repository"
+          else
+            echo "No packages found in releases, starting with empty repository"
+          fi
+          
+          # Publish repository
+          aptly publish repo -distribution=stable pds || aptly publish update stable || true
+      - name: Download new package
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
+          path: ./packages
+      - name: Add package to repository
+        run: |
+          # Create repository if it doesn't exist
+          aptly repo create -distribution=stable -component=main pds || true
+          
+          # Add new package
+          aptly repo add pds ./packages/*.deb
+          
+          # Show repository contents
+          echo "Repository contents:"
+          aptly repo show -with-packages pds
+      - name: Publish repository
+        run: |
+          # Publish or update repository
+          if aptly publish list | grep -q "stable"; then
+            echo "Updating existing publication"
+            aptly publish update stable
+          else
+            echo "Creating new publication"
+            aptly publish repo -distribution=stable pds
+          fi
+          
+          # Export GPG public key to repository root
+          cp /tmp/pds-repo.gpg ~/.aptly/public/pds-repo.gpg
+          
+          # Show published repository
+          echo "Published repository structure:"
+          ls -la ~/.aptly/public/
+      - name: Prepare GitHub Pages
+        run: |
+          # Create pages directory structure
+          mkdir -p pages/apt
+          
+          # Copy aptly public directory to pages/apt
+          cp -r ~/.aptly/public/* pages/apt/
+          
+          # Copy GPG key to root
+          cp /tmp/pds-repo.gpg pages/pds-repo.gpg
+          
+          # Copy and substitute index page template
+          sed "s/{{REPO_OWNER}}/${{ github.repository_owner }}/g" .github/pages/index.html > pages/index.html
+          
+          echo "Pages directory prepared:"
+          ls -la pages/
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
   # build-apt-repo-container:
   #   name: Build APT Repository Container
   #   runs-on: ubuntu-latest
@@ -206,7 +338,6 @@ jobs:
 
 
 
-
 # TODO: look into this one because it auto generates the release notes might solve our issue in the TODO above.
 # - name: Create Release
 #   uses: softprops/action-gh-release@v2
@@ -220,3 +351,4 @@ jobs:
 #     make_latest: true
 #     draft: false
 #     prerelease: false
+
