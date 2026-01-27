@@ -1,4 +1,5 @@
 # TODO: Decide if we want to add docs generation to the release pipeline or just keep the shift left method we currently have.
+# TODO: we could also githook this !!!
 # name: Validate Documentation
 # on:
 #   pull_request:

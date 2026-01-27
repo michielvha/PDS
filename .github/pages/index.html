@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDS APT Repository</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .code { background: #f4f4f4; padding: 10px; margin: 10px 0; border-radius: 4px; overflow-x: auto; }
+        .header { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        pre { margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="header">PDS APT Repository</h1>
+        
+        <h2>Setup Instructions</h2>
+        <p>Add this repository to your system:</p>
+        <div class="code">
+            <pre># Add GPG key
+curl -fsSL https://{{REPO_OWNER}}.github.io/PDS/pds-repo.gpg | sudo tee /usr/share/keyrings/pds-repo.gpg >/dev/null
+
+# Add repository
+echo "deb [signed-by=/usr/share/keyrings/pds-repo.gpg] https://{{REPO_OWNER}}.github.io/PDS/apt/ stable main" | sudo tee /etc/apt/sources.list.d/pds-repo.list
+
+# Update and install
+sudo apt update
+sudo apt install pds</pre>
+        </div>
+        
+        <h2>Repository Contents</h2>
+        <p>This repository contains the PDS (Portable Deploy Suite) package with comprehensive Bash functions for software installation, UI setup, and system deployment.</p>
+        
+        <p><a href="/apt/">Browse repository files</a></p>
+    </div>
+</body>
+</html>
