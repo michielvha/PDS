@@ -235,7 +235,7 @@ jobs:
           fi
           
           # Publish repository
-          aptly publish repo -distribution=stable pds || aptly publish update stable || true
+          aptly publish repo -distribution=stable -architectures=all pds || aptly publish update stable || true
       - name: Download new package
         uses: actions/download-artifact@v7
         with:
@@ -260,7 +260,7 @@ jobs:
             aptly publish update stable
           else
             echo "Creating new publication"
-            aptly publish repo -distribution=stable pds
+            aptly publish repo -distribution=stable -architectures=all pds
           fi
           
           # Export GPG public key to repository root
