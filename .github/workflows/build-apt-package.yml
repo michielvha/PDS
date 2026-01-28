@@ -292,8 +292,11 @@ jobs:
           # Copy GPG key to root
           cp /tmp/pds-repo.gpg pages/pds-repo.gpg
           
-          # Copy and substitute index page template
-          sed "s/{{REPO_OWNER}}/${{ github.repository_owner }}/g" .github/pages/index.html > pages/index.html
+          # Copy logo and index page template
+          cp .github/pages/logo.png pages/logo.png
+          sed -e "s/{{REPO_OWNER}}/${{ github.repository_owner }}/g" \
+              -e "s|{{REPO}}|${{ github.repository }}|g" \
+              .github/pages/index.html > pages/index.html
           
           echo "Pages directory prepared:"
           ls -la pages/
