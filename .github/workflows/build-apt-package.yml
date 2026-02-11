@@ -301,7 +301,7 @@ jobs:
           echo "Pages directory prepared:"
           ls -la pages/
       - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: pages
       - name: Deploy to GitHub Pages
