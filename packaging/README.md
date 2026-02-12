@@ -120,61 +120,37 @@ The package is configured in `nfpm.yaml`:
 
 ## Distribution
 
-### Docker Container (Recommended)
+### APT Repository (Recommended)
 
-The easiest way to host your APT repository is using the provided Docker container:
-
-```bash
-# Pull and run the container
-docker run -d \
-  --name pds-apt-repo \
-  -p 8080:80 \
-  your-username/pds-apt-repo:latest
-
-# Add repository to your system
-curl -fsSL http://localhost:8080/pds-repo.gpg | sudo tee /usr/share/keyrings/pds-repo.gpg >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/pds-repo.gpg] http://localhost:8080/apt/ stable main" | sudo tee /etc/apt/sources.list.d/pds-repo.list
-
-# Install PDS
-sudo apt update && sudo apt install pds
-```
-
-See [DOCKER.md](./DOCKER.md) for detailed Docker documentation.
-
-### Setting Up Your Own APT Repository
-
-1. **Using aptly** (recommended for self-hosting):
+PDS is available via an APT repository hosted on GitHub Pages. This is the easiest way to install and keep PDS updated:
 
 ```bash
-# Install aptly
-apt install aptly
+# Add GPG key
+curl -fsSL https://michielvha.github.io/PDS/pds-repo.gpg | \
+  sudo tee /usr/share/keyrings/pds-repo.gpg >/dev/null
 
-# Create repository
-aptly repo create pds-repo
-aptly repo add pds-repo dist/pds-funcs_1.0.0_all.deb
-
-# Publish repository
-aptly publish repo -distribution=stable -architectures=all pds-repo
-
-# Upload to your static host (S3, GitHub Pages, etc.)
-```
-
-2. **Using hosted services**:
-   - [Cloudsmith](https://cloudsmith.io/)
-   - [PackageCloud](https://packagecloud.io/)
-   - [GitHub Packages](https://github.com/features/packages)
-
-### Client Installation
-
-```bash
-# Add your repository
-curl -fsSL https://your-host/pds-repo.gpg | sudo tee /usr/share/keyrings/pds-repo.gpg >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/pds-repo.gpg] https://your-host/ stable main" | \
+# Add repository
+echo "deb [signed-by=/usr/share/keyrings/pds-repo.gpg] https://michielvha.github.io/PDS/apt/ stable main" | \
   sudo tee /etc/apt/sources.list.d/pds-repo.list
 
-# Install PDS
+# Update and install
 sudo apt update
-sudo apt install pds-funcs
+sudo apt install pds
+```
+
+The repository is automatically updated with each new release, maintaining all package versions for easy installation and upgrades.
+
+### Direct Installation from GitHub Releases
+
+You can also download and install the `.deb` file directly from [GitHub Releases](https://github.com/michielvha/PDS/releases):
+
+```bash
+# Download latest release
+wget https://github.com/michielvha/PDS/releases/download/v1.0.0/pds_1.0.0_all.deb
+
+# Install
+sudo dpkg -i pds_1.0.0_all.deb
+sudo apt-get install -f
 ```
 
 ## Function Categories

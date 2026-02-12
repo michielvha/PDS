@@ -2,6 +2,21 @@
 
 ### Installation
 
+#### APT Repository (Recommended)
+```bash
+# Add GPG key
+curl -fsSL https://michielvha.github.io/PDS/pds-repo.gpg | \
+  sudo tee /usr/share/keyrings/pds-repo.gpg >/dev/null
+
+# Add repository
+echo "deb [signed-by=/usr/share/keyrings/pds-repo.gpg] https://michielvha.github.io/PDS/apt/ stable main" | \
+  sudo tee /etc/apt/sources.list.d/pds-repo.list
+
+# Update and install
+sudo apt update
+sudo apt install pds
+```
+
 #### Direct Installation
 ```bash
 # Download and install

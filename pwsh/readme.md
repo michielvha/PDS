@@ -2,6 +2,13 @@
 
 This section of the documentation includes all the PowerShell-specific documentation.
 
+## Getting started
+
+```pwsh
+install-module PDS
+import-module PDS
+```
+
 ## Windows software packages included
 
 Below is a list of software and tools supported by the custom PowerShell functions and installed via Chocolatey:
