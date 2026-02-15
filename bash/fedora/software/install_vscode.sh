@@ -2,11 +2,11 @@
 # Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/fedora/software/install_vscode.sh) `
 
 # Function: install_vscode
-# Description: Installs Visual Studio Code on Fedora via Flatpak (Flathub). Prefer Flatpak for sandboxing and easier updates.
+# Description: Installs Visual Studio Code on Fedora by adding the official Microsoft RPM repository and installing the native package (no Flatpak sandbox).
 install_vscode() {
-    # Enable Flathub if not already enabled
-    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
-    # Install VS Code
-    flatpak install flathub com.visualstudio.code -y
+	echo "🔧 Adding Microsoft GPG key and repository for Visual Studio Code..."
+	sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+	sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+	sudo dnf check-update || true
+	sudo dnf install -y code
 }
