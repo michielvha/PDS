@@ -195,8 +195,8 @@ jobs:
           echo "Importing GPG private key from secret"
           echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
           
-          # Export public key
-          gpg --armor --export > /tmp/pds-repo.gpg
+          # Export public key in binary format (.gpg extension requires binary, not armored)
+          gpg --export > /tmp/pds-repo.gpg
           echo "GPG key fingerprint:"
           gpg --list-secret-keys --keyid-format LONG | grep -E "^(sec|ssb)"
       - name: Restore aptly cache
