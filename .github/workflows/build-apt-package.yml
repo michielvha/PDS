@@ -91,7 +91,7 @@ jobs:
           cd packaging
           make test
       - name: Upload package artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-${{ matrix.arch }}
           path: packaging/dist/*.deb
