@@ -113,7 +113,7 @@ jobs:
         ubuntu-version: [22.04, 24.04]
     steps:
       - name: Download package
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./packages
@@ -142,7 +142,7 @@ jobs:
           VERSION="${{ needs.version.outputs.semVer }}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
       - name: Download package
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./release
@@ -241,7 +241,7 @@ jobs:
             aptly publish repo -distribution=stable -architectures=all -batch=false pds || aptly publish update -batch=false stable || true
           fi
       - name: Download new package
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./packages
