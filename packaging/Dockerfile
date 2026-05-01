@@ -1,4 +1,4 @@
-FROM ubuntu:noble
+FROM ubuntu:resolute
 
 # Install aptly and dependencies
 RUN apt-get update && \
