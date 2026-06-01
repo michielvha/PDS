@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-01
+
+### Changed
+
+- **Set-AzureCLI**: Now disables the Windows Web Account Manager (WAM) broker via `az config set core.enable_broker_on_windows=false`, reverting `az login` to the browser-based authentication flow and avoiding the "User cancelled the Accounts Control Operation" account picker.
+
 ## 2026-02-16
 
 ### Fixed
