@@ -175,5 +175,6 @@ cat readme.md
 | install_zi | Installs and configures Zi, a package manager for ZSH |
 | configure_zsh | Configures ZSH using Zi with plugins and settings for an enhanced shell experience |
 | set_default_zsh | Sets ZSH as the default shell for the current user |
+| set_bash_prompt | Installs the PDS bash prompt into its own standalone file and wires it into ~/.bashrc via a single guarded source line, so it never clobbers an existing distro .bashrc (Ubuntu/Fedora). Re-running is idempotent. |
 | install_nerd_fonts | Install the recommended fonts for Powerlevel10k and configure GNOME Terminal to use them |
 | pre_commit_hook | Pre-commit hook that automatically formats Go code using gofumpt |
