@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo pacman -Syu --needed --noconfirm openssh zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose github-cli bind
+sudo pacman -Syu --needed --noconfirm openssh zsh firefox ghostty konsole git go nvm net-tools bat btop fastfetch yq make docker docker-compose github-cli bind
 
 # add go to profile
 grep -q 'go/bin' ~/.bashrc 2>/dev/null || echo 'export PATH="$PATH:$HOME/go/bin"' >> ~/.bashrc
