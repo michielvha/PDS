@@ -1,113 +1,198 @@
-# Windows VM + GPU passthrough (UKI / rEFInd, no GRUB)
+# Concealed Windows VM for malware analysis (anti-VM-detection)
 
-Reference setup this was written for: **Intel 14700K + RTX 4070**, Arch + KDE,
-booting a **Unified Kernel Image via rEFInd** (no GRUB), host desktop on the
-**Intel iGPU**, the dGPU (4070) reserved for the VM.
+Goal: a Windows 11 guest that **cannot tell it is a VM**, so that malware which
+refuses to detonate under virtualisation (a near-universal evasion technique)
+runs as if on bare metal. Concealment is the whole point here — GPU passthrough
+is just one of several layers that make the guest look physical, not the
+headline feature.
 
-> Why this doc exists: AutoVirt's `vfio.sh` only knows GRUB / systemd-boot /
-> Limine and **exits** on a UKI+rEFInd box. PDS's `configure_vfio_passthrough`
-> (in `bash/arch/virtualisation.sh`) covers that gap by patching
-> `/etc/kernel/cmdline` and rebuilding the UKI.
+Reference setup this was written for: **Intel 14700K + RTX 4070 Ti SUPER**, Arch
++ KDE, booting a **Unified Kernel Image via rEFInd** (no GRUB), host desktop on
+the **Intel iGPU**, the dGPU reserved for the VM.
 
-Monitor: feed it BOTH the motherboard output (host/KDE) and the dGPU (the VM),
-then switch the monitor's input source to flip between them.
+> **Tooling.** The heavy lifting is done by **AutoVirt**
+> (`github.com/Scrut1ny/AutoVirt`, cloned to `~/AutoVirt` by PDS's
+> `setup_autovirt`). Its menu — `[1] Virtualization Setup`, `[2] QEMU (Patched)`,
+> `[3] EDK2 (Patched)`, `[4] GPU Passthrough`, `[7] Deploy Auto/Unattended XML`
+> — is built around hiding the hypervisor. We do NOT hand-build the VM in
+> virt-manager: a default virt-manager VM leaks dozens of VM tells (KVM CPUID
+> signature, `kvmclock`, QEMU SMBIOS strings, PS/2 devices, virtual NIC OUI,
+> hypervisor-present bit) and malware will fingerprint every one of them.
+>
+> PDS contributes one piece: `configure_vfio_passthrough` (in
+> `bash/arch/virtualisation.sh`). AutoVirt's `[4]` only knows GRUB /
+> systemd-boot / Limine and **exits** on a UKI+rEFInd box; PDS covers that gap by
+> patching `/etc/kernel/cmdline` and rebuilding the UKI.
+
+## What "concealed" actually means here
+
+AutoVirt's `deploy.sh` (`[7]`) generates a libvirt domain whose every knob is set
+to erase a VM tell. The ones that matter for malware evasion:
+
+| Layer | What it hides | Set by |
+|---|---|---|
+| `kvm.hidden.state=on` | KVM CPUID signature (`KVMKVMKVM` @ `0x40000000`) | `[7]` |
+| hypervisor-present bit cleared (`CPUID.1:ECX[31]`) | the universal "I'm a VM" flag | `[7]` (Hyper-V off) |
+| `vmport.state=off` | VMware backdoor I/O port `0x5658` | `[7]` |
+| `msrs.unknown=fault` | PV MSRs that linger after `kvm=off` (injects `#GP`) | `[7]` |
+| `kvmclock`/`hypervclock` off, `tsc` native | paravirtual clock sources | `[7]` |
+| PS/2 controller off, USB kbd/mouse instead | emulated-input fingerprint | `[7]` |
+| **patched QEMU emulator** | QEMU-specific strings/behaviours | `[2]` → `/opt/AutoVirt/emulator/bin/qemu-system-x86_64` |
+| **spoofed SMBIOS** (`-smbios file=…/smbios.bin`) | "QEMU"/"Bochs"/"SeaBIOS" DMI strings | `[2]`/`[3]` → `/opt/AutoVirt/firmware/smbios.bin` |
+| **patched EDK2/OVMF** + real MS Secure Boot keys | OVMF vendor strings, missing SB | `[3]` → `/opt/AutoVirt/firmware/OVMF_{CODE,VARS}.fd` |
+| `host-passthrough`, `check=none`, cache/maxphysaddr passthrough | CPU model mismatch | `[7]` |
+| **nvme** disk with spoofed serial + 4K blocks | `QEMU HARDDISK` / virtio storage tells | `[7]` |
+| `e1000e` NIC, MAC reusing the **host OUI** | virtio-net / well-known QEMU OUI | `[7]` |
+| `tpm-crb` emulated TPM, S3/S4 power states | missing TPM / no sleep states | `[7]` |
+| emulated TPM vendor strings (libtpms) | `"IBM"`/`"SW TPM"` give away swtpm | manual (see `~/AutoVirt/modules/README.md`) |
+| real discrete GPU (passthrough) | virtual QXL/VGA adapter | `[4]`/PDS + Phase 6 |
+
+> **Order matters.** `[7]` references `/opt/AutoVirt/emulator/bin/…` and
+> `/opt/AutoVirt/firmware/…`, which are produced by `[2]` and `[3]`. **Run
+> `[2]` and `[3]` before `[7]` or the deploy fails.** This is the step the old
+> version of this guide missed.
 
 ---
 
 ## Phase 0 — Prerequisites (verify)
-- BIOS: **VT-d = Enabled**, **IGD Multi-Monitor = Enabled** (MSI: OC → CPU Features, and Advanced → Integrated Graphics Configuration).
-- Booted into the desktop on the **iGPU** (monitor on the motherboard input).
+- BIOS: **VT-d = Enabled**, **IGD Multi-Monitor = Enabled** (so the iGPU drives the host while the dGPU is free).
+- Booted into the desktop on the **iGPU** (monitor on the motherboard output).
 - `dmesg | grep -i -e DMAR -e IOMMU` shows `IOMMU enabled`.
+- Monitor: feed it BOTH the motherboard output (host/KDE) and the dGPU (the VM), then switch the monitor's input source to flip between them. A **blank dGPU port** once the GPU is bound to `vfio-pci` (Phase 4) is expected, not a fault.
 
-## Phase 1 — Install the virt stack (AutoVirt option 1)
+## Phase 1 — Install the virt stack (AutoVirt `[1]`)
 ```bash
 cd ~/AutoVirt && ./main.sh      # choose [1] Virtualization Setup
 ```
 Installs `libvirt virt-manager qemu-base edk2-ovmf swtpm dnsmasq`, adds you to
-`kvm`/`libvirt`/`input` groups, enables `libvirtd`, creates a NAT network.
+`kvm`/`libvirt`/`input` groups, enables `libvirtd`, creates the NAT network.
 **Log out/in** (or reboot) so the group membership applies.
 
-## Phase 2 — Bind the dGPU to vfio-pci (PDS, replaces AutoVirt option 4)
+## Phase 2 — Build the patched QEMU (AutoVirt `[2]`)  ← concealment core
+```bash
+cd ~/AutoVirt && ./main.sh      # choose [2] QEMU (Patched) Setup
+```
+Compiles a QEMU whose KVM signature / hypervisor tells are stripped and installs
+it under **`/opt/AutoVirt/emulator/`** (the deploy step points the domain's
+emulator there). Also produces the spoofed **`smbios.bin`**.
+
+## Phase 3 — Build the patched EDK2/OVMF (AutoVirt `[3]`)  ← concealment core
+```bash
+cd ~/AutoVirt && ./main.sh      # choose [3] EDK2 (Patched) Setup
+```
+Builds OVMF with `SECURE_BOOT_ENABLE`, `SMM_REQUIRE`, `TPM2_ENABLE`, injects the
+real Microsoft PK/KEK/DB Secure Boot keys, and drops
+**`/opt/AutoVirt/firmware/OVMF_{CODE,VARS}.fd`** (Win11-valid firmware that
+doesn't announce itself as OVMF).
+
+## Phase 4 — Bind the dGPU to vfio-pci (PDS — UKI/rEFInd gap)
+AutoVirt's `[4]` bails on a UKI+rEFInd box ("no supported bootloader"). Use PDS instead:
 ```bash
 cd ~/PDS
 source bash/arch/virtualisation.sh
 vfio_gpu_ids
-#   01:00.0 VGA ... [10de:XXXX]
+#   01:00.0 VGA   ... [10de:XXXX]
 #   01:00.1 Audio ... [10de:YYYY]
-configure_vfio_passthrough "10de:XXXX,10de:YYYY"   # GPU id + audio id
+configure_vfio_passthrough "10de:XXXX,10de:YYYY"   # GPU id + its audio fn
 ```
-Then **reboot**.
+This writes `/etc/modprobe.d/vfio.conf`, adds vfio modules to the initramfs,
+patches `intel_iommu=on iommu=pt vfio-pci.ids=…` into `/etc/kernel/cmdline`, and
+rebuilds the UKI (`mkinitcpio -P`). Then **reboot**.
 
-## Phase 3 — Verify the host released the GPU
+### Verify the host released the GPU
 ```bash
 lspci -nnk -d 10de:XXXX        # Kernel driver in use: vfio-pci   <-- want this
+lspci -nnk -d 10de:YYYY        # same for the audio function
 dmesg | grep -i iommu          # IOMMU enabled
 ```
-If it still says `nvidia`/`nouveau`, the bind didn't take — recheck Phase 2 and
-that the host is on the iGPU (monitor on the motherboard input).
+If it still says `nvidia`/`nouveau`, the bind didn't take — recheck Phase 4 and
+that the host is on the iGPU. (A dark monitor on the dGPU port is normal: once
+bound to `vfio-pci`, the card no longer drives a host display.)
 
-## Phase 4 — Get the install media
-- **Windows 11 ISO** — from Microsoft.
-- **virtio-win drivers ISO**:
+## Phase 5 — Storage + install media
+- **No `virtio-win` needed.** The deploy uses an **nvme** disk bus, which Windows
+  11 install media supports natively — there is no "load viostor" step. (Add
+  virtio drivers later from inside the guest only if you want the virtio NIC;
+  the default `e1000e` already works.)
+- **Windows 11 ISO** goes in **`~/Downloads`** — `deploy.sh` scans that directory
+  and lets you pick. (It also auto-grants `libvirt-qemu` traverse access to it.)
+- **Disk location:** the deploy creates a **500 GB** nvme volume in libvirt's
+  **`default`** storage pool. On this box `/` is small (~32 GB), so the `default`
+  pool is pointed at **`/home`** (182 GB free):
   ```bash
-  yay -S virtio-win        # AUR
-  # or: https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso
+  sudo virsh pool-define-as default dir --target /home/VMs
+  sudo virsh pool-build default && sudo virsh pool-start default
+  sudo virsh pool-autostart default
   ```
-  Put both where libvirt can read them (e.g. `/var/lib/libvirt/images/`).
+  (qcow2 is sparse — the 500 GB is a ceiling, not upfront usage.)
 
-## Phase 5 — Create the VM (virt-manager)
-New VM → Local install media → **Windows 11 ISO** → **✅ Customize before install**:
-- **Chipset = Q35**, **Firmware = UEFI** (an `OVMF_CODE…secboot…` entry for Win11; plain OVMF also works).
-- **CPUs → Model = `host-passthrough`**, 8–16 vCPUs; **RAM 16–32 GB**.
-- **Add Hardware → TPM → Emulated, Version 2.0** (Win11 requires it; backed by `swtpm`).
-- **Disk bus = VirtIO** (fast) — or SATA for simplicity (no driver needed at install).
-- **NIC → device model = virtio**.
-- **Add Hardware → Storage → CDROM** → attach the **virtio-win ISO** (2nd CD).
-- Leave the default **Spice + QXL/Virtio video** for now (your install screen on the host).
-- **Begin Installation.**
+## Phase 6 — Deploy the concealed VM (AutoVirt `[7]`)
+```bash
+cd ~/AutoVirt && ./main.sh      # choose [7] Deploy Auto/Unattended XML
+```
+Prompts you for: **Hyper-V** (answer **n** for malware analysis — enabling it
+re-exposes a hypervisor and the `hypervclock`), **evdev** (optional shared
+kbd/mouse), **audio** (optional PipeWire), **RAM**, and the **ISO** to use. It
+then `virt-install`s the domain `AutoVirt` with every concealment knob above,
+plus a randomised MAC (host OUI) and disk serial.
 
-## Phase 6 — Install Windows (host-side Spice window)
-- If the installer shows **no disk** (VirtIO): **Load driver** → virtio-win CD → `amd64\w11\` → load **viostor/vioscsi**. Disk appears.
-- Finish install. (Skip MS account: at the network step, Shift+F10 → `oobe\bypassnro`.)
-- On the desktop, run **`virtio-win-guest-tools.exe`** from the CD (all virtio drivers).
-- **Shut the VM down.**
+> The generated domain uses `--graphics spice --video vga` so you have a console
+> for the Windows install. That virtual adapter is itself a VM tell — switch it
+> off once the dGPU is attached (Phase 7).
 
-## Phase 7 — Attach the dGPU (VM off)
-- **Add Hardware → PCI Host Device → 01:00.0** (GPU **VGA**).
-- **Add Hardware → PCI Host Device → 01:00.1** (GPU **Audio**).
+Install Windows through the SPICE console (Skip MS account: at the network step,
+**Shift+F10 → `oobe\bypassnro`**), then shut the VM down.
 
-Optional NVIDIA "Error 43" guard — usually NOT needed on a 40-series with current
-drivers, but if Windows flags Code 43, `virsh edit <vm>` and under `<features>`:
+## Phase 7 — Attach the dGPU + go headless (VM off)
+Passing the **real** GPU removes the virtual-display tell and gives the guest a
+genuine NVIDIA adapter. `virsh edit AutoVirt` (or virt-manager → Add Hardware):
+- **PCI Host Device → 01:00.0** (GPU VGA) and **01:00.1** (GPU audio).
+- Set **`<graphics>`** and **`<video>`** to `none` (or `model type='none'`) so no
+  QXL/VGA adapter remains.
+
+`kvm.hidden.state=on` (already set by `[7]`) doubles as the classic NVIDIA
+**Code 43** guard, so consumer drivers install cleanly. If Windows still flags
+Code 43, add under `<features>`:
 ```xml
   <kvm><hidden state='on'/></kvm>
   <vendor_id state='on' value='1234567890ab'/>
 ```
-(and ensure `<hyperv>` has a `<vendor_id state='on' value='...'/>`).
+Then: **switch the monitor's input to the dGPU**, boot the VM, install the
+**NVIDIA driver** in the guest, reboot → full speed.
 
-## Phase 8 — Boot + install the NVIDIA driver
-- **Switch the monitor's input to the dGPU.** Start the VM.
-- Windows boots; the GPU drives that monitor (basic res at first).
-- Install the **GeForce/NVIDIA driver** in the guest → reboot the VM → full speed.
+## Phase 8 — Verify concealment from inside the guest
+Before trusting it with live samples, run a VM-detection probe **in the guest**
+and confirm it reports few/no hits:
+- **Pafish** — `github.com/a0rtega/pafish`
+- **Al-Khaser** — `github.com/LordNoteworthy/al-khaser`
+
+Anything they flag is a remaining tell — chase it down (common leftovers: swtpm
+vendor strings → patch libtpms per `~/AutoVirt/modules/README.md`; residual SPICE
+device; hostname/registry artifacts).
 
 ## Phase 9 — Keyboard & mouse for the VM
-- Easiest: **Add Hardware → USB Host Device** → pass a spare USB keyboard + mouse.
-- Shared with host: **evdev passthrough** (`<input type='evdev'>` for the
-  `/dev/input/by-id/...-kbd` and `...-mouse`; toggle with both Ctrl keys).
-- Slickest: **Looking Glass** (VM in a window on the host desktop) — set up later.
+- Easiest: **USB Host Device** passthrough of a spare keyboard + mouse.
+- Shared with host: **evdev** (offered by `[7]`; toggle with the chosen key combo).
+- Slickest: **Looking Glass** (AutoVirt `[6]`) — but note its IVSHMEM device is a
+  VM tell; weigh against concealment for true malware work.
 
 ---
 
-## Optional, later
-- **Performance:** CPU pinning (pin guest vCPUs to physical cores + isolate),
-  hugepages, CPU feature tuning.
-- **Anti-detection** (only if a game's kernel anti-cheat blocks VMs): AutoVirt
-  options 2 (patched QEMU) + 3 (patched EDK2) + the spoofing in option 7.
+## Lab hygiene (malware analysis)
+- **Network:** for live detonation, isolate the guest — a host-only/closed
+  network or an analysis gateway (e.g. INetSim), not the NAT uplink, unless you
+  specifically need real C2 traffic and accept the risk.
+- **Snapshots:** take a clean snapshot before each sample so you can roll back.
+- **Host exposure:** no shared folders / clipboard / drag-drop to the host while
+  a sample is live.
 
 ## Troubleshooting
 | Symptom | Fix |
 |---|---|
-| VM won't start, "device in use" | Host driver still holds the GPU (Phase 3 failed) — confirm `vfio-pci`. |
-| Black screen on the dGPU, VM "running" | Normal until the NVIDIA driver is installed in the guest; use Spice meanwhile. |
-| Installer shows no disk | Load `viostor` from the virtio-win CD (Phase 6). |
-| Windows shows GPU with Code 43 | Apply the XML guard in Phase 7. |
-| `vfio_gpu_ids` shows nothing | `lspci -nn | grep -Ei 'vga|3d|audio'` and pick the dGPU + its audio fn manually. |
+| `[7]` deploy fails on missing emulator/firmware | Run `[2]` and `[3]` first — they create `/opt/AutoVirt/{emulator,firmware}`. |
+| VM won't start, "device in use" | Host driver still holds the GPU (Phase 4 failed) — confirm `vfio-pci`. |
+| Black screen on the dGPU, VM "running" | Normal until the NVIDIA driver is installed in the guest; use SPICE meanwhile. |
+| Windows shows GPU with Code 43 | Ensure `kvm.hidden` is on; add the `vendor_id` XML guard (Phase 7). |
+| `vfio_gpu_ids` shows nothing | `lspci -nn \| grep -Ei 'vga\|3d\|audio'` and pick the dGPU + its audio fn manually. |
+| Pafish/Al-Khaser still flags VM | Track each hit: swtpm vendor strings, leftover SPICE/QXL, `kvmclock`, hostname. |
+| Disk volume fails to allocate | `default` pool is on small `/`; repoint it at `/home` (Phase 5). |
