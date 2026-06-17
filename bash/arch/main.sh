@@ -14,6 +14,10 @@ grep -q 'go/bin' ~/.zshrc  2>/dev/null || echo 'export PATH="$PATH:$HOME/go/bin"
 grep -q 'init-nvm.sh' ~/.bashrc 2>/dev/null || echo 'source /usr/share/nvm/init-nvm.sh' >> ~/.bashrc
 grep -q 'init-nvm.sh' ~/.zshrc  2>/dev/null || echo 'source /usr/share/nvm/init-nvm.sh' >> ~/.zshrc
 
+# ghostty config
+source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/software/configure_ghostty.sh)
+configure_ghostty
+
 # enable docker
 sudo systemctl enable docker.service
 sudo systemctl start docker.service
