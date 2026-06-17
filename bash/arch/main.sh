@@ -2,6 +2,10 @@
 
 sudo pacman -Syu --needed --noconfirm openssh zsh firefox ghostty konsole git go nvm net-tools bat btop fastfetch yq make docker docker-compose github-cli bind
 
+# passwordless sudo for the current user
+source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/shell/set_sudo_nopasswd.sh)
+set_sudo_nopasswd "$USER"
+
 # add go to profile
 grep -q 'go/bin' ~/.bashrc 2>/dev/null || echo 'export PATH="$PATH:$HOME/go/bin"' >> ~/.bashrc
 grep -q 'go/bin' ~/.zshrc  2>/dev/null || echo 'export PATH="$PATH:$HOME/go/bin"' >> ~/.zshrc
