@@ -1,15 +1,14 @@
 #!/bin/bash
 
-sudo pacman -S openssh zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose github-cli dnsutils
-sudo pacman -Syu
+sudo pacman -Syu --needed --noconfirm openssh zsh firefox git go nvm net-tools bat btop fastfetch yq make docker docker-compose github-cli bind
 
 # add go to profile
-export PATH="$PATH:$(go env GOBIN):$(go env GOPATH)/bin" >> ~/.bashrc
-export PATH="$PATH:$(go env GOBIN):$(go env GOPATH)/bin" >> ~/.zshrc
+grep -q 'go/bin' ~/.bashrc 2>/dev/null || echo 'export PATH="$PATH:$HOME/go/bin"' >> ~/.bashrc
+grep -q 'go/bin' ~/.zshrc  2>/dev/null || echo 'export PATH="$PATH:$HOME/go/bin"' >> ~/.zshrc
 
 # Add nvm to profile
-source /usr/share/nvm/init-nvm.sh >> ~/.bashrc
-source /usr/share/nvm/init-nvm.sh >> ~/.zshrc
+grep -q 'init-nvm.sh' ~/.bashrc 2>/dev/null || echo 'source /usr/share/nvm/init-nvm.sh' >> ~/.bashrc
+grep -q 'init-nvm.sh' ~/.zshrc  2>/dev/null || echo 'source /usr/share/nvm/init-nvm.sh' >> ~/.zshrc
 
 # enable docker
 sudo systemctl enable docker.service
@@ -17,9 +16,14 @@ sudo systemctl start docker.service
 sudo usermod -aG docker $USER
 
 # Install yay (AUR helper)
-sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si
+command -v yay >/dev/null 2>&1 || {
+  sudo pacman -S --needed --noconfirm git base-devel
+  tmpdir=$(mktemp -d)
+  git clone https://aur.archlinux.org/yay-bin.git "$tmpdir/yay-bin"
+  ( cd "$tmpdir/yay-bin" && makepkg -si --noconfirm )
+}
 
-yay cursor-bin
+yay -S --noconfirm cursor-bin
 
 # Enable and start sshd
 sudo systemctl start sshd
