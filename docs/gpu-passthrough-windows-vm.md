@@ -118,11 +118,11 @@ bound to `vfio-pci`, the card no longer drives a host display.)
   and lets you pick. (It also auto-grants `libvirt-qemu` traverse access to it.)
 - **Disk location:** the deploy creates a **500 GB** nvme volume in libvirt's
   **`default`** storage pool. On this box `/` is small (~32 GB), so the `default`
-  pool is pointed at **`/home`** (182 GB free):
+  pool is pointed at **`/home`** (182 GB free). PDS persists this (no more ad-hoc
+  `virsh pool-define-as`):
   ```bash
-  sudo virsh pool-define-as default dir --target /home/VMs
-  sudo virsh pool-build default && sudo virsh pool-start default
-  sudo virsh pool-autostart default
+  cd ~/PDS && source bash/arch/virtualisation.sh
+  configure_libvirt_pool            # repoints the `default` pool -> /home/VMs
   ```
   (qcow2 is sparse — the 500 GB is a ceiling, not upfront usage.)
 
@@ -143,12 +143,32 @@ plus a randomised MAC (host OUI) and disk serial.
 Install Windows through the SPICE console (Skip MS account: at the network step,
 **Shift+F10 → `oobe\bypassnro`**), then shut the VM down.
 
+> **Reproducible alternative (skip the interactive menu).** `[7]` is interactive,
+> so it can't be replayed on a fresh box without re-prompting. PDS persists the
+> resulting domain as a template — once `[2]`/`[3]` have built the emulator/firmware
+> and the pool exists, define the VM in one shot:
+> ```bash
+> cd ~/PDS && source bash/arch/virtualisation.sh
+> vfio_gpu_ids                                   # note the GPU + audio PCI addresses
+> VM_ISO=~/Downloads/Win11.iso \
+>   GPU_VGA="0x01 0x00 0x0" GPU_AUDIO="0x01 0x00 0x1" \
+>   define_concealed_vm                          # defines from concealed-vm.xml.template
+> ```
+> After the VM is dialed in, snapshot it back so the template matches your box
+> exactly: `export_concealed_vm` (then review `git diff` and commit). The template
+> already bakes in the Phase 7.5 hardening.
+
 ## Phase 7 — Attach the dGPU + go headless (VM off)
 Passing the **real** GPU removes the virtual-display tell and gives the guest a
-genuine NVIDIA adapter. `virsh edit AutoVirt` (or virt-manager → Add Hardware):
-- **PCI Host Device → 01:00.0** (GPU VGA) and **01:00.1** (GPU audio).
-- Set **`<graphics>`** and **`<video>`** to `none` (or `model type='none'`) so no
-  QXL/VGA adapter remains.
+genuine NVIDIA adapter. PDS scripts this (no hand `virsh edit`) — **VM must be
+shut down first**, as it strips the SPICE console:
+```bash
+cd ~/PDS && source bash/arch/virtualisation.sh
+attach_gpu_passthrough AutoVirt        # auto-detects the NVIDIA VGA + audio fn
+```
+It adds both PCI host devices with **`<rom bar='off'/>`** and removes
+`<graphics>`/`<video>` so no QXL/VGA adapter remains. (Pass addresses explicitly
+if auto-detect is wrong: `attach_gpu_passthrough AutoVirt 01:00.0 01:00.1`.)
 
 `kvm.hidden.state=on` (already set by `[7]`) doubles as the classic NVIDIA
 **Code 43** guard, so consumer drivers install cleanly. If Windows still flags
@@ -196,3 +216,50 @@ device; hostname/registry artifacts).
 | `vfio_gpu_ids` shows nothing | `lspci -nn \| grep -Ei 'vga\|3d\|audio'` and pick the dGPU + its audio fn manually. |
 | Pafish/Al-Khaser still flags VM | Track each hit: swtpm vendor strings, leftover SPICE/QXL, `kvmclock`, hostname. |
 | Disk volume fails to allocate | `default` pool is on small `/`; repoint it at `/home` (Phase 5). |
+
+---
+
+## Phase 7.5 — Audit & harden the generated domain XML (mentor review)
+*(Slots in between Phase 7 and Phase 8.)* AutoVirt's `[7]` sets most concealment
+knobs (verified on the reference box: `memballoon none`, `ps2 off`, `smm`, the
+`ssbd` flags and topology are all already present). The CPU/feature gaps it
+leaves are scripted by PDS:
+```bash
+cd ~/PDS && source bash/arch/virtualisation.sh
+harden_concealed_vm AutoVirt    # disables vmx/svm/hypervisor, requires invtsc/topoext, pmu on
+```
+`virsh dumpxml AutoVirt` and confirm/add the rest below — these came out of a
+peer review and are the items a default deploy most often misses:
+
+- **`<memballoon model='none'/>`** — the virtio memory balloon is a VM tell and
+  is the gap most likely present. Remove it.
+- **CPU feature masking** — under `<cpu mode='host-passthrough'>` add
+  `<feature policy='require' name='invtsc'/>` (defeats RDTSC-delta timing checks
+  — a very common detection), `require topoext`, `disable hypervisor`
+  (belt-and-braces with Hyper-V off), and `disable svm`/`vmx-*` so no
+  nested-virt flags leak.
+- **Plausible CPU topology + pinning** — set `<topology sockets='1' cores='8'
+  threads='2'/>` (a flat or odd vCPU layout is itself a tell), then `vcpupin` /
+  `emulatorpin` / `iothreadpin` + `numatune` for performance and to avoid
+  scheduling jitter that timing probes notice.
+- **`<pmu state='on'/>`** — expose a performance-monitoring unit; its absence is
+  checkable. Confirm `<kvm><hidden state='on'/></kvm>`, `<vmport state='off'/>`,
+  `<smm state='on'/>`, `<msrs unknown='fault'/>` are all present.
+- **Disk *model* string, not just the serial** — verify the deploy spoofs the
+  model (a real consumer SSD string) and not only the serial; pafish checks for
+  `QEMU`/`QEMU HARDDISK`.
+- **NIC** — `e1000e` is the default and usually works. If guest networking is
+  flaky, switch the `<interface>` model to **`rtl8139`** (mentor's pick). Never
+  `virtio` — that's a tell.
+- **GPU passthrough `<rom bar='off'/>`** — on each GPU `<hostdev>` (also note in
+  Phase 7). Suppresses a leaked option-ROM tell and often clears Code 43. If the
+  NVIDIA driver then won't initialise, pass a clean dumped vBIOS via
+  `<rom file='…'/>` instead.
+- **Skip the VMware `hypervisor.cpuid.v0` metadata** seen in some example XMLs —
+  it's VMware-schema metadata, ignored by the KVM/libvirt driver, and does
+  nothing here. `disable hypervisor` + Hyper-V off is the real equivalent.
+
+> **Headless management.** Once you strip the SPICE console (Phase 7), reach the
+> host over SSH (PDS `main.sh` already enables `sshd`). Put that management path
+> on a **separate host-only interface** — never the detonation network (see Lab
+> hygiene).

@@ -1,0 +1,133 @@
+<!--
+  Concealed Windows VM (anti-VM-detection) — libvirt domain template.
+
+  This is the durable, reproducible source of truth for the VM described in
+  docs/gpu-passthrough-windows-vm.md. define_concealed_vm (in virtualisation.sh)
+  substitutes the percent-delimited tokens from environment variables and refuses
+  to define while any host-specific placeholder remains, so the host-specific
+  bits can't be forgotten.
+
+  Two classes of placeholder:
+    percent-delimited  — filled from env vars by define_concealed_vm (have defaults).
+    GPU source address — host-specific, edit by hand once (find with the lspci hints).
+
+  After your first good deploy, replace this file with the real thing:
+      export_concealed_vm           # dumps + sanitizes the live domain to here
+  so the template reflects exactly what works on your box.
+
+  Concealment knobs and the reasoning live in the docs; Phase 7.5 there is the
+  checklist this template already satisfies (memballoon none, invtsc/topoext,
+  hypervisor/svm disabled, pmu on, rom bar off, e1000e, no virtio).
+-->
+<domain type="kvm">
+  <name>%%VM_NAME%%</name>
+  <memory unit="KiB">%%MEM_KIB%%</memory>
+  <currentMemory unit="KiB">%%MEM_KIB%%</currentMemory>
+  <vcpu placement="static">%%VCPUS%%</vcpu>
+  <!-- Optional perf: pin vCPUs/emulator to real host cores (host-specific).
+       Leaving this out is fine; add <cputune>/<numatune> once you know your
+       core layout (lscpu -e) to cut scheduling jitter timing probes notice. -->
+  <os>
+    <type arch="x86_64" machine="q35">hvm</type>
+    <loader readonly="yes" secure="yes" type="pflash">%%OVMF_CODE%%</loader>
+    <nvram template="%%OVMF_VARS%%">/var/lib/libvirt/qemu/nvram/%%VM_NAME%%_VARS.fd</nvram>
+    <bootmenu enable="yes"/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <kvm>
+      <hidden state="on"/>
+    </kvm>
+    <pmu state="on"/>
+    <vmport state="off"/>
+    <smm state="on"/>
+    <ioapic driver="kvm"/>
+    <msrs unknown="fault"/>
+  </features>
+  <cpu mode="host-passthrough" check="none" migratable="off">
+    <topology sockets="1" dies="1" cores="%%CORES%%" threads="%%THREADS%%"/>
+    <cache mode="passthrough"/>
+    <maxphysaddr mode="passthrough"/>
+    <feature policy="require" name="topoext"/>
+    <feature policy="require" name="invtsc"/>
+    <feature policy="disable" name="hypervisor"/>
+    <feature policy="disable" name="svm"/>
+    <feature policy="disable" name="vmx-vnmi"/>
+  </cpu>
+  <clock offset="localtime">
+    <timer name="tsc" present="yes" tickpolicy="discard" mode="native"/>
+    <timer name="hpet" present="yes"/>
+    <timer name="rtc" present="yes" tickpolicy="catchup"/>
+    <timer name="pit" present="yes" tickpolicy="delay"/>
+    <timer name="kvmclock" present="no"/>
+    <timer name="hypervclock" present="no"/>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <pm>
+    <suspend-to-mem enabled="yes"/>
+    <suspend-to-disk enabled="yes"/>
+  </pm>
+  <devices>
+    <emulator>%%EMULATOR%%</emulator>
+    <!-- nvme bus: Win11 supports it natively (no virtio-win) and it avoids the
+         'QEMU HARDDISK'/virtio storage tells. Matches AutoVirt's deploy. -->
+    <disk type="file" device="disk">
+      <driver name="qemu" type="qcow2" cache="none" io="native" discard="unmap"/>
+      <source file="%%DISK_PATH%%"/>
+      <target dev="sda" bus="nvme"/>
+      <serial>%%DISK_SERIAL%%</serial>
+      <boot order="2"/>
+      <alias name="ua-mydisk"/>
+    </disk>
+    <disk type="file" device="cdrom">
+      <driver name="qemu" type="raw"/>
+      <source file="%%ISO_PATH%%"/>
+      <target dev="sdb" bus="sata"/>
+      <readonly/>
+      <boot order="1"/>
+    </disk>
+    <controller type="sata" index="0"/>
+    <controller type="usb" index="0" model="qemu-xhci" ports="15"/>
+    <interface type="network">
+      <mac address="%%MAC%%"/>
+      <source network="default"/>
+      <model type="%%NIC_MODEL%%"/>
+    </interface>
+    <!-- USB keyboard/mouse instead of PS/2 (emulated-input fingerprint). -->
+    <input type="keyboard" bus="usb"/>
+    <input type="mouse" bus="usb"/>
+    <audio id="1" type="none"/>
+    <!-- GPU passthrough: rom bar off (no leaked option-ROM tell / Code 43 guard).
+         Find the source addresses with: vfio_gpu_ids ; lspci -nn | grep -i nvidia
+         e.g. 01:00.0 (VGA) and 01:00.1 (audio) -> domain=0 bus=0x01 ... -->
+    <hostdev mode="subsystem" type="pci" managed="yes">
+      <source>
+        <address domain="0x0000" bus="CHANGEME_GPU_VGA_BUS" slot="CHANGEME_GPU_VGA_SLOT" function="CHANGEME_GPU_VGA_FN"/>
+      </source>
+      <rom bar="off"/>
+    </hostdev>
+    <hostdev mode="subsystem" type="pci" managed="yes">
+      <source>
+        <address domain="0x0000" bus="CHANGEME_GPU_AUDIO_BUS" slot="CHANGEME_GPU_AUDIO_SLOT" function="CHANGEME_GPU_AUDIO_FN"/>
+      </source>
+      <rom bar="off"/>
+    </hostdev>
+    <watchdog model="itco" action="reset"/>
+    <!-- virtio memory balloon is a VM tell -> none. -->
+    <memballoon model="none"/>
+  </devices>
+  <!-- Patched/spoofed SMBIOS produced by AutoVirt [2]/[3]. -->
+  <qemu:commandline xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0">
+    <qemu:arg value="-smbios"/>
+    <qemu:arg value="file=%%SMBIOS_BIN%%"/>
+  </qemu:commandline>
+  <!-- OPEN ITEM — nvme MODEL-string spoof. The <serial> above is honoured, but
+       the nvme controller still reports a generic model ('QEMU NVMe Ctrl') that
+       pafish can read; rotation_rate / the ide-hd 'model' frontend property do
+       NOT apply to nvme. AutoVirt leaves this unspoofed too. To close it, the
+       patched QEMU build must expose a model on the nvme device; verify support
+       before adding a qemu:override here. (VM_DISK_MODEL is reserved for that.) -->
+</domain>
