@@ -41,6 +41,16 @@ zstyle ':autocomplete:*' default-context history-incremental-search-backward
 zstyle ':autocomplete:*' min-input 1
 setopt HIST_FIND_NO_DUPS
 
+# --- History settings ---
+# Set after OMZP::history so these override the plugin's small defaults.
+HISTFILE=~/.zsh_history
+HISTSIZE=100000             # lines kept in memory
+SAVEHIST=100000            # lines persisted to HISTFILE
+setopt INC_APPEND_HISTORY  # write each command as it runs, not only on exit
+setopt EXTENDED_HISTORY    # record timestamps
+setopt HIST_IGNORE_DUPS    # skip consecutive duplicates
+setopt HIST_IGNORE_ALL_DUPS # drop older duplicate when a command repeats
+
 # --- Enable kubectl autocompletion for zsh ---
 # Reference: https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/
 autoload -Uz compinit
