@@ -123,6 +123,33 @@ install_hashicorp_product() {
     fi
 }
 
+# Convenience wrappers around install_hashicorp_product. Each takes an optional version
+# as $1, e.g. `install_vault` or `install_vault 1.15.0`.
+
+# Function: install_terraform
+# Description: Installs HashiCorp Terraform on a Debian-based system
+install_terraform() {
+    install_hashicorp_product "terraform" "$1"
+}
+
+# Function: install_vault
+# Description: Installs HashiCorp Vault on a Debian-based system
+install_vault() {
+    install_hashicorp_product "vault" "$1"
+}
+
+# Function: install_consul
+# Description: Installs HashiCorp Consul on a Debian-based system
+install_consul() {
+    install_hashicorp_product "consul" "$1"
+}
+
+# Function: install_nomad
+# Description: Installs HashiCorp Nomad on a Debian-based system
+install_nomad() {
+    install_hashicorp_product "nomad" "$1"
+}
+
 # Function: install_packer
 # Description: (legacy standalone) Installs HashiCorp's Packer and configures the system as a Packer build host.
 install_packer() {

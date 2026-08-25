@@ -46,8 +46,11 @@ source_github_shell_files() {
     source_from_github "bash/common/cloud/aws.sh"
     source_from_github "bash/common/cloud/azure.sh"
     source_from_github "bash/common/software/go.sh"
-    source_from_github "bash/common/software/packer.sh"
+    source_from_github "bash/common/software/hashicorp.sh"
     source_from_github "bash/common/utils/get_latest_github_binary.sh"
+    source_from_github "bash/common/git/configure_git_identity.sh"
+    source_from_github "bash/common/git/github_auth.sh"
+    source_from_github "bash/common/git/clone_repos.sh"
 
     source_from_github "bash/debian/software/install_azcli.sh"
     source_from_github "bash/debian/software/install_kubectl.sh"
@@ -58,8 +61,11 @@ source_github_shell_files() {
     source_from_github "bash/debian/ui/install_jetbrains_font.sh"
     source_from_github "bash/debian/ui/install_juno_theme.sh"
     source_from_github "bash/debian/ui/install_tokyonight_theme.sh"
-    source_from_github "bash/debian/software/set_gnome_fonts.sh"
-    source_from_github "bash/debian/software/setup_gnome_extras.sh"
+    source_from_github "bash/debian/ui/set_gnome_fonts.sh"
+    source_from_github "bash/debian/ui/setup_gnome_extras.sh"
+
+    source_from_github "bash/debian/software/install_gh.sh"
+    source_from_github "bash/debian/deploy/bootstrap.sh"
 
 
     echo -e "${GREEN}All files have been sourced successfully.${NC}"

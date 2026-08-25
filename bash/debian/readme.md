@@ -15,4 +15,8 @@
 | verify_hashicorp_gpg_key | Downloads and verifies the HashiCorp GPG signing key by fetching the expected fingerprint from HashiCorp's website |
 | add_hashicorp_repository | Adds the HashiCorp apt repository to the system's package sources |
 | install_hashicorp_product | Installs a HashiCorp product after verifying the GPG key and adding the repository |
+| install_terraform | Installs HashiCorp Terraform on a Debian-based system |
+| install_vault | Installs HashiCorp Vault on a Debian-based system |
+| install_consul | Installs HashiCorp Consul on a Debian-based system |
+| install_nomad | Installs HashiCorp Nomad on a Debian-based system |
 | install_packer | (legacy standalone) Installs HashiCorp's Packer and configures the system as a Packer build host. |
