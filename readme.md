@@ -60,7 +60,8 @@ check notes on phone for more idea's.
 ### Linux
 - [x] Single bootstrap entrypoint binding the function library together (`bootstrap_workstation`).
 - [ ] Extend the bootstrap beyond Debian/Ubuntu to Fedora and Arch.
-- [ ] Remove the duplicated function copies in `packaging/lib/` and `bash/module/`.
+- [x] Remove the dead duplicate function copies in `packaging/lib/` (never referenced by nfpm; wrappers ported to `bash/debian/software/hashicorp.sh`).
+- [ ] Decide what to do with `bash/module/`, superseded by `bash/common/` but kept for now.
 - [ ] Sync shell history across devices (consider creating a separate project in Go).
 - [ ] Add support for Unifi server and sideload tools like AltStore.
 
