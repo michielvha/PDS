@@ -29,6 +29,7 @@ COMMANDS:
     doctor              Check PDS installation health
     search <term>       Search for functions containing term
     show <function>     Show function source code
+    bootstrap [stage]   Bootstrap this workstation (stage: all|base|stack|github|repos)
 
 FUNCTION CATEGORIES:
     Software Installation:
@@ -48,6 +49,14 @@ EXAMPLES:
     pds search docker          # Find Docker-related functions
     pds show install_docker    # Show install_docker function source
     pds doctor                  # Check installation
+    pds bootstrap              # Full workstation bootstrap
+    pds bootstrap repos        # Only re-clone missing repositories
+
+BOOTSTRAP CONFIGURATION (export before running):
+    PDS_WORKSPACE       Where repos are cloned      (default ~/code/personal)
+    PDS_GIT_IDENTITY    GitHub account to auth as   (default michielvha)
+    PDS_GIT_EMAIL       Commit email in workspace   (default michielvh@outlook.com)
+    PDS_GITHUB_OWNERS   Owners to clone from        (default "michielvha vhco-pro")
 
 To disable auto-loading: export PDS_DISABLE=1
 To re-enable: unset PDS_DISABLE
@@ -387,6 +396,26 @@ show_info() {
     fi
 }
 
+# Function to run the workstation bootstrap
+run_bootstrap() {
+    local stage="$1"
+    local bootstrap_script="${PDS_LIB_DIR}/debian/deploy/bootstrap.sh"
+
+    if [ ! -r "$bootstrap_script" ]; then
+        echo "❌ Bootstrap script not found: $bootstrap_script"
+        echo "   The bootstrap targets Debian-based systems and ships with the pds package."
+        return 1
+    fi
+
+    # The bootstrap runs many third-party installers that legitimately return non-zero on
+    # already-satisfied steps; each stage reports its own failures, so don't abort the shell.
+    set +e
+
+    # shellcheck disable=SC1090
+    source "$bootstrap_script"
+    bootstrap_workstation "$stage"
+}
+
 # Main command handling
 case "${1:-help}" in
     help|-h|--help)
@@ -403,6 +432,9 @@ case "${1:-help}" in
         ;;
     doctor)
         doctor_check
+        ;;
+    bootstrap)
+        run_bootstrap "${2:-all}"
         ;;
     search)
         if [ $# -lt 2 ]; then
