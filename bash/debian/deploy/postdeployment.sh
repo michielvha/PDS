@@ -23,7 +23,7 @@ ubuntu_postdeployment() {
 	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/shell/zsh.sh)
 	# shellcheck disable=SC1090
-	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/system/install_docker.sh)
+	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/software/install_docker.sh)
 	# shellcheck disable=SC1090
 	source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/software/go.sh)
 	# shellcheck disable=SC1090
