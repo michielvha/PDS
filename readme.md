@@ -58,8 +58,70 @@ This section provides references to the specific `readme.md` files in the respec
 check notes on phone for more idea's.
 
 ### Linux
+- [x] Single bootstrap entrypoint binding the function library together (`bootstrap_workstation`).
+- [ ] Extend the bootstrap beyond Debian/Ubuntu to Fedora and Arch.
+- [x] Remove the dead duplicate function copies in `packaging/lib/` (never referenced by nfpm; wrappers ported to `bash/debian/software/hashicorp.sh`).
+- [ ] Decide what to do with `bash/module/`, superseded by `bash/common/` but kept for now.
 - [ ] Sync shell history across devices (consider creating a separate project in Go).
 - [ ] Add support for Unifi server and sideload tools like AltStore.
+
+# Bootstrapping a Linux workstation
+
+Takes a fresh Debian/Ubuntu install to a working dev machine in one command: base packages, the dev
+stack, GitHub auth, and every non-archived repo cloned into `~/code/personal`.
+
+```bash
+source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/deploy/bootstrap.sh)
+bootstrap_workstation
+```
+
+If the `pds` package is already installed, use the CLI instead:
+
+```bash
+pds bootstrap          # everything
+pds bootstrap repos    # just clone anything missing
+```
+
+## Stages
+
+Each stage is independently runnable (`bootstrap_workstation <stage>`) and safe to re-run.
+
+| Stage | Does |
+|---|---|
+| `base` | `full_upgrade`, core CLI packages, passwordless sudo, bat, zsh + Zi + powerlevel10k |
+| `stack` | docker, go, node, kubectl, azure cli, aws cli, vscode, claude code |
+| `github` | GitHub CLI + Git Credential Manager, `gh auth login`, git identity + credential routing |
+| `repos` | clones all non-archived repos for the configured owners |
+
+## Configuration
+
+Export any of these before running to override the defaults:
+
+| Variable | Default |
+|---|---|
+| `PDS_WORKSPACE` | `~/code/personal` |
+| `PDS_GIT_IDENTITY` | `michielvha` |
+| `PDS_GIT_NAME` | `michielvha` |
+| `PDS_GIT_EMAIL` | `michielvh@outlook.com` |
+| `PDS_GITHUB_OWNERS` | `michielvha vhco-pro` |
+
+## Git identity model
+
+The `github` stage configures two independent mechanisms, which is what makes multiple GitHub accounts
+coexist on one host:
+
+- **Commit identity** is bound by directory. An `includeIf "gitdir:~/code/personal/"` entry in
+  `~/.gitconfig` pulls in `~/.gitconfig.d/michielvha.inc`, so every commit made anywhere under the
+  workspace is authored as `michielvha` regardless of the machine-wide default.
+- **Credentials** are routed by remote URL, via `credential.https://github.com/<owner>.username`.
+  This applies even to repos cloned outside the workspace, and more specific owner entries always win
+  over the catch-all, so adding a work account later doesn't disturb this one.
+
+Verify either with `show_git_identity` and `verify_github_credentials`.
+
+Because `gh` keeps its tokens in its own keyring, which git never reads, `sync_github_credentials`
+copies the live token into git's credential store. Re-run it if a `gh auth login`/`refresh` ever leaves
+git authenticating as the wrong account.
 
 # Getting Started
 
