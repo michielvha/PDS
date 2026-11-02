@@ -84,15 +84,8 @@ install_cloudflared() {
             ;;
 
         arch|manjaro|endeavouros)
-            echo "Installing via AUR..."
-            if command -v yay &> /dev/null; then
-                yay -S --noconfirm cloudflared
-            elif command -v paru &> /dev/null; then
-                paru -S --noconfirm cloudflared
-            else
-                echo "No AUR helper found, installing binary directly..."
-                install_cloudflared_binary "$arch"
-            fi
+            echo "Installing the signed cloudflared package via pacman..."
+            sudo pacman -S --needed --noconfirm cloudflared || return
             ;;
 
         opensuse*|sles)
