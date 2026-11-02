@@ -1,0 +1,28 @@
+name: Test Cloudflare host bootstrap
+
+on:
+  push:
+    paths:
+      - bash/common/cloud/bootstrap_cloudflared_host.sh
+      - bash/common/software/install_cloudflared.sh
+      - tests/test_cloudflared_bootstrap.py
+      - .github/workflows/test-cloudflared-bootstrap.yml
+  pull_request:
+    paths:
+      - bash/common/cloud/bootstrap_cloudflared_host.sh
+      - bash/common/software/install_cloudflared.sh
+      - tests/test_cloudflared_bootstrap.py
+      - .github/workflows/test-cloudflared-bootstrap.yml
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check Bash syntax
+        run: bash -n bash/common/cloud/bootstrap_cloudflared_host.sh bash/common/software/install_cloudflared.sh
+      - name: Test credential provisioning and safe library loading
+        run: python3 -m unittest discover -s tests -v
