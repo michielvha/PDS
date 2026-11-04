@@ -1,98 +1,71 @@
 #!/bin/bash
-# shellcheck disable=SC2296
-# Common shell configuration functions
-# This module contains functions for setting up and configuring ZSH shell environments
-# Usage: source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/shell/zsh.sh)
+# Zi installation and shell configuration shared by workstations and images.
 
-# Function: install_zi
-# Description: Installs and configures Zi, a package manager for ZSH
 install_zi() {
-    # Check if git is installed
-    if ! command -v git &> /dev/null; then
-        read -rp "Git is not installed. Install it now? (y/n): " choice
-        [[ "$choice" =~ ^[Yy]$ ]] || { echo "Git is required. Exiting."; return 1; }
+    if [[ -r /usr/local/share/zi/zi.zsh ]]; then
+        return 0
+    fi
+    if ! command -v git >/dev/null 2>&1; then
+        printf '%s\n' 'install_zi requires git; install it with the image base packages.' >&2
+        return 1
+    fi
+    if [[ -e /usr/local/share/zi ]]; then
+        printf '%s\n' 'Refusing to overwrite /usr/local/share/zi: zi.zsh is missing.' >&2
+        return 1
+    fi
+    sudo git clone --depth=1 https://github.com/z-shell/zi /usr/local/share/zi
+}
 
-        { sudo apt update -y && sudo apt install -y git; } || { echo "Failed to install Git. Install it manually."; return 1; }
+# Preserve existing configuration once before installing the maintained copy.
+_pds_install_zsh_config() {
+    local source_file="$1" destination="$2"
+    if [[ -e "$destination" ]] && ! cmp -s -- "$source_file" "$destination"; then
+        if [[ ! -e "${destination}.pds-backup" ]]; then
+            sudo cp -p -- "$destination" "${destination}.pds-backup" || return
+        fi
+    fi
+    sudo install -m 0644 -- "$source_file" "$destination"
+}
+
+configure_zsh() {
+    local config_dir loader downloaded_assets=""
+    config_dir="$(dirname -- "${BASH_SOURCE[0]}")/../../config"
+    if [[ ! -d "$HOME" ]]; then
+        printf '%s\n' 'configure_zsh requires an existing HOME directory.' >&2
+        return 1
+    fi
+    # The raw workstation bootstrap has no local assets. Fetch them only when
+    # configuration is explicitly requested, using the same ref as its libraries.
+    if [[ ! -r "$config_dir/zshrc" || ! -r "$config_dir/.p10k.zsh" ]]; then
+        downloaded_assets="$(mktemp -d)" || return
+        config_dir="$downloaded_assets"
+        if ! curl -fsSL "https://raw.githubusercontent.com/michielvha/PDS/${PDS_REF:-main}/bash/config/zshrc" -o "$config_dir/zshrc" ||
+           ! curl -fsSL "https://raw.githubusercontent.com/michielvha/PDS/${PDS_REF:-main}/bash/config/.p10k.zsh" -o "$config_dir/.p10k.zsh"; then
+            rm -rf -- "$downloaded_assets"
+            return 1
+        fi
     fi
 
-    # Install Zi
-    sudo mkdir -p /usr/local/share/zi ~/.config/zi
-    sudo git clone --depth=1 https://github.com/z-shell/zi /usr/local/share/zi
-    echo "Zi installed successfully."
+    loader="$(mktemp)" || { [[ -z "$downloaded_assets" ]] || rm -rf -- "$downloaded_assets"; return 1; }
+    printf '%s\n' 'source /etc/zshrc' > "$loader"
+    sudo install -d /etc/skel || {
+        rm -f -- "$loader"
+        [[ -z "$downloaded_assets" ]] || rm -rf -- "$downloaded_assets"
+        return 1
+    }
+    if ! _pds_install_zsh_config "$config_dir/zshrc" /etc/zshrc ||
+       ! _pds_install_zsh_config "$loader" /etc/skel/.zshrc ||
+       ! _pds_install_zsh_config "$config_dir/.p10k.zsh" /etc/skel/.p10k.zsh ||
+       ! _pds_install_zsh_config "$loader" "$HOME/.zshrc" ||
+       ! _pds_install_zsh_config "$config_dir/.p10k.zsh" "$HOME/.p10k.zsh"; then
+        rm -f -- "$loader"
+        [[ -z "$downloaded_assets" ]] || rm -rf -- "$downloaded_assets"
+        return 1
+    fi
+    rm -f -- "$loader"
+    [[ -z "$downloaded_assets" ]] || rm -rf -- "$downloaded_assets"
+    sudo chown "$(id -u):$(id -g)" "$HOME/.zshrc" "$HOME/.p10k.zsh"
 }
-
-# Function: configure_zsh
-# Description: Configures ZSH using Zi with plugins and settings for an enhanced shell experience
-# TODO: Move to .zshrc file in this repository and create a function to add it to the /etc/zshrc file from github raw url, like we are doing in `set_bashrc`.
-configure_zsh() {
-  cat <<'EOF' | sudo tee ~/.zshrc  # ~/.p10k.zsh/etc/zshrc
-source /usr/local/share/zi/zi.zsh
-
-# --- Theme stuff ---
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-zi light romkatv/powerlevel10k
-
-[[ ! -f ~/.p10k.zsh ]] || source  ~/.p10k.zsh #import p10k config
-
-### --- Plugins ---
-zi light zsh-users/zsh-syntax-highlighting
-zi light zsh-users/zsh-history-substring-search
-# zi light zsh-users/zsh-autosuggestions # seems to conflict with zsh-autocomplete
-# zi light zsh-users/zsh-completions # This plugin is not needed, as we use zsh-autocomplete instead.
-zi light agkozak/zsh-z # Jump quickly to directories that you have visited "frecently." A native Zsh port of z.sh with added features. 
-
-# Installs stuff in ~/zi/plugins that needs to be manually sourced.
-#zi light ohmyzsh/ohmyzsh
-zi snippet OMZP::docker
-zi snippet OMZP::history
-zi snippet OMZP::git
-
-### --- Autocomplete ---
-# zi light marlonrichert/zsh-autocomplete
-# zstyle ':autocomplete:*' default-context history-incremental-search-backward
-# zstyle ':autocomplete:*' min-input 1
-# setopt HIST_FIND_NO_DUPS
-zi light michielvha/zsh-readline
-
-# --- Enable kubectl autocompletion for zsh ---
-#autoload -Uz compinit && compinit # zi enables this automatically.
-if (( $+commands[kubectl] )); then
-  # Only source if compdef is defined (meaning completion system is active)
-  if (( $+functions[compdef] )); then
-     source <(kubectl completion zsh)
-     alias k='kubectl'
-     compdef __start_kubectl k
-  fi
-fi
-
-# --- Various ---
-# TODO: 'neofetch' here will trigger p10k config error if ran before prompt is set. we'd have to wrap it in a precmd hook. as shown below.
-
-alias knr='kubectl get pods --field-selector=status.phase!=Running'
-EOF
-
-  # this configures zsh for all new users, first create this config then create the new user. Point it to global config.
-  cat <<'EOF' | sudo tee /etc/skel/.zshrc
-source /etc/zshrc
-EOF
-
-cp ~/.zshrc /etc/zshrc
-}
-#TODO: Auto complete is not working in zsh, figure out why. Has to do with zsh-autocomplete, we need to figure out a way to have zsh completion work together with this plugin.
-# use this to fix p10k warning when calling neofetch in .zshrc
-# autoload -Uz add-zsh-hook
-# add-zsh-hook precmd run_neofetch
-
-# run_neofetch() {
-#   command neofetch
-# }
-
 
 # Function: set_default_zsh
 # Description: Sets ZSH as the default shell for the current user
@@ -169,7 +142,7 @@ install_nerd_fonts() {
             local available_profiles_list
             available_profiles_list=$(gsettings get org.gnome.Terminal.ProfilesList list 2>/dev/null)
             # Regex to extract the first UUID from a list like "['uuid1', 'uuid2']" or "@as ['uuid1', 'uuid2']"
-            if [[ "$available_profiles_list" =~ '([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})' ]]; then
+            if [[ "$available_profiles_list" =~ ([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) ]]; then
                 default_profile_uuid=${BASH_REMATCH[1]}
                 echo "Using the first available profile UUID: $default_profile_uuid as a fallback."
             fi

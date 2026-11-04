@@ -3,7 +3,12 @@
 
 # Source utility functions
 # shellcheck source=/dev/null
-source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_distro.sh)
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/../utils/detect_distro.sh" ]]; then
+    # shellcheck source=../utils/detect_distro.sh
+    source "$(dirname -- "${BASH_SOURCE[0]}")/../utils/detect_distro.sh"
+elif ! declare -F get_package_manager >/dev/null; then
+    source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_distro.sh)
+fi
 
 # Function: install_bat
 # Description: Installs bat command-line tool on various Linux distributions and other systems

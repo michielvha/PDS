@@ -42,7 +42,7 @@ FUNCTION CATEGORIES:
         install_jetbrains_font, install_tokyonight_theme, setup_gnome_extras
     
     Shell Configuration:
-        install_ohmyzsh, configure_ohmyzsh, install_zsh_extensions
+        install_zi, configure_zsh, set_default_zsh, setup_motd
 
 EXAMPLES:
     pds list                    # List all functions

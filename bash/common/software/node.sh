@@ -4,9 +4,19 @@
 
 # Source utility functions
 # shellcheck source=/dev/null
-source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_distro.sh 2>/dev/null || echo "# detect_distro.sh not available")
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/../utils/detect_distro.sh" ]]; then
+    # shellcheck source=../utils/detect_distro.sh
+    source "$(dirname -- "${BASH_SOURCE[0]}")/../utils/detect_distro.sh"
+elif ! declare -F get_package_manager >/dev/null; then
+    source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_distro.sh 2>/dev/null || echo "# detect_distro.sh not available")
+fi
 # shellcheck source=/dev/null
-source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_arch.sh 2>/dev/null || echo "# detect_arch.sh not available")
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/../utils/detect_arch.sh" ]]; then
+    # shellcheck source=../utils/detect_arch.sh
+    source "$(dirname -- "${BASH_SOURCE[0]}")/../utils/detect_arch.sh"
+elif ! declare -F detect_arch >/dev/null; then
+    source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_arch.sh 2>/dev/null || echo "# detect_arch.sh not available")
+fi
 
 # Function: install_node
 # Description: Installs Node.js 24.x (newest LTS - "Krypton" as of 2025) on various platforms

@@ -60,23 +60,56 @@ pds show install_docker # Show function source code
 ## Package Structure
 
 ```
-/usr/share/pds-funcs/           # Main library directory
-├── software/                   # Software installation functions
-│   ├── install_docker.sh      # Docker installation
-│   ├── install_vscode.sh      # VS Code installation
-│   ├── hashicorp.sh           # HashiCorp tools
-│   └── ...
-├── ui/                        # UI/Theme functions
-│   ├── install_jetbrains_font.sh
-│   ├── install_tokyonight_theme.sh
-│   └── ...
-├── deploy/                    # Deployment functions
-│   └── postdeployment.sh
-└── init.sh                    # Main initialization script
+/usr/share/pds/
+├── common/                   # Shared libraries, grouped by category
+├── debian/                   # Debian/Ubuntu libraries, grouped by category
+├── config/                   # Zi configuration and the Powerlevel10k preset
+├── init.sh                   # Explicit Bash entry point
+└── VERSION
 
-/etc/profile.d/pds-funcs.sh    # Auto-loader for interactive shells
-/usr/bin/pds                   # CLI helper tool
+/etc/profile.d/pds.sh         # Interactive shell auto-loader
+/usr/bin/pds                  # CLI helper
 ```
+
+## Image provisioning with Zi
+
+The shell setup uses Zi and the existing PDS Powerlevel10k preset.
+Zi also loads the existing `OMZP::` snippets; it does not install or switch to the Oh My Zsh framework.
+The preset under `bash/config/.p10k.zsh` is included in the package unchanged.
+
+Use the complete [image provisioning example](../examples/image-provisioning/provision.sh) after configuring the PDS APT repository and installing Git and Zsh through the image's base package list.
+Set `PDS_VERSION` to an exact published package version containing these helpers.
+The example installs that version and explicitly sources `/usr/share/pds/init.sh` in Bash before applying the selected configuration.
+Loading the package defines functions and reads local libraries; installation work starts only when a function is called.
+A library that cannot be loaded makes initialization fail visibly.
+
+`install_zi` reuses an existing installation and requires Git to be installed already.
+It refuses to overwrite an existing directory that does not contain `zi.zsh`.
+`configure_zsh` installs the shared configuration in `/etc/zshrc` and supplies the preset and loader for the current user and `/etc/skel`.
+An existing configuration that differs is saved once with a `.pds-backup` suffix before replacement.
+The standalone workstation bootstrap fetches missing shell assets only when `configure_zsh` is called, using `PDS_REF`; installed packages and complete checkouts use their local assets.
+The function does not change the user's login shell; select that through clone-time user configuration, or call `set_default_zsh` explicitly on a workstation.
+
+The Debian/Ubuntu helper `setup_motd [banner-file] [none|fastfetch|neofetch]` manages `/etc/update-motd.d/90-pds` and its optional banner under `/etc/pds`.
+It leaves distribution and administrator MOTD scripts in place.
+Without a banner it displays the current kernel; the default information-tool choice is `none`.
+To use a system-information tool, install it separately and pass its name.
+`PDS_MOTD_BANNER` and `PDS_MOTD_INFO` select those arguments in the example.
+
+Keep hostname, per-machine addresses and SSH keys in clone-time cloud-init.
+Image sealing remains the builder's responsibility.
+SSH hardening and automatic updates are explicit role choices; the example does not apply them during image creation.
+
+Use the installed package or a complete checkout for the supported provisioning path.
+The affected libraries prefer local helper files.
+Their existing raw-URL fallback remains available for standalone use when a helper has not already been loaded.
+Loading the complete installed package uses its local helpers and performs no downloads.
+The workstation bootstrap explicitly loads those dependencies before calling installers.
+The old administration and Azure import paths are compatibility shims to their maintained implementations.
+
+Run `make -C packaging test-image-provisioning` to build and install the actual Debian package in disposable Ubuntu, then check strict offline loading, the preserved Zi configuration, preset delivery to a new user, MOTD repeatability and validated sudoers.
+The offline Zi test records plugin requests instead of downloading plugin repositories.
+It does not certify every installer, Fedora packaging or a complete Proxmox image build.
 
 ## Development
 
@@ -95,6 +128,7 @@ make build      # Build the .deb package
 make install    # Install locally (requires sudo)
 make uninstall  # Remove the package
 make test       # Test in Docker container
+make test-image-provisioning # Test the built package, Zi, MOTD and strict loading
 make lint       # Run shellcheck on scripts
 make validate   # Validate package configuration
 make clean      # Clean build artifacts
@@ -103,7 +137,7 @@ make info       # Show package information
 
 ### Adding New Functions
 
-1. Add your `.sh` file to the appropriate directory in `../bash/debian/`
+1. Add your `.sh` file to the appropriate category in `../bash/common/` or `../bash/debian/`.
 2. Follow the existing naming convention
 3. Test your functions
 4. Update version in `nfpm.yaml` and `Makefile`
@@ -113,9 +147,9 @@ make info       # Show package information
 
 The package is configured in `nfpm.yaml`:
 
-- **Source**: Uses existing `../bash/debian/` structure
-- **Target**: Installs to `/usr/share/pds-funcs/`
-- **Auto-loading**: Via `/etc/profile.d/pds-funcs.sh`
+- **Source**: Includes `../bash/common/`, `../bash/debian/` and `../bash/config/`.
+- **Target**: Installs to `/usr/share/pds/`
+- **Auto-loading**: Via `/etc/profile.d/pds.sh`
 - **Dependencies**: bash, curl, wget, gpg
 
 ## Distribution
@@ -181,13 +215,13 @@ sudo apt-get install -f
 1. **Functions not loading**:
    ```bash
    pds doctor                    # Check installation health
-   source /usr/share/pds-funcs/init.sh  # Manual load
+   source /usr/share/pds/init.sh  # Manual load
    ```
 
 2. **Permission issues**:
    ```bash
-   ls -la /usr/share/pds-funcs/  # Check file permissions
-   sudo chown -R root:root /usr/share/pds-funcs/
+   ls -la /usr/share/pds/  # Check file permissions
+   sudo chown -R root:root /usr/share/pds/
    ```
 
 3. **Disable auto-loading**:

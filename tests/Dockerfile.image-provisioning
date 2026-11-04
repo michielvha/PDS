@@ -1,0 +1,7 @@
+FROM ubuntu:24.04
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       bash ca-certificates curl git gpg python3 shellcheck sudo wget zsh \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /work
+CMD ["bash", "-euc", "dpkg -i \"$PDS_TEST_PACKAGE\"; python3 tests/image_provisioning_test.py"]

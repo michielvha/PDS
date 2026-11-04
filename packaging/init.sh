@@ -1,52 +1,37 @@
 #!/bin/bash
-# PDS (Personal Development Scripts) - Main initialization script
-# This script safely loads all PDS function libraries
-# NOTE: Don't use 'set -e' here as it can crash interactive shells
+# Load library definitions without changing the caller's shell options.
 
-# Set default library directory (this will contain your bash/debian structure)
-PDS_LIB_DIR="${PDS_LIB_DIR:-/usr/share/pds}"
-
-# Function to safely source a file
 pds_source_file() {
     local file="$1"
-    if [ -r "$file" ]; then
-        # shellcheck disable=SC1090
-        if source "$file" 2>/dev/null; then
-            return 0
-        else
-            echo "Warning: Failed to load PDS library file: $file" >&2
-            return 1
-        fi
-    else
-        echo "Warning: PDS library file not readable: $file" >&2
+    if [[ ! -r "$file" ]]; then
+        printf 'PDS library file is not readable: %s\n' "$file" >&2
         return 1
     fi
+    # shellcheck disable=SC1090
+    if source "$file"; then
+        return 0
+    fi
+    printf 'Failed to load PDS library file: %s\n' "$file" >&2
+    return 1
 }
 
-# Load all library files from the dynamic directory structure
-if [ -d "$PDS_LIB_DIR" ]; then
-    # Dynamically discover platform directories (debian, common, kali, etc.)
-    for platform_dir in "$PDS_LIB_DIR"/*; do
-        if [ -d "$platform_dir" ] && [ "$(basename "$platform_dir")" != "." ] && [ "$(basename "$platform_dir")" != ".." ]; then
-            # Skip if it's just a file
-            [ -d "$platform_dir" ] || continue
-            
-            # Source all .sh files in each category directory within this platform
-            for category_dir in "$platform_dir"/*; do
-                if [ -d "$category_dir" ]; then
-                    # Source all .sh files in this category directory
-                    for lib_file in "$category_dir"/*.sh; do
-                        # Check if the glob matched any files
-                        [ -f "$lib_file" ] || continue
-                        pds_source_file "$lib_file"
-                    done
-                fi
+_pds_load_libraries() {
+    local library_dir="${PDS_LIB_DIR:-/usr/share/pds}"
+    local platform_dir category_dir lib_file
+    if [[ ! -d "$library_dir" ]]; then
+        printf 'PDS library directory not found: %s\n' "$library_dir" >&2
+        return 1
+    fi
+    for platform_dir in "$library_dir"/*; do
+        [[ -d "$platform_dir" ]] || continue
+        for category_dir in "$platform_dir"/*; do
+            [[ -d "$category_dir" ]] || continue
+            for lib_file in "$category_dir"/*.sh; do
+                [[ -f "$lib_file" ]] || continue
+                pds_source_file "$lib_file" || return 1
             done
-        fi
+        done
     done
-else
-    echo "Warning: PDS library directory not found: $PDS_LIB_DIR" >&2
-fi
+}
 
-# Clean up variables
-unset lib_file category_dir platform_dir PDS_LIB_DIR
+_pds_load_libraries

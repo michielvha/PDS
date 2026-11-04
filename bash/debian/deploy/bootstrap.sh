@@ -44,7 +44,9 @@ bootstrap_base() {
 	echo "═══ 1/4 base system ═══"
 
 	_pds_source "bash/common/admin/sysadmin.sh"
+	_pds_source "bash/common/shell/set_sudo_nopasswd.sh"
 	_pds_source "bash/common/shell/zsh.sh"
+	_pds_source "bash/common/utils/detect_distro.sh"
 	_pds_source "bash/common/software/install_bat.sh"
 
 	echo "⬆️  Updating system..."
@@ -77,12 +79,14 @@ bootstrap_base() {
 bootstrap_stack() {
 	echo "═══ 2/4 dev stack ═══"
 
+	_pds_source "bash/common/utils/detect_distro.sh"
+	_pds_source "bash/common/utils/detect_arch.sh"
 	_pds_source "bash/debian/software/install_docker.sh"
 	_pds_source "bash/debian/software/install_kubectl.sh"
 	_pds_source "bash/debian/software/install_vscode.sh"
 	_pds_source "bash/common/software/go.sh"
 	_pds_source "bash/common/software/node.sh"
-	_pds_source "bash/common/cloud/azure.sh"
+	_pds_source "bash/debian/software/install_azcli.sh"
 	_pds_source "bash/common/cloud/aws.sh"
 	_pds_source "bash/common/software/install_claude_code.sh"
 
@@ -105,6 +109,8 @@ bootstrap_stack() {
 bootstrap_github() {
 	echo "═══ 3/4 github auth ═══"
 
+	_pds_source "bash/common/utils/detect_distro.sh"
+	_pds_source "bash/common/utils/detect_arch.sh"
 	_pds_source "bash/debian/software/install_gh.sh"
 	_pds_source "bash/common/software/install_git_credman.sh"
 	_pds_source "bash/common/git/github_auth.sh"

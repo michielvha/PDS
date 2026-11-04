@@ -1,11 +1,5 @@
 #!/bin/bash
-# Common cloud-related functions for Azure
-# This module contains functions for managing Azure resources
-# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/cloud/azure.sh) `
-
-# Function: install_azcli
-# Description: Installs and configures the Azure CLI
-install_azcli() {
-	# quick and easy script maintained by microsoft. Do not use in production.
-	curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-}
+# Compatibility import. Azure CLI installation is Debian-specific.
+# Use the PDS package or source the canonical installer from a complete checkout.
+# shellcheck source=../../debian/software/install_azcli.sh
+source "$(dirname -- "${BASH_SOURCE[0]}")/../../debian/software/install_azcli.sh"

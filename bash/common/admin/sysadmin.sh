@@ -80,34 +80,15 @@ full_upgrade() {
     sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y # && sudo apt dist-upgrade -y
 }
 
-# Function: set_sudo_nopasswd_current
-# Description: Configure passwordless sudo for the current user
+# The validated sudoers implementation lives in common/shell.
+# Keep this import local: loading PDS never downloads or installs anything.
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/../shell/set_sudo_nopasswd.sh" ]]; then
+    # shellcheck source=../shell/set_sudo_nopasswd.sh
+    source "$(dirname -- "${BASH_SOURCE[0]}")/../shell/set_sudo_nopasswd.sh"
+fi
+
 set_sudo_nopasswd_current() {
-    # first check with grep to see if entry doesn't already exist. We use logical || (or) operator to only append if the grep command returns false(1). if it returns true(0) it means the entry already exists and no action will be taken.
-    sudo grep -q "^$(whoami) ALL=(ALL) NOPASSWD:ALL" /etc/sudoers || echo "$(whoami) ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers > /dev/null
-}
-
-# Function: set_sudo_nopasswd
-# Description: Configure passwordless sudo for any specified user
-# Usage: set_sudo_nopasswd [username]
-set_sudo_nopasswd() {
-    local user="${1:-$USER}"
-    local sudoers_file="/etc/sudoers.d/$user"
-
-    if [[ -z "$user" ]]; then
-        echo "Usage: set_sudo_nopasswd [username]"
-        return 1
-    fi
-
-    if ! id "$user" &>/dev/null; then
-        echo "User '$user' does not exist."
-        return 2
-    fi
-
-    sudo grep -q "$user ALL=(ALL) NOPASSWD:ALL" /etc/sudoers || echo "$user ALL=(ALL) NOPASSWD:ALL" | sudo tee "$sudoers_file" > /dev/null
-
-    sudo chmod 0440 "$sudoers_file"
-    echo "Passwordless sudo enabled for $user."
+    set_sudo_nopasswd "$(id -un)"
 }
 
 # Function: auto_pull_cron_entry
@@ -324,7 +305,13 @@ system_cleanup() {
 
             # Remove unused packages
             echo "  - Removing orphaned packages..."
-            sudo pacman -Rns $(pacman -Qtdq) --noconfirm 2>/dev/null || echo "  No orphaned packages found"
+            local -a orphaned_packages=()
+            mapfile -t orphaned_packages < <(pacman -Qtdq)
+            if (( ${#orphaned_packages[@]} )); then
+                sudo pacman -Rns "${orphaned_packages[@]}" --noconfirm
+            else
+                echo "  No orphaned packages found"
+            fi
 
             # Clean package cache
             if [[ "$aggressive" == true ]]; then
