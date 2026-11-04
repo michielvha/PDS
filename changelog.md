@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Package the existing Zi configuration and unchanged Powerlevel10k preset for current and future users.
+- Add configurable Debian/Ubuntu MOTD setup and a pinned-package image provisioning example.
+- Add isolated tests that install the actual Debian package and verify image provisioning helpers.
+
+### Fixed
+
+- Reuse existing Zi installs and report missing dependencies without interactive prompts.
+- Load local packaged helpers without implicit network downloads and report initialization failures.
+- Consolidate sudoers and Azure implementations while retaining local compatibility imports.
+- Correct package paths and replace obsolete Oh My Zsh references in CLI help.
+- Correct existing lint findings in the Zsh font-profile pattern and Arch cleanup argument handling.
+
 ## 2026-06-17
 
 ### Added
@@ -22,3 +38,7 @@
 ### Fixed
 
 - **APT repository GPG key format**: Changed `gpg --armor --export` to `gpg --export` (binary format) in the `build-apt-package.yml` pipeline. The `.gpg` file extension requires binary OpenPGP format per `apt-secure(8)`, but the key was being exported in ASCII-armored format, causing `NO_PUBKEY` errors when clients ran `apt update`.
+
+## Engineering workflow
+
+- Pin the shared engineering conventions and retain the existing project instructions in AGENTS.md.
