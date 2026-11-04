@@ -42,3 +42,5 @@
 ## Engineering workflow
 
 - Pin the shared engineering conventions and retain the existing project instructions in AGENTS.md.
+
+- Add regression checks for bundled MOTD presets, custom banners and invalid-selection preservation.
