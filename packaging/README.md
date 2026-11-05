@@ -96,9 +96,11 @@ Without a banner it displays the current kernel; the default information-tool ch
 To use a system-information tool, install it separately and pass its name.
 `PDS_MOTD_BANNER` and `PDS_MOTD_INFO` select those arguments in the example.
 
-VHCO and Stackweaver banners include ASCII approximations of their hexagonal logos above the
-FIGlet Big names. EdgeForge keeps its original artwork. These are plain text assets with no
-formatter or image dependency at runtime.
+VHCO and Stackweaver banners convert the official
+[VHCO](https://github.com/vhco-pro/.github/blob/main/profile/assets/vhco.png) and
+[Stackweaver](https://github.com/vhco-pro/.github/blob/main/profile/assets/stackweaver.png)
+logo silhouettes to plain ASCII above the FIGlet Big names. EdgeForge keeps its original artwork.
+These are plain text assets with no formatter or image dependency at runtime.
 
 Choose a bundled text banner with `setup_motd_preset <name> [none|fastfetch|neofetch]`:
 

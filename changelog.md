@@ -4,7 +4,7 @@
 
 ### Added
 
-- Add text-only hexagonal VH and SW logo approximations above the VHCO and Stackweaver FIGlet Big wordmarks; preserve EdgeForge artwork.
+- Render the official GitHub organization logo silhouettes as plain ASCII above the VHCO and Stackweaver FIGlet Big wordmarks; preserve EdgeForge artwork.
 
 - Test the actual nFPM artifact name, including Debian-normalized prerelease versions, and reject missing or ambiguous package inputs.
 - Map the Zsh `k` alias to kubectl's registered completion so current kubectl releases work for image users and normal installations through `install_kubectl`.
