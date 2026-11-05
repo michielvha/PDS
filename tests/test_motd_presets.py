@@ -1,4 +1,5 @@
 """MOTD preset tests; run only in the disposable PDS test container."""
+import hashlib
 from pathlib import Path
 import shlex
 import subprocess
@@ -33,6 +34,13 @@ class MotdPresets(unittest.TestCase):
                 output = subprocess.run(['/etc/update-motd.d/90-pds'], capture_output=True, check=True)
                 self.assertEqual(output.stdout, expected)
                 self.assertEqual(vendor.read_text(), '#!/bin/sh\necho vendor\n')
+
+    def test_edgeforge_preserves_the_legacy_plain_banner(self):
+        # Recorded from the earlier builders banner; ignore trailing whitespace.
+        banner = (ROOT / 'bash/config/motd/edgeforge.txt').read_text()
+        normalized = '\n'.join(line.rstrip() for line in banner.splitlines()).rstrip()
+        self.assertEqual(hashlib.sha256(normalized.encode()).hexdigest(),
+                         'd68d3c897297bdf790ec91ad70c8519652fdeea39fc40acbb4e3cac3c2dd6228')
 
     def test_invalid_selection_preserves_active_banner_and_script(self):
         run('setup_motd_preset vhco')

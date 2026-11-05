@@ -96,6 +96,22 @@ Without a banner it displays the current kernel; the default information-tool ch
 To use a system-information tool, install it separately and pass its name.
 `PDS_MOTD_BANNER` and `PDS_MOTD_INFO` select those arguments in the example.
 
+Choose a bundled text banner with `setup_motd_preset <name> [none|fastfetch|neofetch]`:
+
+```bash
+setup_motd_preset vhco
+setup_motd_preset stackweaver
+setup_motd_preset edgeforge
+```
+
+VHCO and Stackweaver have their own banner files. EdgeForge preserves the earlier plain banner;
+its duplicate coloured copy is omitted. System information remains the helper's optional second
+argument. Presets live under `bash/config/motd/` in a checkout and `/usr/share/pds/config/motd/`
+in the package. Add a lowercase `.txt` file there for another preset; no duplicate function is needed.
+Names may contain letters, digits, underscores and hyphens. Invalid names or missing files fail
+before changing the active banner. `setup_motd /path/to/banner.txt` remains available for a custom file.
+Banner files are printed as data and are never sourced as shell code.
+
 Keep hostname, per-machine addresses and SSH keys in clone-time cloud-init.
 Image sealing remains the builder's responsibility.
 SSH hardening and automatic updates are explicit role choices; the example does not apply them during image creation.

@@ -4,4 +4,4 @@ RUN apt-get update \
        bash ca-certificates curl git gpg python3 shellcheck sudo wget zsh \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /work
-CMD ["bash", "-euc", "dpkg -i \"$PDS_TEST_PACKAGE\"; python3 tests/image_provisioning_test.py"]
+CMD ["bash", "-euc", "dpkg -i \"$PDS_TEST_PACKAGE\"; python3 -B -m unittest discover -s tests -p '*test*.py' -v"]

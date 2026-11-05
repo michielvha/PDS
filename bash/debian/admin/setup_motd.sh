@@ -48,3 +48,18 @@ EOF
     fi
     rm -f -- "$script"
 }
+
+# Select a bundled text banner; adding a preset requires only a new asset file.
+setup_motd_preset() {
+    local preset="${1:-}" information="${2:-none}" banner_dir
+    if [[ $# -lt 1 || $# -gt 2 || ! "$preset" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
+        printf '%s\n' 'Usage: setup_motd_preset <preset-name> [none|fastfetch|neofetch]' >&2
+        return 2
+    fi
+    banner_dir="$(dirname -- "${BASH_SOURCE[0]}")/../../config/motd"
+    if [[ ! -r "$banner_dir/$preset.txt" ]]; then
+        printf 'Unknown or unreadable MOTD preset: %s\n' "$preset" >&2
+        return 1
+    fi
+    setup_motd "$banner_dir/$preset.txt" "$information"
+}
