@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Package PowerShell Script
-        uses: michielvha/package-pwsh-script-action@v1
+        uses: michielvha/package-pwsh-script-action@70c91213a95a54dde4620741c7be73cac44836b1 # v1
         with:
           name: 'PDS'
           script-path: 'pwsh/scripts/main.ps1'
