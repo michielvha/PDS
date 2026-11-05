@@ -66,9 +66,12 @@ test: build ## Test the package installation in a Docker container
 
 test-image-provisioning: build ## Test Zi, MOTD and unattended loading in disposable Ubuntu
 	docker build -f ../tests/Dockerfile.image-provisioning -t pds-image-provisioning-test:local ..
+	@set -eu; set -- $(DIST_DIR)/$(PACKAGE_NAME)_*_$(ARCH).deb; \
+	if [ "$$#" -ne 1 ] || [ ! -f "$$1" ]; then \
+		printf '%s\n' 'Expected exactly one built PDS package.' >&2; exit 1; \
+	fi; \
 	docker run --rm --network none -v "$(abspath ..):/work:ro" \
-		-e "PDS_TEST_PACKAGE=/work/packaging/$(DIST_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(ARCH).deb" \
-		pds-image-provisioning-test:local
+		-e "PDS_TEST_PACKAGE=/work/packaging/$$1" pds-image-provisioning-test:local
 
 lint-image-provisioning: ## Fail on warnings in the shared image-provisioning path
 	shellcheck -S warning init.sh bin/pds profile.d/pds.sh scripts/*.sh \

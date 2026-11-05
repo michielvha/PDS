@@ -4,6 +4,7 @@
 
 ### Added
 
+- Test the actual nFPM artifact name, including Debian-normalized prerelease versions, and reject missing or ambiguous package inputs.
 - Map the Zsh `k` alias to kubectl's registered completion so current kubectl releases work for image users and normal installations through `install_kubectl`.
 - Add explicit shared-image kubectl/Krew installation, verified Krew release inputs, and fresh-user/failure regression checks; retain ordinary per-user installation.
 - Expose Krew archive versions/checksums and the test container digest to managed dependency updates; updates remain reviewable pull requests.
