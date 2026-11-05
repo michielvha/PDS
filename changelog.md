@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Documentation
+
+- Refresh the root README with platform coverage, usage examples, and light and dark project banners. Record backlog dispositions and deferred ideas in `docs/internal/analysis/readme-refresh.md`.
+- Move the Debian workstation bootstrap reference to `docs/workstation-bootstrap.md` and describe its remaining validation gaps.
+- Add pinned agent instructions for vh-adlc, with Copilot and Claude entry points. Preserve platform and changelog requirements from the earlier instructions.
+
 ## 2026-06-17
 
 ### Added

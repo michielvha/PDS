@@ -1,144 +1,100 @@
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/pds-banner-light.svg">
+  <img src="docs/assets/pds-banner-dark.svg" alt="PDS: Portable Deploy Suite. Workstation setup and everyday admin scripts." width="1200">
+</picture>
+
 # Portable Deploy Suite
 
-This repository contains all my deployment functions and documentation, supporting both **Windows** (`pwsh`), **linux** `bash` and **macOS** (`darwin`).
+The scripts I use to set up my machines and handle the admin work that comes after. Software installs, shell configuration, cloud tooling, and Windows administration, collected in one place.
 
-## Overview  
+PDS has Bash functions for Linux, a PowerShell module for Windows, and Homebrew setup scripts for macOS. Each platform has its own entry points and coverage.
 
-The goal of this project is to create a personal deployment repository that simplifies the configuration & installation of essential tooling on both Windows and Linux.
+[Bash](bash/readme.md) · [PowerShell](pwsh/readme.md) · [macOS](darwin/readme.md) · [Issues](https://github.com/michielvha/PDS/issues)
 
-- **Supported Platforms:**  
-  - Windows (PowerShell)  
-  - Linux (Bash)  
-    - **Distributions:** Fedora-based & Debian-based
-  - MacOS (Darwin)
+## Platform coverage
 
-## Structure
+| Platform | What is here | Where to start |
+| --- | --- | --- |
+| Debian / Ubuntu | Staged workstation bootstrap, software and shell functions, `.deb` packaging, and the `pds` CLI | [Bootstrap guide](docs/workstation-bootstrap.md) |
+| Fedora | Software installers and a separate system bootstrap script. The staged workstation bootstrap is Debian-only. | [Fedora scripts](bash/fedora/) |
+| Arch Linux | Setup and virtualisation scripts. No staged workstation bootstrap. | [Arch scripts](bash/arch/) |
+| Windows | PowerShell functions for software, shells, cloud and Kubernetes tools, diagnostics, and administration | [PowerShell module](pwsh/module/) |
+| macOS | Homebrew installation and shell setup scripts | [macOS guide](darwin/readme.md) |
 
-This section provides references to the specific `readme.md` files in the respective architecture folders for detailed information about each architecture.
+The Debian bootstrap still needs a full run on a real Linux host. [Issue #32](https://github.com/michielvha/PDS/issues/32) tracks installation, credential storage, and package validation. Existing scripts do not establish equivalent coverage across platforms.
 
-- **[Bash](bash/readme.md)**  
-  - Includes modules for Fedora and Debian-based distributions.
-  - Provides reusable scripts for system configuration and automation.
+## Get started
 
-- **[PowerShell](pwsh/readme.md)**  
-  - Contains modular functions for Windows deployment.
-  - Includes instructions for creating, publishing, and using PowerShell modules.
+Clone the repository to inspect the scripts and use the functions you need:
 
-- **[Darwin (macOS)](darwin/readme.md)**  
-  - Planned support for macOS with specific tools and configurations.
-
-# Features and Enhancements
-
-## Current Features
-
-- **Cross-Platform Support:**  
-  - Windows (PowerShell)  
-  - Linux (Bash)  
-
-- **Modular Design:**  
-  - Functions and scripts are organized into reusable modules.
-
-- **Automation:**  
-  - Scripts automate common deployment tasks, such as installing software and configuring environments.
-
-## Planned Enhancements
-
-### General
-- [ ] Add proper testing and linting to pipelines.
-- [ ] Improve error handling and logging across all scripts.
-
-### Windows
-- [ ] Pin frequently used applications to the taskbar.
-- [ ] Wrap 'W11Debloat' to run on initial run of script
-- [ ] Add functions for system diagnostics and machine information retrieval. (check old scripts for example)
-- [ ] Enhance `Install-KubeCLI` to check for dependencies like Azure CLI.
-- [ ] add custom logging / proper error handling to script. (check old scripts)
-- [ ] function for aliasses Kubectl
-
-check notes on phone for more idea's.
+```bash
+git clone https://github.com/michielvha/PDS.git
+cd PDS
+```
 
 ### Linux
-- [x] Single bootstrap entrypoint binding the function library together (`bootstrap_workstation`).
-- [ ] Extend the bootstrap beyond Debian/Ubuntu to Fedora and Arch.
-- [x] Remove the dead duplicate function copies in `packaging/lib/` (never referenced by nfpm; wrappers ported to `bash/debian/software/hashicorp.sh`).
-- [ ] Decide what to do with `bash/module/`, superseded by `bash/common/` but kept for now.
-- [ ] Sync shell history across devices (consider creating a separate project in Go).
-- [ ] Add support for Unifi server and sideload tools like AltStore.
 
-# Bootstrapping a Linux workstation
-
-Takes a fresh Debian/Ubuntu install to a working dev machine in one command: base packages, the dev
-stack, GitHub auth, and every non-archived repo cloned into `~/code/personal`.
+For a fresh Debian or Ubuntu workstation, load the bootstrap functions from your checkout:
 
 ```bash
-source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/debian/deploy/bootstrap.sh)
-bootstrap_workstation
+source bash/debian/deploy/bootstrap.sh
+bootstrap_workstation repos
 ```
 
-If the `pds` package is already installed, use the CLI instead:
+The `repos` stage needs GitHub CLI authentication. Other stages install the base system tools, the development stack, and GitHub authentication tooling. Run `bootstrap_workstation` without a stage to run them all.
+
+Review the [bootstrap guide](docs/workstation-bootstrap.md) before running the full setup. The `base` stage upgrades the system, enables passwordless sudo, and replaces the user's Zsh configuration. Installer functions may fetch additional scripts from GitHub.
+
+If the `.deb` package is already installed:
 
 ```bash
-pds bootstrap          # everything
-pds bootstrap repos    # just clone anything missing
+pds help
+pds list
+pds search docker
+pds show install_docker
+pds bootstrap repos
 ```
 
-## Stages
+See [packaging](packaging/README.md) for the build and installation instructions.
 
-Each stage is independently runnable (`bootstrap_workstation <stage>`) and safe to re-run.
+### Windows
 
-| Stage | Does |
-|---|---|
-| `base` | `full_upgrade`, core CLI packages, passwordless sudo, bat, zsh + Zi + powerlevel10k |
-| `stack` | docker, go, node, kubectl, azure cli, aws cli, vscode, claude code |
-| `github` | GitHub CLI + Git Credential Manager, `gh auth login`, git identity + credential routing |
-| `repos` | clones all non-archived repos for the configured owners |
+Import the PowerShell module from your checkout:
 
-## Configuration
+```powershell
+Import-Module .\pwsh\module\PDS.psm1
+Get-Command -Module PDS
+```
 
-Export any of these before running to override the defaults:
+Use [the function documentation](pwsh/docs/readme.md) and [module source](pwsh/module/Public/) to choose what to run. The [Windows setup script](pwsh/scripts/main.ps1) makes system changes and installs a personal selection of applications.
 
-| Variable | Default |
-|---|---|
-| `PDS_WORKSPACE` | `~/code/personal` |
-| `PDS_GIT_IDENTITY` | `michielvha` |
-| `PDS_GIT_NAME` | `michielvha` |
-| `PDS_GIT_EMAIL` | `michielvh@outlook.com` |
-| `PDS_GITHUB_OWNERS` | `michielvha vhco-pro` |
+### macOS
 
-## Git identity model
+Read the [macOS guide](darwin/readme.md) and review [the installer](darwin/install.sh) for its Homebrew packages and shell changes before running it.
 
-The `github` stage configures two independent mechanisms, which is what makes multiple GitHub accounts
-coexist on one host:
+## Find your way around
 
-- **Commit identity** is bound by directory. An `includeIf "gitdir:~/code/personal/"` entry in
-  `~/.gitconfig` pulls in `~/.gitconfig.d/michielvha.inc`, so every commit made anywhere under the
-  workspace is authored as `michielvha` regardless of the machine-wide default.
-- **Credentials** are routed by remote URL, via `credential.https://github.com/<owner>.username`.
-  This applies even to repos cloned outside the workspace, and more specific owner entries always win
-  over the catch-all, so adding a work account later doesn't disturb this one.
+| Path | Contents |
+| --- | --- |
+| [`bash/common/`](bash/common/) | Shared shell, Git, cloud, and software functions |
+| [`bash/debian/`](bash/debian/) | Debian and Ubuntu installers, desktop setup, and workstation bootstrap |
+| [`bash/fedora/`](bash/fedora/) · [`bash/arch/`](bash/arch/) | Distribution-specific scripts |
+| [`pwsh/module/Public/`](pwsh/module/Public/) | PowerShell functions grouped by purpose |
+| [`pwsh/docs/`](pwsh/docs/) | PowerShell function reference |
+| [`darwin/`](darwin/) | macOS installation and shell configuration |
+| [`packaging/`](packaging/) | Debian package, CLI, and container configuration |
+| [`docs/`](docs/) | Setup guides |
 
-Verify either with `show_git_identity` and `verify_github_credentials`.
+## Development
 
-Because `gh` keeps its tokens in its own keyring, which git never reads, `sync_github_credentials`
-copies the live token into git's credential store. Re-run it if a `gh auth login`/`refresh` ever leaves
-git authenticating as the wrong account.
+[AGENTS.md](AGENTS.md) pins the shared engineering conventions used with vh-adlc. Read it before changing the scripts. A new feature gets a feature document with acceptance criteria and a test plan; its issue tracks the work.
 
-# Getting Started
+The APT workflow includes ShellCheck and package installation checks. PowerShell validation and broader bootstrap coverage still need work. See the [open issues](https://github.com/michielvha/PDS/issues) for the backlog.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/michielvha/PDS.git
-   cd PDS
-   ```
+## References
 
-2. Follow the instructions in the respective `readme.md` files for Bash or PowerShell to set up your environment.
+[PowerShell Gallery](https://www.powershellgallery.com/) · [Tiny11Builder](https://github.com/ntdevlabs/tiny11builder) · [Win11Debloat](https://github.com/Raphire/Win11Debloat) · [Crapfixer](https://github.com/builtbybel/Crapfixer)
 
-3. Run the scripts or modules as needed to deploy your personal setup.
+## License
 
-# References
-
-## Windows
-- [PowerShell Gallery](https://www.powershellgallery.com/)   
-- [Tiny11Builder](https://github.com/ntdevlabs/tiny11builder)  
-- [Win11Debloat](https://github.com/Raphire/Win11Debloat/tree/master)
-- [Crapfixer](https://github.com/builtbybel/Crapfixer): removes a lot of the bloatware and bad settings from Windows 11.
+[GPL-3.0](LICENSE).
