@@ -10,6 +10,14 @@
       "depNameTemplate": "kubernetes-sigs/krew",
       "datasourceTemplate": "github-release-attachments",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^tests/check-package\\.sh$/"],
+      "matchStrings": ["nfpm_version=(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)\\nnfpm_sha256=(?<currentDigest>[a-f0-9]{64})"],
+      "depNameTemplate": "goreleaser/nfpm",
+      "datasourceTemplate": "github-release-attachments",
+      "versioningTemplate": "semver"
     }
   ],
   "packageRules": [

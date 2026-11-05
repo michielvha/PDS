@@ -258,6 +258,13 @@ manager and service binaries to exercise system configuration, so it uses a dige
 base instead of an application runtime image. Source is mounted read-only and the tests run with
 networking disabled. It is never a production runtime or a published container.
 
+Run `bash tests/check-package.sh` from the repository root with Docker, Make, curl and ShellCheck
+available on an amd64 Linux host. It verifies the pinned nFPM archive, builds a local candidate and
+runs all package/helper checks in disposable Ubuntu. This is also the pull-request check; it does
+not tag, publish a package or deploy the APT repository. `make -C packaging lint-image-provisioning`
+checks the relevant shell files without suppressing failures. The older broad lint target retains
+its existing behavior for unrelated scripts.
+
 ## Update and SSH policy helpers
 
 `update_system_cron_entry` selects the nightly midnight APT update/upgrade policy. Install cron

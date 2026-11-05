@@ -11,6 +11,8 @@ on:
       - packaging/**
       - bash/debian/**
       - bash/common/**
+      - bash/config/**
+      - tests/**
       - .github/workflows/build-apt-package.yml
       - '!**/*.md'
       - '!.gitignore'
@@ -20,6 +22,8 @@ on:
       - packaging/**
       - bash/debian/**
       - bash/common/**
+      - bash/config/**
+      - tests/**
       - '!**/*.md'
       - '!.gitignore'
 env:

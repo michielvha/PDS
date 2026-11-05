@@ -1,4 +1,4 @@
-.PHONY: build clean install test test-image-provisioning help
+.PHONY: build clean install test test-image-provisioning lint-image-provisioning help
 
 # Package configuration
 PACKAGE_NAME := pds
@@ -69,6 +69,14 @@ test-image-provisioning: build ## Test Zi, MOTD and unattended loading in dispos
 	docker run --rm --network none -v "$(abspath ..):/work:ro" \
 		-e "PDS_TEST_PACKAGE=/work/packaging/$(DIST_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(ARCH).deb" \
 		pds-image-provisioning-test:local
+
+lint-image-provisioning: ## Fail on warnings in the shared image-provisioning path
+	shellcheck -S warning init.sh bin/pds profile.d/pds.sh scripts/*.sh \
+		../tests/check-package.sh ../bash/common/admin/sysadmin.sh \
+		../bash/common/admin/ssh_security.sh ../bash/common/shell/zsh.sh \
+		../bash/common/shell/set_sudo_nopasswd.sh ../bash/debian/admin/setup_motd.sh \
+		../bash/debian/admin/automatic_updates.sh ../bash/config/pds-update.sh \
+		../bash/debian/software/install_gh.sh ../bash/debian/software/install_kubectl.sh
 
 lint: ## Run shellcheck on all scripts
 	@echo "Running shellcheck on scripts..."
