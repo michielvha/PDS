@@ -7,6 +7,7 @@
 | install_bat | Installs the bat command-line tool with syntax highlighting across various Linux distributions and systems |
 | setup_bat_alias | Sets up alias for batcat -> bat if needed on Ubuntu/Debian systems |
 | install_go | Installs the latest version of Golang and configures the environment for the current user. |
+| [Cloudflare host bootstrap](cloud/readme.md) | Provision an account certificate and prepare persistent tunnel services on another Linux host over SSH. |
 | set_go_env | Configures the Go environment variables for the current user. |
 | setup_edgectl_dev_env | Sets up the development environment for edgectl with Go installed for the root user. Using root user because edgectl requires root privileges to run. |
 | install_minikube | Installs the latest version of minikube. |
