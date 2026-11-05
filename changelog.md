@@ -46,3 +46,5 @@
 - Add regression checks for bundled MOTD presets, custom banners and invalid-selection preservation.
 
 - Bundle VHCO, Stackweaver and preserved EdgeForge text banners behind `setup_motd_preset`, retaining custom-file support.
+
+- Add real OpenSSH authentication and noninteractive update/conffile/lock regression tests before changing the baseline helpers.

@@ -252,3 +252,8 @@ sudo apt-get install -f
 - Run `pds doctor` to check installation
 - Check `/var/log/dpkg.log` for installation issues
 - Visit [GitHub Issues](https://github.com/michielvha/PDS/issues)
+
+The image-provisioning container is a disposable root test fixture. It needs Ubuntu, a package
+manager and service binaries to exercise system configuration, so it uses a digest-pinned Ubuntu
+base instead of an application runtime image. Source is mounted read-only and the tests run with
+networking disabled. It is never a production runtime or a published container.
