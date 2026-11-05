@@ -7,6 +7,7 @@
 - Add explicit shared-image kubectl/Krew installation, verified Krew release inputs, and fresh-user/failure regression checks; retain ordinary per-user installation.
 - Expose Krew archive versions/checksums and the test container digest to managed dependency updates; updates remain reviewable pull requests.
 - Check the built image-provisioning package on pull requests, fail relevant shell warnings, and include packaged configuration/test changes in CI and release triggers.
+- Keep pull-request version calculation in dry-run mode, freeze existing publisher action revisions without upgrades, and gate package publication on image-provisioning checks.
 - Package the existing Zi configuration and unchanged Powerlevel10k preset for current and future users.
 - Add configurable Debian/Ubuntu MOTD setup and a pinned-package image provisioning example.
 - Add isolated tests that install the actual Debian package and verify image provisioning helpers.
