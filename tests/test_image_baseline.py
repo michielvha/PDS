@@ -177,8 +177,39 @@ class ImageBaseline(unittest.TestCase):
         finally:
             main.write_bytes(before)
 
+    def test_ssh_rolls_back_when_an_earlier_setting_overrides_the_policy(self):
+        main = Path('/etc/ssh/sshd_config')
+        managed = Path('/etc/ssh/sshd_config.d/00-pds-security.conf')
+        original = main.read_bytes()
+        old_policy = managed.read_bytes() if managed.exists() else None
+        old_mode = managed.stat().st_mode & 0o777 if managed.exists() else None
+        try:
+            managed.write_bytes(b'# previous operator state\n')
+            managed.chmod(0o600)
+            main.write_bytes(b'PasswordAuthentication yes\n' + original)
+            result = pds('restricted_ssh_security_profile', check=False)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(managed.read_bytes(), b'# previous operator state\n')
+            self.assertEqual(managed.stat().st_mode & 0o777, 0o600)
+        finally:
+            main.write_bytes(original)
+            if old_policy is None:
+                managed.unlink(missing_ok=True)
+            else:
+                managed.write_bytes(old_policy)
+                managed.chmod(old_mode)
+
     def test_update_job_is_repeatable_and_handles_modified_conffiles(self):
+        crontab = Path('/etc/crontab')
+        original = crontab.read_text() if crontab.exists() else ''
+        legacy = '0 0 * * * root apt update -y && apt upgrade -y'
+        operator = '15 4 * * * root echo operator-job'
+        crontab.write_text(original + '\n' + legacy + '\n' + operator + '\n')
         pds('update_system_cron_entry; update_system_cron_entry')
+        self.assertNotIn(legacy, crontab.read_text())
+        self.assertIn(operator, crontab.read_text())
+        pds('source /work/bash/common/admin/sysadmin.sh; update_system_cron_entry')
+        self.assertNotIn(legacy, crontab.read_text())
         cron = Path('/etc/cron.d/pds-update')
         jobs = [line for line in cron.read_text().splitlines()
                 if line.strip() and not line.startswith('#') and '=' not in line]

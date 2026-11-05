@@ -257,3 +257,30 @@ The image-provisioning container is a disposable root test fixture. It needs Ubu
 manager and service binaries to exercise system configuration, so it uses a digest-pinned Ubuntu
 base instead of an application runtime image. Source is mounted read-only and the tests run with
 networking disabled. It is never a production runtime or a published container.
+
+## Update and SSH policy helpers
+
+`update_system_cron_entry` selects the nightly midnight APT update/upgrade policy. Install cron
+through the operating system first. The helper installs one managed job under `/etc/cron.d`, enables
+cron on systemd hosts, and migrates only the exact legacy job it previously wrote to `/etc/crontab`.
+It preserves other cron entries and keeps a backup before that migration. Start cron explicitly on
+an ordinary host if it is not running; a newly booted image starts the enabled service normally.
+
+The installed updater runs non-interactively, preserves modified conffiles with dpkg's default/old
+handling, and bounds waits/retries for APT lists and dpkg locks to five minutes. Failures remain
+nonzero and output goes to `/var/log/pds-update.log`. Ubuntu's existing APT timers remain enabled.
+`PDS_UPDATE_LOCK_TIMEOUT` can reduce the lock budget for a manual run or a test; it accepts 1-300
+seconds. No automatic reboot is configured. Re-run the helper to refresh its installed script after
+updating PDS; the package does not overwrite generated host configuration automatically.
+
+`restricted_ssh_security_profile` selects key-only, non-root SSH in a managed `00-pds-security.conf`
+drop-in. It validates the existing and resulting OpenSSH configuration and checks the effective
+settings. It restores the previous managed file if the selected settings do not take effect.
+It never reloads the daemon. On an ordinary host, verify the intended non-root key access and then
+explicitly reload the distribution's SSH service. An image recipe calls this helper after package
+installers and leaves activation to the next boot. When a caller defines `pds_before_ssh_policy`,
+the helper invokes that function before applying the policy; builders uses it to observe the running
+SSH service without duplicating the policy implementation.
+
+These helpers are explicit selections. A standalone installation or custom image recipe may omit
+them or choose another policy. Omitting a call does not remove policy already configured on a host.

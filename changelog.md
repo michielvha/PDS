@@ -48,3 +48,5 @@
 - Bundle VHCO, Stackweaver and preserved EdgeForge text banners behind `setup_motd_preset`, retaining custom-file support.
 
 - Add real OpenSSH authentication and noninteractive update/conffile/lock regression tests before changing the baseline helpers.
+
+- Configure a repeatable noninteractive nightly updater and a validated no-reload SSH policy through shared helpers.

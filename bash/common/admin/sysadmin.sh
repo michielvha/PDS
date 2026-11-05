@@ -1,13 +1,11 @@
 #!/bin/bash
 # Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/admin/sysadmin.sh) `
 
-# Function: update_system_cron_entry
-# Description: Create system-wide Crontab to auto update system every night at midnight.
-update_system_cron_entry() {
-    # first check with grep to see if entry doesn't already exist. We use logical || (or) operator to only append if the grep command returns false(1). if it returns true(0) it means the entry already exists and no action will be taken.
-    sudo grep -q "apt update -y && apt upgrade -y" /etc/crontab || \
-    echo "0 0 * * * root apt update -y && apt upgrade -y" | sudo tee -a /etc/crontab > /dev/null
-}
+# Debian/Ubuntu update policy is maintained beside its platform-specific helpers.
+# shellcheck source=../../debian/admin/automatic_updates.sh
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/../../debian/admin/automatic_updates.sh" ]]; then
+    source "$(dirname -- "${BASH_SOURCE[0]}")/../../debian/admin/automatic_updates.sh"
+fi
 
 # Function: setup_auto_update_weekly_debian
 # Description: Configure system to auto-update weekly using /etc/cron.weekly
@@ -125,25 +123,11 @@ set_fractional_scaling() {
 }
 
 
-# Function: restricted_ssh_security_profile
-# Description: Enable restricted security profile for SSH
-# NIS2 Compliance: Implements cybersecurity risk management measures as required by
-#                  EU Directive 2022/2555 (NIS2), specifically:
-#                  - Article 21(2)(g): Basic cyber hygiene practices
-#                  - Article 21(2)(i): Access control policies and human resources security
-# Note: For full NIS2 compliance, consider implementing MFA on top of these settings
-# References: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022L2555
-function restricted_ssh_security_profile() {
-  # Disable password authentication and root login, enable public key authentication.
-  # These configurations reduce attack surface and implement stronger authentication
-  # mechanisms aligned with NIS2 cybersecurity requirements for critical infrastructure.
-  sudo sed -i -E '
-      s/^#?PasswordAuthentication yes/PasswordAuthentication no/
-      s/^#?PermitRootLogin prohibit-password/PermitRootLogin no/
-      s/^#?PubkeyAuthentication yes/PubkeyAuthentication yes/
-  ' /etc/ssh/sshd_config
-  echo "🔒 Restricted SSH security profile will be applied on next login."
-}
+# Keep the existing import path while sharing one SSH policy implementation.
+# shellcheck source=ssh_security.sh
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/ssh_security.sh" ]]; then
+    source "$(dirname -- "${BASH_SOURCE[0]}")/ssh_security.sh"
+fi
 
 # Function: system_cleanup
 # Description: Safe cross-platform system cleanup supporting multiple package managers
