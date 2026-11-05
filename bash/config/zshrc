@@ -39,7 +39,7 @@ if (( $+commands[kubectl] )); then
   if (( $+functions[compdef] )); then
      source <(kubectl completion zsh)
      alias k='kubectl'
-     compdef __start_kubectl k
+     compdef k=kubectl
   fi
 fi
 

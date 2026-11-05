@@ -124,7 +124,7 @@ install_kubectl() (
             'alias k=kubectl'
         )
         if [[ "$shell_name" == zsh ]]; then
-            lines+=('compdef __start_kubectl k')
+            lines+=('compdef k=kubectl')
         else
             lines+=('complete -F __start_kubectl k')
         fi

@@ -41,7 +41,7 @@ while [ "$#" -gt 0 ]; do
 done
 if [ -n "$out" ]; then cat > "$out"; else cat; fi''')
         self.write_command('kubectl', '''if [ "$1" = completion ]; then
-    echo '__start_kubectl() { :; }'
+    if [ \"$2\" = zsh ]; then echo '_kubectl() { :; }; compdef _kubectl kubectl'; else echo '__start_kubectl() { :; }'; fi
 elif [ "$1" = krew ]; then shift; exec "$KREW_ROOT/bin/kubectl-krew" "$@"
 else exit 0; fi''')
         bootstrap = self.root / 'krew-linux_amd64'
@@ -129,6 +129,32 @@ if [ -n "$out" ]; then cp "$TEST_ARCHIVE" "$out"; else echo fixture-key; fi''')
         profile = (self.home / '.bashrc').read_text()
         self.assertEqual(profile.count('alias k=kubectl'), 1)
         self.assertNotIn(str(self.home), profile)
+
+    def test_zsh_alias_uses_the_generated_completion(self):
+        # Model kubectl's Zsh output, including its registered function name.
+        zi = Path('/usr/local/share/zi/zi.zsh')
+        zi.parent.mkdir(parents=True, exist_ok=True)
+        prior = zi.read_bytes() if zi.exists() else None
+        zi.write_text('zi() { :; }; autoload -Uz compinit; compinit -D\n')
+        try:
+            command = 'source ' + shlex.quote(str(self.root / 'config/zshrc'))
+            command += '; [[ ${_comps[kubectl]:-} == _kubectl && ${_comps[k]:-} == _kubectl ]]'
+            result = subprocess.run(['zsh', '-dfc', command], env=self.env,
+                                    text=True, capture_output=True, timeout=20)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            installed = self.run_install(env={'SHELL': '/usr/bin/zsh'})
+            self.assertEqual(installed.returncode, 0, installed.stderr)
+            profile = (self.home / '.zshrc').read_text()
+            result = subprocess.run(['zsh', '-dfc',
+                                     'autoload -Uz compinit; compinit -D; ' + profile +
+                                     '; [[ ${_comps[k]:-} == _kubectl ]]'],
+                                    env=self.env, text=True, capture_output=True, timeout=20)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        finally:
+            if prior is None:
+                zi.unlink(missing_ok=True)
+            else:
+                zi.write_bytes(prior)
 
     def test_raw_workstation_fetches_pins_only_when_called(self):
         shutil.rmtree(self.root / 'config')

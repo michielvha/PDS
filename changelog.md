@@ -4,6 +4,7 @@
 
 ### Added
 
+- Map the Zsh `k` alias to kubectl's registered completion so current kubectl releases work for image users and normal installations.
 - Add explicit shared-image kubectl/Krew installation, verified Krew release inputs, and fresh-user/failure regression checks; retain ordinary per-user installation.
 - Expose Krew archive versions/checksums and the test container digest to managed dependency updates; updates remain reviewable pull requests.
 - Check the built image-provisioning package on pull requests, fail relevant shell warnings, and include packaged configuration/test changes in CI and release triggers.
