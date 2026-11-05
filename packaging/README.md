@@ -305,6 +305,9 @@ For reusable images, call `install_kubectl 1.37 --system` from root Bash. This e
 `/usr/local/share/pds/krew`, owned by root and readable/executable by new users. Bash and Zsh load
 its path and alias through shared configuration; Bash completion is installed system-wide and the
 existing PDS Zsh configuration enables kubectl completion. Zi's shell-plugin downloads are unchanged.
+Use `install_kubectl` for current kubectl installations. The older `configure_kubectl_plugins`
+helper is outside this image integration and still contains a legacy Zsh alias-completion mapping;
+its compatibility with current kubectl is not established by these checks.
 Users can set a private `KREW_ROOT` before loading the shell configuration for their own plugins;
 updating the shared installation requires an administrator.
 

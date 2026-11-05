@@ -22,6 +22,7 @@ on:
       - bash/common/**
       - bash/config/**
       - tests/**
+      - .github/workflows/build-apt-package.yml
       - '!**/*.md'
       - '!.gitignore'
 env:
