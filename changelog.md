@@ -4,6 +4,7 @@
 
 ### Added
 
+- Add explicit shared-image kubectl/Krew installation, verified Krew release inputs, and fresh-user/failure regression checks; retain ordinary per-user installation.
 - Package the existing Zi configuration and unchanged Powerlevel10k preset for current and future users.
 - Add configurable Debian/Ubuntu MOTD setup and a pinned-package image provisioning example.
 - Add isolated tests that install the actual Debian package and verify image provisioning helpers.

@@ -284,3 +284,26 @@ SSH service without duplicating the policy implementation.
 
 These helpers are explicit selections. A standalone installation or custom image recipe may omit
 them or choose another policy. Omitting a call does not remove policy already configured on a host.
+
+## kubectl and Krew
+
+`install_kubectl 1.37` installs kubectl from the selected Kubernetes minor APT channel and keeps
+Krew in the invoking user's `${KREW_ROOT:-$HOME/.krew}`. It adds the alias, completion and plugin
+path to that user's Bash or Zsh configuration. Open a new shell after installation. The default
+channel is 1.37; choose the channel appropriate for your cluster's supported client version skew.
+
+For reusable images, call `install_kubectl 1.37 --system` from root Bash. This explicitly selects
+`/usr/local/share/pds/krew`, owned by root and readable/executable by new users. Bash and Zsh load
+its path and alias through shared configuration; Bash completion is installed system-wide and the
+existing PDS Zsh configuration enables kubectl completion. Zi's shell-plugin downloads are unchanged.
+Users can set a private `KREW_ROOT` before loading the shell configuration for their own plugins;
+updating the shared installation requires an administrator.
+
+Image mode requires the package or a complete checkout. The ordinary raw workstation bootstrap
+fetches the checksum data at the explicit installation call, using its `PDS_REF` (default `main`).
+`bash/config/krew-releases.sha256` records the exact Krew release archive and SHA-256 for amd64 and
+arm64. The installer verifies the archive
+before executing it and bootstraps Krew from that same archive. Krew then verifies its index's
+manifests for neat, view-secret and stern. All three are required; download or plugin failures stop
+the selected installation. The plugin index is resolved at installation time, so these plugin
+versions can change between builds. Image validation records their installed versions.

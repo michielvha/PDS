@@ -47,6 +47,7 @@ else exit 0; fi''')
         bootstrap = self.root / 'krew-linux_amd64'
         bootstrap.write_text('''#!/bin/bash
 set -eu
+export KREW_ROOT="${KREW_ROOT:-$HOME/.krew}"
 printf 'krew %s\\n' "$*" >> "$TEST_CALLS"
 if [[ "$1" == install ]]; then
     [[ "${2:-}" != stern || "${TEST_FAIL_PLUGIN:-}" != stern ]] || exit 43
@@ -72,10 +73,14 @@ while [ "$#" -gt 0 ]; do
     case "$1" in -o) out=$2; shift 2;; -*O*) remote=1; shift;; https://*) url=$1; shift;; *) shift;; esac
 done
 if [ "$remote" = 1 ]; then out=${url##*/}; fi
+if [ "${url##*/}" = krew-releases.sha256 ]; then cp "$TEST_PINS" "$out"; exit; fi
 if [ -n "$out" ]; then cp "$TEST_ARCHIVE" "$out"; else echo fixture-key; fi''')
+        self.pins = self.root / 'raw-pins.sha256'
+        shutil.copy2(self.root / 'config/krew-releases.sha256', self.pins)
         self.env = {**os.environ, 'PATH': f'{self.bin}:/usr/sbin:/usr/bin:/sbin:/bin',
                     'HOME': str(self.home), 'SHELL': '/bin/bash',
-                    'TEST_CALLS': str(self.calls), 'TEST_ARCHIVE': str(self.archive)}
+                    'TEST_CALLS': str(self.calls), 'TEST_ARCHIVE': str(self.archive),
+                    'TEST_PINS': str(self.pins)}
         self.env.pop('KREW_ROOT', None)
         shutil.rmtree('/usr/local/share/pds/krew', ignore_errors=True)
         for path in ('/etc/profile.d/pds-kubectl.sh', '/etc/bash_completion.d/pds-kubectl',
@@ -124,6 +129,17 @@ if [ -n "$out" ]; then cp "$TEST_ARCHIVE" "$out"; else echo fixture-key; fi''')
         profile = (self.home / '.bashrc').read_text()
         self.assertEqual(profile.count('alias k=kubectl'), 1)
         self.assertNotIn(str(self.home), profile)
+
+    def test_raw_workstation_fetches_pins_only_when_called(self):
+        shutil.rmtree(self.root / 'config')
+        loaded = subprocess.run(['bash', '-euc', f'source {shlex.quote(str(self.module))}'],
+                                env=self.env, text=True, capture_output=True, timeout=20)
+        self.assertEqual(loaded.returncode, 0, loaded.stderr)
+        self.assertFalse(self.calls.exists())
+        result = self.run_install(env={'PDS_REF': 'owned-test-ref'})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('/owned-test-ref/bash/config/krew-releases.sha256', self.calls.read_text())
+        self.assertTrue((self.home / '.krew/bin/kubectl-krew').is_file())
 
     def test_plugin_failure_stops_even_when_caller_checks_status(self):
         result = subprocess.run(['bash', '-euc',
