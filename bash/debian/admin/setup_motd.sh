@@ -58,7 +58,7 @@ setup_motd_preset() {
         printf '%s\n' 'Usage: setup_motd_preset <preset-name> [none|fastfetch|neofetch]' >&2
         return 2
     fi
-    banner_dir="$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../config/motd"
+    banner_dir="$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../../config/motd"
     if [[ ! -r "$banner_dir/$preset.txt" ]]; then
         printf 'Unknown or unreadable MOTD preset: %s\n' "$preset" >&2
         return 1

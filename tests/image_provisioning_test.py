@@ -193,6 +193,16 @@ class ImageProvisioning(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(result.stdout, 'caller-exit')
 
+    def test_bash_stdin_import_reports_missing_library(self):
+        # Stdin has no source filename; report the unsupported import clearly.
+        code = (LIB / 'common/cloud/azure.sh').read_text() + '\nprintf continued\n'
+        with tempfile.TemporaryDirectory() as tmp:
+            result = subprocess.run(['bash'], input=code, cwd=tmp,
+                                    text=True, capture_output=True, timeout=20)
+        self.assertEqual(result.stdout, 'continued')
+        self.assertIn('No such file or directory', result.stderr)
+        self.assertNotIn('bad substitution', result.stderr)
+
     def test_cli_discovers_the_packaged_helpers(self):
         self.assertIn('install_zi', shell('pds help').stdout)
         self.assertNotIn('install_ohmyzsh', shell('pds help').stdout)

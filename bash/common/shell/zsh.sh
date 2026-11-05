@@ -31,7 +31,7 @@ _pds_install_zsh_config() {
 
 configure_zsh() (
     local config_dir work loader
-    config_dir="$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../config"
+    config_dir="$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../../config"
     if [[ ! -d "$HOME" ]]; then
         printf '%s\n' 'configure_zsh requires an existing HOME directory.' >&2
         return 1

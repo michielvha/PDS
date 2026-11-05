@@ -20,8 +20,9 @@
 
 ### Fixed
 
-- Keep ordinary Krew installs per user when an image profile exports the shared root, and persist custom roots for later shells.
+- Keep ordinary Krew installs per user when an image profile exports the shared root, export shell-local custom roots, and keep root/PATH selection together when switching roots.
 - Load installed libraries and resolve their imports/assets in Zsh without downloads or changes to caller options.
+- Guard the Zsh filename fallback when Bash has no source metadata.
 - Simplify temporary Zsh configuration cleanup and remove a redundant pipe from cron migration.
 
 - Reuse existing Zi installs and report missing dependencies without interactive prompts.

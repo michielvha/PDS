@@ -4,4 +4,4 @@
 # Compatibility import. Azure CLI installation is Debian-specific.
 # Use the PDS package or source the canonical installer from a complete checkout.
 # shellcheck source=../../debian/software/install_azcli.sh
-source "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../debian/software/install_azcli.sh"
+source "$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../../debian/software/install_azcli.sh"

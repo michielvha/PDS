@@ -6,9 +6,9 @@
 
 # Source utility functions
 # shellcheck source=/dev/null
-if [[ -r "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../utils/detect_distro.sh" ]]; then
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../utils/detect_distro.sh" ]]; then
     # shellcheck source=../utils/detect_distro.sh
-    source "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../utils/detect_distro.sh"
+    source "$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../utils/detect_distro.sh"
 elif ! declare -F get_package_manager >/dev/null; then
     source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_distro.sh)
 fi

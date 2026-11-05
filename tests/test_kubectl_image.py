@@ -162,6 +162,35 @@ if [ -n "$out" ]; then cp "$TEST_ARCHIVE" "$out"; else echo fixture-key; fi''')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('plugin neat', result.stdout)
 
+    def test_normal_install_exports_a_shell_local_custom_root(self):
+        for shell_name in ('bash', 'zsh'):
+            with self.subTest(shell=shell_name):
+                custom = self.home / (shell_name + ' local root')
+                script = f'source {shlex.quote(str(self.module))}; '
+                script += f'KREW_ROOT={shlex.quote(str(custom))}; install_kubectl 1.37'
+                result = subprocess.run([shell_name, '-euc', script], env=self.env,
+                                        text=True, capture_output=True, timeout=20)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue((custom / 'bin/kubectl-krew').is_file())
+                self.assertFalse((self.home / '.krew').exists())
+
+    def test_reinstall_can_switch_between_custom_and_default_roots(self):
+        for shell_name in ('bash', 'zsh'):
+            with self.subTest(shell=shell_name):
+                custom = self.home / (shell_name + '-custom')
+                for root in (custom, self.home / '.krew', custom):
+                    env = {'KREW_ROOT': str(root), 'SHELL': '/usr/bin/' + shell_name}
+                    installed = self.run_install(env=env, shell=shell_name)
+                    self.assertEqual(installed.returncode, 0, installed.stderr)
+                    script = ('autoload -Uz compinit; compinit -D; ' if shell_name == 'zsh' else '')
+                    script += f'source "$HOME/.{shell_name}rc"; '
+                    script += 'test "$KREW_ROOT" = "$TEST_ROOT"; '
+                    script += 'test "$(command -v kubectl-neat)" = "$TEST_ROOT/bin/kubectl-neat"'
+                    result = subprocess.run([shell_name, '-euc', script],
+                                            env={**self.env, 'TEST_ROOT': str(root)},
+                                            text=True, capture_output=True, timeout=20)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_zsh_alias_uses_the_generated_completion(self):
         # Model kubectl's Zsh output, including its registered function name.
         zi = Path('/usr/local/share/zi/zi.zsh')

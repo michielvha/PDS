@@ -60,7 +60,7 @@ EOF
 
 install_kubectl() (
     set -euo pipefail
-    local channel="${1:-1.37}" mode="${2:-}" assets work profile shell_name hook line root_line
+    local channel="${1:-1.37}" mode="${2:-}" assets work profile shell_name hook line root_line last_root_line
     if [[ $# -gt 2 || ! "$channel" =~ ^1\.[0-9]+$ || ( -n "$mode" && "$mode" != --system ) ]]; then
         printf '%s\n' 'Usage: install_kubectl [minor-channel, e.g. 1.37] [--system]' >&2
         return 2
@@ -71,7 +71,7 @@ install_kubectl() (
     fi
     work="$(mktemp -d)" || return 1
     trap 'rm -rf -- "$work"' EXIT
-    assets="$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../config"
+    assets="$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../../config"
     if [[ ! -r "$assets/krew-releases.sha256" ]]; then
         if [[ "$mode" == --system ]]; then
             printf '%s\n' 'Use the installed PDS package or a complete checkout for image assets.' >&2
@@ -100,8 +100,9 @@ install_kubectl() (
         # A global image profile exposes shared plugins, but installation without
         # --system must select a writable per-user tree. Keep explicit custom roots.
         if [[ -z "${KREW_ROOT:-}" || "${KREW_ROOT%/}" == /usr/local/share/pds/krew ]]; then
-            export KREW_ROOT="$HOME/.krew"
+            KREW_ROOT="$HOME/.krew"
         fi
+        export KREW_ROOT
     fi
     _pds_install_krew "$assets/krew-releases.sha256" || return 1
     if [[ "$mode" == --system ]]; then
@@ -128,9 +129,12 @@ install_kubectl() (
         if [[ "$KREW_ROOT" != "$HOME/.krew" ]]; then
             printf -v root_line 'export KREW_ROOT=%q' "$KREW_ROOT"
         fi
+        # Keep root and PATH together when a later install selects another root.
+        last_root_line="$(awk '/^export KREW_ROOT=/ { line=$0 } END { print line }' "$profile")" || return 1
+        if [[ "$last_root_line" != "$root_line" ]]; then
+            printf '%s\n' "$root_line" 'export PATH="$KREW_ROOT/bin:$PATH"' >> "$profile" || return 1
+        fi
         local lines=(
-            "$root_line"
-            'export PATH="$KREW_ROOT/bin:$PATH"'
             "source <(kubectl completion $shell_name)"
             'alias k=kubectl'
         )

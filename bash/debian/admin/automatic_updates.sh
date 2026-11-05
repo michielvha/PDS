@@ -13,7 +13,7 @@ update_system_cron_entry() {
         printf '%s\n' 'Install APT and cron before configuring automatic updates.' >&2
         return 1
     fi
-    asset="$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../config/pds-update.sh"
+    asset="$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../../config/pds-update.sh"
     if [[ ! -r "$asset" ]] || ! bash -n "$asset"; then
         printf '%s\n' 'The PDS updater asset is missing or invalid; use the package or a complete checkout.' >&2
         return 1
