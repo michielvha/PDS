@@ -8,6 +8,8 @@
 - Expose Krew archive versions/checksums and the test container digest to managed dependency updates; updates remain reviewable pull requests.
 - Check the built image-provisioning package on pull requests, fail relevant shell warnings, and include packaged configuration/test changes in CI and release triggers.
 - Keep pull-request version calculation in dry-run mode, freeze existing publisher action revisions without upgrades, and gate package publication on image-provisioning checks.
+- Restrict check jobs to read-only tokens and remove persisted checkout credentials. Version calculation stays read-only; the existing release job creates the tag at the checked commit after package tests pass.
+- Share one verified nFPM download between local and publisher checks and fold package coverage into the existing workflow.
 - Package the existing Zi configuration and unchanged Powerlevel10k preset for current and future users.
 - Add configurable Debian/Ubuntu MOTD setup and a pinned-package image provisioning example.
 - Add isolated tests that install the actual Debian package and verify image provisioning helpers.
