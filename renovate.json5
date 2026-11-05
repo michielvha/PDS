@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "automerge": false,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^bash/config/krew-releases\\.sha256$/"],
+      "matchStrings": ["(?<currentDigest>[a-f0-9]{64})  (?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)/krew-linux_(?:amd64|arm64)\\.tar\\.gz"],
+      "depNameTemplate": "kubernetes-sigs/krew",
+      "datasourceTemplate": "github-release-attachments",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^packaging/scripts/fetch-nfpm\\.sh$/"],
+      "matchStrings": ["nfpm_version=(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)\\nnfpm_sha256=(?<currentDigest>[a-f0-9]{64})"],
+      "depNameTemplate": "goreleaser/nfpm",
+      "datasourceTemplate": "github-release-attachments",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["kubernetes-sigs/krew"],
+      "groupName": "Krew release archives"
+    }
+  ]
+}

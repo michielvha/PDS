@@ -1,8 +1,6 @@
 name: Build APT Package
 permissions:
-  id-token: write
-  contents: write
-  pages: write
+  contents: read
 on:
   workflow_dispatch:
   push:
@@ -11,6 +9,8 @@ on:
       - packaging/**
       - bash/debian/**
       - bash/common/**
+      - bash/config/**
+      - tests/**
       - .github/workflows/build-apt-package.yml
       - '!**/*.md'
       - '!.gitignore'
@@ -20,6 +20,9 @@ on:
       - packaging/**
       - bash/debian/**
       - bash/common/**
+      - bash/config/**
+      - tests/**
+      - .github/workflows/build-apt-package.yml
       - '!**/*.md'
       - '!.gitignore'
 env:
@@ -32,26 +35,31 @@ jobs:
       semVer: ${{ steps.gitversion.outputs.semVer }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0 # GitVersion needs full history
-      - name: Tag with GitVersion
+          persist-credentials: false
+      - name: Calculate package version
         id: gitversion
-        uses: michielvha/gitversion-tag-action@v7.0.4
+        uses: michielvha/gitversion-tag-action@8cf5869816cf71437052ac97d086e00526bf2d89 # v7.0.4
         with:
           configFilePath: gitversion.yml # Path to your GitVersion config file
+          dry-run: 'true' # The release job creates the exact tag only after checks pass.
   lint:
     name: Lint Scripts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Install shellcheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
       - name: Run shellcheck
         run: |
           cd packaging
           make lint
+          make lint-image-provisioning
   build:
     name: Build Package
     runs-on: ubuntu-latest
@@ -61,7 +69,9 @@ jobs:
         arch: [all]
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Set up environment
         run: |
           # Use GitVersion determined version
@@ -70,9 +80,8 @@ jobs:
           echo "Building version: $VERSION"
       - name: Install nfpm
         run: |
-          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
-          sudo apt update
-          sudo apt install nfpm
+          bash packaging/scripts/fetch-nfpm.sh "$RUNNER_TEMP/pds-nfpm"
+          echo "$RUNNER_TEMP/pds-nfpm" >> "$GITHUB_PATH"
       - name: Update package version
         run: |
           cd packaging
@@ -90,8 +99,10 @@ jobs:
         run: |
           cd packaging
           make test
+      - name: Test image provisioning package
+        run: make -C packaging test-image-provisioning
       - name: Upload package artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-${{ matrix.arch }}
           path: packaging/dist/*.deb
@@ -113,7 +124,7 @@ jobs:
         ubuntu-version: [22.04, 24.04]
     steps:
       - name: Download package
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./packages
@@ -136,13 +147,15 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Set version
         run: |
           VERSION="${{ needs.version.outputs.semVer }}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
       - name: Download package
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./release
@@ -158,6 +171,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create ${{ env.VERSION }} \
+            --target "$GITHUB_SHA" \
             --title "PDS ${{ env.VERSION }}" \
             --notes-file release-notes.md \
             ./release/${{ env.PACKAGE_NAME }}_${{ env.VERSION }}_all.deb
@@ -173,7 +187,9 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Set version
         run: |
           VERSION="${{ needs.version.outputs.semVer }}"
@@ -201,7 +217,7 @@ jobs:
           gpg --list-secret-keys --keyid-format LONG | grep -E "^(sec|ssb)"
       - name: Restore aptly cache
         id: cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.aptly
           key: aptly-repo-${{ runner.os }}-${{ github.repository }}
@@ -241,7 +257,7 @@ jobs:
             aptly publish repo -distribution=stable -architectures=all -batch=false pds || aptly publish update -batch=false stable || true
           fi
       - name: Download new package
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: ${{ env.PACKAGE_NAME }}-${{ needs.version.outputs.semVer }}-all
           path: ./packages
@@ -301,12 +317,12 @@ jobs:
           echo "Pages directory prepared:"
           ls -la pages/
       - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: pages
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
 
   # build-apt-repo-container:
   #   name: Build APT Repository Container

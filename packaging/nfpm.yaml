@@ -46,6 +46,12 @@ contents:
     dst: /usr/share/pds/common
     file_info:
       mode: 0644
+
+  # Zi and Powerlevel10k assets used by configure_zsh.
+  - src: ../bash/config
+    dst: /usr/share/pds/config
+    file_info:
+      mode: 0644
   
   # Main initialization script
   - src: ./init.sh
