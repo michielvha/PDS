@@ -4,6 +4,8 @@
 
 ### Added
 
+- Render VHCO and Stackweaver MOTD presets in FIGlet Big lettering to match the preserved EdgeForge style.
+
 - Test the actual nFPM artifact name, including Debian-normalized prerelease versions, and reject missing or ambiguous package inputs.
 - Map the Zsh `k` alias to kubectl's registered completion so current kubectl releases work for image users and normal installations through `install_kubectl`.
 - Add explicit shared-image kubectl/Krew installation, verified Krew release inputs, and fresh-user/failure regression checks; retain ordinary per-user installation.
