@@ -16,6 +16,10 @@ pds_source_file() {
 }
 
 _pds_load_libraries() {
+    # Scope Zsh glob behavior to this function, including empty asset directories.
+    if [[ -n "${ZSH_VERSION:-}" ]]; then
+        setopt localoptions nullglob
+    fi
     local library_dir="${PDS_LIB_DIR:-/usr/share/pds}"
     local platform_dir category_dir lib_file
     if [[ ! -d "$library_dir" ]]; then
@@ -32,6 +36,7 @@ _pds_load_libraries() {
             done
         done
     done
+    return 0
 }
 
 _pds_load_libraries

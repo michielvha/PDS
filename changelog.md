@@ -4,7 +4,7 @@
 
 ### Added
 
-- Render VHCO and Stackweaver MOTD presets in FIGlet Big lettering to match the preserved EdgeForge style.
+- Add text-only hexagonal VH and SW logo approximations above the VHCO and Stackweaver FIGlet Big wordmarks; preserve EdgeForge artwork.
 
 - Test the actual nFPM artifact name, including Debian-normalized prerelease versions, and reject missing or ambiguous package inputs.
 - Map the Zsh `k` alias to kubectl's registered completion so current kubectl releases work for image users and normal installations through `install_kubectl`.
@@ -19,6 +19,10 @@
 - Add isolated tests that install the actual Debian package and verify image provisioning helpers.
 
 ### Fixed
+
+- Keep ordinary Krew installs per user when an image profile exports the shared root, and persist custom roots for later shells.
+- Load installed libraries and resolve their imports/assets in Zsh without downloads or changes to caller options.
+- Simplify temporary Zsh configuration cleanup and remove a redundant pipe from cron migration.
 
 - Reuse existing Zi installs and report missing dependencies without interactive prompts.
 - Load local packaged helpers without implicit network downloads and report initialization failures.

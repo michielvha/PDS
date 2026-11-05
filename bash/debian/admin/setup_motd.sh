@@ -1,4 +1,6 @@
 #!/bin/bash
+# Zsh uses %x for the defining source file; Bash uses BASH_SOURCE.
+# shellcheck disable=SC2296
 # Debian/Ubuntu dynamic MOTD setup; preserve distribution MOTD scripts.
 # Usage: setup_motd [banner-file] [none|fastfetch|neofetch]
 setup_motd() {
@@ -56,7 +58,7 @@ setup_motd_preset() {
         printf '%s\n' 'Usage: setup_motd_preset <preset-name> [none|fastfetch|neofetch]' >&2
         return 2
     fi
-    banner_dir="$(dirname -- "${BASH_SOURCE[0]}")/../../config/motd"
+    banner_dir="$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../config/motd"
     if [[ ! -r "$banner_dir/$preset.txt" ]]; then
         printf 'Unknown or unreadable MOTD preset: %s\n' "$preset" >&2
         return 1

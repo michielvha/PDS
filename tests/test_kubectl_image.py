@@ -92,9 +92,9 @@ if [ -n "$out" ]; then cp "$TEST_ARCHIVE" "$out"; else echo fixture-key; fi''')
         command.write_text('#!/bin/sh\nset -eu\n' + body + '\n')
         command.chmod(0o755)
 
-    def run_install(self, args='', extra='', env=None):
+    def run_install(self, args='', extra='', env=None, shell='bash'):
         return subprocess.run(
-            ['bash', '-euc', f'source {shlex.quote(str(self.module))}; '
+            [shell, '-euc', f'source {shlex.quote(str(self.module))}; '
              f'install_kubectl 1.37 {args}; {extra or ":"}'],
             text=True, capture_output=True, timeout=20, env={**self.env, **(env or {})})
 
@@ -129,6 +129,38 @@ if [ -n "$out" ]; then cp "$TEST_ARCHIVE" "$out"; else echo fixture-key; fi''')
         profile = (self.home / '.bashrc').read_text()
         self.assertEqual(profile.count('alias k=kubectl'), 1)
         self.assertNotIn(str(self.home), profile)
+
+    def test_normal_install_overrides_inherited_shared_root(self):
+        for shell_name in ('bash', 'zsh'):
+            with self.subTest(shell=shell_name):
+                env = {'KREW_ROOT': '/usr/local/share/pds/krew',
+                       'SHELL': '/usr/bin/' + shell_name}
+                for _ in range(2):
+                    result = self.run_install(env=env, shell=shell_name)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue((self.home / '.krew/bin/kubectl-krew').is_file())
+                self.assertFalse(Path('/usr/local/share/pds/krew').exists())
+                profile = self.home / ('.' + shell_name + 'rc')
+                script = ('autoload -Uz compinit; compinit -D; ' if shell_name == 'zsh' else '')
+                script += f'source {shlex.quote(str(profile))}; '
+                script += 'test "$KREW_ROOT" = "$HOME/.krew"; kubectl-neat'
+                result = subprocess.run([shell_name, '-fc', script],
+                                        env={**self.env, **env}, text=True,
+                                        capture_output=True, timeout=20)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('plugin neat', result.stdout)
+
+    def test_normal_install_preserves_custom_root_in_fresh_shell(self):
+        custom = self.home / 'custom krew'
+        result = self.run_install(env={'KREW_ROOT': str(custom)})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((custom / 'bin/kubectl-krew').is_file())
+        # A later shell must select the same explicit custom location.
+        result = subprocess.run(['bash', '-euc',
+                                 'source "$HOME/.bashrc"; kubectl-neat'],
+                                env=self.env, text=True, capture_output=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('plugin neat', result.stdout)
 
     def test_zsh_alias_uses_the_generated_completion(self):
         # Model kubectl's Zsh output, including its registered function name.

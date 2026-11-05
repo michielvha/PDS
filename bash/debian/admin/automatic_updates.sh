@@ -1,4 +1,6 @@
 #!/bin/bash
+# Zsh uses %x for the defining source file; Bash uses BASH_SOURCE.
+# shellcheck disable=SC2296
 # Select the PDS nightly policy without embedding it in every consumer script.
 update_system_cron_entry() {
     local asset work staged mode uid gid
@@ -11,7 +13,7 @@ update_system_cron_entry() {
         printf '%s\n' 'Install APT and cron before configuring automatic updates.' >&2
         return 1
     fi
-    asset="$(dirname -- "${BASH_SOURCE[0]}")/../../config/pds-update.sh"
+    asset="$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../config/pds-update.sh"
     if [[ ! -r "$asset" ]] || ! bash -n "$asset"; then
         printf '%s\n' 'The PDS updater asset is missing or invalid; use the package or a complete checkout.' >&2
         return 1
@@ -34,7 +36,9 @@ EOF
         if [[ ! -e /etc/crontab.pds-backup ]]; then
             sudo cp -p -- /etc/crontab /etc/crontab.pds-backup || { rm -rf -- "$work"; return 1; }
         fi
-        if ! (set -o pipefail; sudo awk -v legacy="$legacy" '$0 != legacy' /etc/crontab | cat > "$work/crontab"); then
+        # The destination is our unprivileged temporary file.
+        # shellcheck disable=SC2024
+        if ! sudo awk -v legacy="$legacy" '$0 != legacy' /etc/crontab > "$work/crontab"; then
             rm -rf -- "$work"
             return 1
         fi

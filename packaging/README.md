@@ -96,6 +96,10 @@ Without a banner it displays the current kernel; the default information-tool ch
 To use a system-information tool, install it separately and pass its name.
 `PDS_MOTD_BANNER` and `PDS_MOTD_INFO` select those arguments in the example.
 
+VHCO and Stackweaver banners include ASCII approximations of their hexagonal logos above the
+FIGlet Big names. EdgeForge keeps its original artwork. These are plain text assets with no
+formatter or image dependency at runtime.
+
 Choose a bundled text banner with `setup_motd_preset <name> [none|fastfetch|neofetch]`:
 
 ```bash
@@ -294,10 +298,18 @@ SSH service without duplicating the policy implementation.
 These helpers are explicit selections. A standalone installation or custom image recipe may omit
 them or choose another policy. Omitting a call does not remove policy already configured on a host.
 
+The installed library can also be sourced from Zsh with `source /usr/share/pds/init.sh`.
+Loading definitions preserves the caller's options and performs no downloads. Local imports and
+bundled assets resolve relative to their defining file in either shell. The image provisioning
+example and `pds` CLI execute in Bash; this does not promise Zsh compatibility for every historical
+helper's implementation.
+
 ## kubectl and Krew
 
 `install_kubectl 1.37` installs kubectl from the selected Kubernetes minor APT channel and keeps
-Krew in the invoking user's `${KREW_ROOT:-$HOME/.krew}`. It adds the alias, completion and plugin
+Krew in the invoking user's `$HOME/.krew`, or an explicit custom `KREW_ROOT`. An inherited
+`/usr/local/share/pds/krew` selects the per-user default instead. The user's profile records the
+selected root so later shells use it too. It adds the alias, completion and plugin
 path to that user's Bash or Zsh configuration. Open a new shell after installation. The default
 channel is 1.37; choose the channel appropriate for your cluster's supported client version skew.
 

@@ -1,4 +1,6 @@
 #!/bin/bash
+# Zsh uses %x for the defining source file; Bash uses BASH_SOURCE.
+# shellcheck disable=SC2296
 # Zi installation and shell configuration shared by workstations and images.
 
 install_zi() {
@@ -27,45 +29,31 @@ _pds_install_zsh_config() {
     sudo install -m 0644 -- "$source_file" "$destination"
 }
 
-configure_zsh() {
-    local config_dir loader downloaded_assets=""
-    config_dir="$(dirname -- "${BASH_SOURCE[0]}")/../../config"
+configure_zsh() (
+    local config_dir work loader
+    config_dir="$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../config"
     if [[ ! -d "$HOME" ]]; then
         printf '%s\n' 'configure_zsh requires an existing HOME directory.' >&2
         return 1
     fi
-    # The raw workstation bootstrap has no local assets. Fetch them only when
-    # configuration is explicitly requested, using the same ref as its libraries.
+    work="$(mktemp -d)" || return 1
+    trap 'rm -rf -- "$work"' EXIT
+    # Fetch standalone bootstrap assets only at this explicit call.
     if [[ ! -r "$config_dir/zshrc" || ! -r "$config_dir/.p10k.zsh" ]]; then
-        downloaded_assets="$(mktemp -d)" || return
-        config_dir="$downloaded_assets"
-        if ! curl -fsSL "https://raw.githubusercontent.com/michielvha/PDS/${PDS_REF:-main}/bash/config/zshrc" -o "$config_dir/zshrc" ||
-           ! curl -fsSL "https://raw.githubusercontent.com/michielvha/PDS/${PDS_REF:-main}/bash/config/.p10k.zsh" -o "$config_dir/.p10k.zsh"; then
-            rm -rf -- "$downloaded_assets"
-            return 1
-        fi
+        config_dir="$work"
+        curl -fsSL "https://raw.githubusercontent.com/michielvha/PDS/${PDS_REF:-main}/bash/config/zshrc" -o "$config_dir/zshrc" || return 1
+        curl -fsSL "https://raw.githubusercontent.com/michielvha/PDS/${PDS_REF:-main}/bash/config/.p10k.zsh" -o "$config_dir/.p10k.zsh" || return 1
     fi
-
-    loader="$(mktemp)" || { [[ -z "$downloaded_assets" ]] || rm -rf -- "$downloaded_assets"; return 1; }
-    printf '%s\n' 'source /etc/zshrc' > "$loader"
-    sudo install -d /etc/skel || {
-        rm -f -- "$loader"
-        [[ -z "$downloaded_assets" ]] || rm -rf -- "$downloaded_assets"
-        return 1
-    }
-    if ! _pds_install_zsh_config "$config_dir/zshrc" /etc/zshrc ||
-       ! _pds_install_zsh_config "$loader" /etc/skel/.zshrc ||
-       ! _pds_install_zsh_config "$config_dir/.p10k.zsh" /etc/skel/.p10k.zsh ||
-       ! _pds_install_zsh_config "$loader" "$HOME/.zshrc" ||
-       ! _pds_install_zsh_config "$config_dir/.p10k.zsh" "$HOME/.p10k.zsh"; then
-        rm -f -- "$loader"
-        [[ -z "$downloaded_assets" ]] || rm -rf -- "$downloaded_assets"
-        return 1
-    fi
-    rm -f -- "$loader"
-    [[ -z "$downloaded_assets" ]] || rm -rf -- "$downloaded_assets"
+    loader="$work/loader"
+    printf '%s\n' 'source /etc/zshrc' > "$loader" || return 1
+    sudo install -d /etc/skel || return 1
+    _pds_install_zsh_config "$config_dir/zshrc" /etc/zshrc || return 1
+    _pds_install_zsh_config "$loader" /etc/skel/.zshrc || return 1
+    _pds_install_zsh_config "$config_dir/.p10k.zsh" /etc/skel/.p10k.zsh || return 1
+    _pds_install_zsh_config "$loader" "$HOME/.zshrc" || return 1
+    _pds_install_zsh_config "$config_dir/.p10k.zsh" "$HOME/.p10k.zsh" || return 1
     sudo chown "$(id -u):$(id -g)" "$HOME/.zshrc" "$HOME/.p10k.zsh"
-}
+)
 
 # Function: set_default_zsh
 # Description: Sets ZSH as the default shell for the current user

@@ -1,10 +1,12 @@
 #!/bin/bash
-# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/admin/sysadmin.sh) `
+# Zsh uses %x for the defining source file; Bash uses BASH_SOURCE.
+# shellcheck disable=SC2296
+# Local function collection: use the PDS package or a complete checkout.
 
 # Debian/Ubuntu update policy is maintained beside its platform-specific helpers.
 # shellcheck source=../../debian/admin/automatic_updates.sh
-if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/../../debian/admin/automatic_updates.sh" ]]; then
-    source "$(dirname -- "${BASH_SOURCE[0]}")/../../debian/admin/automatic_updates.sh"
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../debian/admin/automatic_updates.sh" ]]; then
+    source "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../../debian/admin/automatic_updates.sh"
 fi
 
 # Function: setup_auto_update_weekly_debian
@@ -80,9 +82,9 @@ full_upgrade() {
 
 # The validated sudoers implementation lives in common/shell.
 # Keep this import local: loading PDS never downloads or installs anything.
-if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/../shell/set_sudo_nopasswd.sh" ]]; then
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../shell/set_sudo_nopasswd.sh" ]]; then
     # shellcheck source=../shell/set_sudo_nopasswd.sh
-    source "$(dirname -- "${BASH_SOURCE[0]}")/../shell/set_sudo_nopasswd.sh"
+    source "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../shell/set_sudo_nopasswd.sh"
 fi
 
 set_sudo_nopasswd_current() {
@@ -125,8 +127,8 @@ set_fractional_scaling() {
 
 # Keep the existing import path while sharing one SSH policy implementation.
 # shellcheck source=ssh_security.sh
-if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/ssh_security.sh" ]]; then
-    source "$(dirname -- "${BASH_SOURCE[0]}")/ssh_security.sh"
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/ssh_security.sh" ]]; then
+    source "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/ssh_security.sh"
 fi
 
 # Function: system_cleanup

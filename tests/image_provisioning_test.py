@@ -55,6 +55,50 @@ class ImageProvisioning(unittest.TestCase):
                        '[[ "$before" == "$-" && "$PDS_LIB_DIR" == /usr/share/pds ]]')
         self.assertEqual(result.returncode, 0)
 
+    def test_zsh_load_keeps_options_and_does_not_run_installers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            calls = directory / 'calls'
+            for name in ('sudo', 'curl', 'wget', 'git', 'apt', 'apt-get', 'dnf', 'systemctl'):
+                command = directory / name
+                command.write_text('#!/bin/sh\nprintf "%s\\n" "$0" >> "$PDS_TEST_CALLS"\nexit 91\n')
+                command.chmod(0o755)
+            script = 'before=$(setopt); source /usr/share/pds/init.sh || exit; '
+            script += '[[ "$before" == "$(setopt)" ]] || exit 92; '
+            script += 'for fn in configure_zsh setup_motd install_kubectl install_azcli '
+            script += 'update_system_cron_entry restricted_ssh_security_profile; '
+            script += 'do (( $+functions[$fn] )) || exit 93; done'
+            result = subprocess.run(['zsh', '-dfc', script], text=True,
+                                    capture_output=True, timeout=20,
+                                    env={**os.environ, 'PATH': f'{tmp}:/usr/bin:/bin',
+                                         'PDS_TEST_CALLS': str(calls)})
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertFalse(calls.exists(), calls.read_text() if calls.exists() else '')
+
+    def test_zsh_reports_broken_and_empty_libraries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for broken in (False, True):
+                if broken:
+                    module = Path(tmp) / 'common/test/broken.sh'
+                    module.parent.mkdir(parents=True)
+                    module.write_text('return 7\n')
+                result = subprocess.run(['zsh', '-dfc', 'source /usr/share/pds/init.sh'],
+                                        text=True, capture_output=True, timeout=20,
+                                        env={**os.environ, 'PDS_LIB_DIR': tmp})
+                self.assertEqual(result.returncode == 0, not broken, result.stderr)
+                if broken:
+                    self.assertIn('Failed to load PDS library file', result.stderr)
+
+    def test_zsh_can_configure_from_packaged_assets_without_downloads(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            script = ('source /usr/share/pds/init.sh || exit; '
+                      'curl() { return 91; }; configure_zsh || exit; '
+                      'cmp "$HOME/.p10k.zsh" /usr/share/pds/config/.p10k.zsh')
+            result = subprocess.run(['zsh', '-dfc', script], text=True,
+                                    capture_output=True, timeout=20,
+                                    env={**os.environ, 'HOME': tmp})
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_zsh_uses_existing_preset_and_zi(self):
         expected = (ROOT / 'bash/config/.p10k.zsh').read_bytes()
         self.assertEqual((LIB / 'config/.p10k.zsh').read_bytes(), expected)
@@ -130,6 +174,24 @@ class ImageProvisioning(unittest.TestCase):
                        'PDS_REF': 'test-ref', 'PDS_TEST_FETCHES': str(calls)})
             self.assertEqual(len(calls.read_text().splitlines()), 2)
             self.assertIn('/test-ref/bash/config/.p10k.zsh', calls.read_text())
+
+    def test_zsh_configuration_cleans_temporary_assets_on_failure(self):
+        for shell_name in ('bash', 'zsh'):
+            with self.subTest(shell=shell_name), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                module = directory / 'zsh.sh'
+                module.write_bytes((LIB / 'common/shell/zsh.sh').read_bytes())
+                work = directory / 'work'
+                work.mkdir()
+                script = 'trap "printf caller-exit" EXIT; '
+                script += f'source {shlex.quote(str(module))}; curl() {{ return 41; }}; '
+                script += 'if configure_zsh; then exit 99; fi; '
+                script += 'test -z "$(ls -A "$TMPDIR")"'
+                result = subprocess.run([shell_name, '-euc', script], text=True,
+                                        capture_output=True, timeout=20,
+                                        env={**os.environ, 'HOME': tmp, 'TMPDIR': str(work)})
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, 'caller-exit')
 
     def test_cli_discovers_the_packaged_helpers(self):
         self.assertIn('install_zi', shell('pds help').stdout)

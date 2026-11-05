@@ -1,12 +1,14 @@
 #!/bin/bash
+# Zsh uses %x for the defining source file; Bash uses BASH_SOURCE.
+# shellcheck disable=SC2296
 # shellcheck disable=SC2016
 # Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/software/install_claude_code.sh) `
 
 # Source utility functions
 # shellcheck source=/dev/null
-if [[ -r "$(dirname -- "${BASH_SOURCE[0]}")/../utils/detect_distro.sh" ]]; then
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../utils/detect_distro.sh" ]]; then
     # shellcheck source=../utils/detect_distro.sh
-    source "$(dirname -- "${BASH_SOURCE[0]}")/../utils/detect_distro.sh"
+    source "$(dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}")/../utils/detect_distro.sh"
 elif ! declare -F get_package_manager >/dev/null; then
     source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/utils/detect_distro.sh)
 fi
