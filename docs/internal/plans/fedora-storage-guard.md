@@ -1,6 +1,7 @@
 ---
-status: planned
-status_description: "Owner accepted the reviewed scope and authorized scoped publication and verified Fedora installation."
+status: in-progress
+status_description: "Claimed for test-first implementation; publication and verified Fedora installation are authorized."
+branch: feat/fedora-storage-guard
 issue: null
 goal: "Reclaim over-budget Go build cache on a repeatable schedule without home snapshots retaining its discarded contents."
 covers:
