@@ -1,6 +1,6 @@
 ---
 status: draft
-status_description: "Owner selected cache exclusion and scheduled native cleanup; independent specification review is pending."
+status_description: "Selected policy has a clean independent spec review; owner acceptance is pending."
 issue: null
 goal: "Reclaim over-budget Go build cache on a repeatable schedule without home snapshots retaining its discarded contents."
 covers:
@@ -422,6 +422,11 @@ None.
 
 | Date | Review | Kind | Commit | Model | Isolation | Outcome |
 | --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-11 | R-1 | spec | `64464540e5510f3bc2d66aba09819842a9f7dc56` | unknown | procedural | No findings; model identity not attested |
+
+### R-1
+
+NO FINDINGS
 
 ## Sources
 
