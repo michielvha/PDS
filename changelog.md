@@ -4,7 +4,7 @@
 
 ### Documentation
 
-- Record the Fedora Btrfs allocation failure and storage-maintenance proposal in `docs/internal/plans/fedora-storage-guard.md`.
+- Record the verified Fedora Btrfs recovery, approved snapshot/cache cleanup and proposed scheduling policy in `docs/internal/plans/fedora-storage-guard.md`. Automation is not installed.
 - Refresh the root README with platform coverage, usage examples, and light and dark project banners. Record backlog dispositions and deferred ideas in `docs/internal/analysis/readme-refresh.md`.
 - Move the Debian workstation bootstrap reference to `docs/workstation-bootstrap.md` and describe its remaining validation gaps.
 - Add pinned agent instructions for vh-adlc, with Copilot and Claude entry points. Preserve platform and changelog requirements from the earlier instructions.
