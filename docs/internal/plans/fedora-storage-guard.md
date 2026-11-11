@@ -1,6 +1,6 @@
 ---
-status: draft
-status_description: "Selected policy has a clean independent spec review; owner acceptance is pending."
+status: planned
+status_description: "Owner accepted the reviewed scope and authorized scoped publication and verified Fedora installation."
 issue: null
 goal: "Reclaim over-budget Go build cache on a repeatable schedule without home snapshots retaining its discarded contents."
 covers:
@@ -39,8 +39,12 @@ separate user timer checks the Go build-cache budget every four hours.
 Filesystem monitoring never deletes files or starts a balance.
 
 On 2026-11-11 the owner selected this policy, including Go cache exclusion from
-future home backups and the resulting cold-cache rebuild trade-off. This is
-the selected design, not an installed service or final specification acceptance.
+future home backups and the resulting cold-cache rebuild trade-off, then
+accepted the independently reviewed specification. The owner authorized the
+required documentation/claim publication, a verified implementation PR and
+installation for user `m` on `fedora-43` after disposable verification. This
+grants no merge, release, disk formatting, extra snapshot deletion or automatic
+balancing. Implementation and installation have not yet started.
 
 An explicitly authorized manual recovery run may relocate a limited number of data block groups
 from the constrained device. It preserves RAID1 metadata and takes before/after
@@ -423,6 +427,7 @@ None.
 | Date | Review | Kind | Commit | Model | Isolation | Outcome |
 | --- | --- | --- | --- | --- | --- | --- |
 | 2026-11-11 | R-1 | spec | `64464540e5510f3bc2d66aba09819842a9f7dc56` | unknown | procedural | No findings; model identity not attested |
+| 2026-11-11 | R-1 | spec | `64464540e5510f3bc2d66aba09819842a9f7dc56` | n/a | n/a | accepted by owner |
 
 ### R-1
 
