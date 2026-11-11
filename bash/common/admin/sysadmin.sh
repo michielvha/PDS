@@ -1,13 +1,13 @@
 #!/bin/bash
-# Source: ` source <(curl -fsSL https://raw.githubusercontent.com/michielvha/PDS/main/bash/common/admin/sysadmin.sh) `
+# Zsh uses %x for the defining source file; Bash uses BASH_SOURCE.
+# shellcheck disable=SC2296
+# Local function collection: use the PDS package or a complete checkout.
 
-# Function: update_system_cron_entry
-# Description: Create system-wide Crontab to auto update system every night at midnight.
-update_system_cron_entry() {
-    # first check with grep to see if entry doesn't already exist. We use logical || (or) operator to only append if the grep command returns false(1). if it returns true(0) it means the entry already exists and no action will be taken.
-    sudo grep -q "apt update -y && apt upgrade -y" /etc/crontab || \
-    echo "0 0 * * * root apt update -y && apt upgrade -y" | sudo tee -a /etc/crontab > /dev/null
-}
+# Debian/Ubuntu update policy is maintained beside its platform-specific helpers.
+# shellcheck source=../../debian/admin/automatic_updates.sh
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../../debian/admin/automatic_updates.sh" ]]; then
+    source "$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../../debian/admin/automatic_updates.sh"
+fi
 
 # Function: setup_auto_update_weekly_debian
 # Description: Configure system to auto-update weekly using /etc/cron.weekly
@@ -80,34 +80,15 @@ full_upgrade() {
     sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y # && sudo apt dist-upgrade -y
 }
 
-# Function: set_sudo_nopasswd_current
-# Description: Configure passwordless sudo for the current user
+# The validated sudoers implementation lives in common/shell.
+# Keep this import local: loading PDS never downloads or installs anything.
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../shell/set_sudo_nopasswd.sh" ]]; then
+    # shellcheck source=../shell/set_sudo_nopasswd.sh
+    source "$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/../shell/set_sudo_nopasswd.sh"
+fi
+
 set_sudo_nopasswd_current() {
-    # first check with grep to see if entry doesn't already exist. We use logical || (or) operator to only append if the grep command returns false(1). if it returns true(0) it means the entry already exists and no action will be taken.
-    sudo grep -q "^$(whoami) ALL=(ALL) NOPASSWD:ALL" /etc/sudoers || echo "$(whoami) ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers > /dev/null
-}
-
-# Function: set_sudo_nopasswd
-# Description: Configure passwordless sudo for any specified user
-# Usage: set_sudo_nopasswd [username]
-set_sudo_nopasswd() {
-    local user="${1:-$USER}"
-    local sudoers_file="/etc/sudoers.d/$user"
-
-    if [[ -z "$user" ]]; then
-        echo "Usage: set_sudo_nopasswd [username]"
-        return 1
-    fi
-
-    if ! id "$user" &>/dev/null; then
-        echo "User '$user' does not exist."
-        return 2
-    fi
-
-    sudo grep -q "$user ALL=(ALL) NOPASSWD:ALL" /etc/sudoers || echo "$user ALL=(ALL) NOPASSWD:ALL" | sudo tee "$sudoers_file" > /dev/null
-
-    sudo chmod 0440 "$sudoers_file"
-    echo "Passwordless sudo enabled for $user."
+    set_sudo_nopasswd "$(id -un)"
 }
 
 # Function: auto_pull_cron_entry
@@ -144,25 +125,11 @@ set_fractional_scaling() {
 }
 
 
-# Function: restricted_ssh_security_profile
-# Description: Enable restricted security profile for SSH
-# NIS2 Compliance: Implements cybersecurity risk management measures as required by
-#                  EU Directive 2022/2555 (NIS2), specifically:
-#                  - Article 21(2)(g): Basic cyber hygiene practices
-#                  - Article 21(2)(i): Access control policies and human resources security
-# Note: For full NIS2 compliance, consider implementing MFA on top of these settings
-# References: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022L2555
-function restricted_ssh_security_profile() {
-  # Disable password authentication and root login, enable public key authentication.
-  # These configurations reduce attack surface and implement stronger authentication
-  # mechanisms aligned with NIS2 cybersecurity requirements for critical infrastructure.
-  sudo sed -i -E '
-      s/^#?PasswordAuthentication yes/PasswordAuthentication no/
-      s/^#?PermitRootLogin prohibit-password/PermitRootLogin no/
-      s/^#?PubkeyAuthentication yes/PubkeyAuthentication yes/
-  ' /etc/ssh/sshd_config
-  echo "🔒 Restricted SSH security profile will be applied on next login."
-}
+# Keep the existing import path while sharing one SSH policy implementation.
+# shellcheck source=ssh_security.sh
+if [[ -r "$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/ssh_security.sh" ]]; then
+    source "$(dirname -- "${BASH_SOURCE[0]:-${ZSH_VERSION:+${(%):-%x}}}")/ssh_security.sh"
+fi
 
 # Function: system_cleanup
 # Description: Safe cross-platform system cleanup supporting multiple package managers
@@ -324,7 +291,13 @@ system_cleanup() {
 
             # Remove unused packages
             echo "  - Removing orphaned packages..."
-            sudo pacman -Rns $(pacman -Qtdq) --noconfirm 2>/dev/null || echo "  No orphaned packages found"
+            local -a orphaned_packages=()
+            mapfile -t orphaned_packages < <(pacman -Qtdq)
+            if (( ${#orphaned_packages[@]} )); then
+                sudo pacman -Rns "${orphaned_packages[@]}" --noconfirm
+            else
+                echo "  No orphaned packages found"
+            fi
 
             # Clean package cache
             if [[ "$aggressive" == true ]]; then

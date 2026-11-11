@@ -1,0 +1,4 @@
+**
+!tests/
+!tests/Dockerfile.image-provisioning
+!tests/Dockerfile.image-provisioning.dockerignore

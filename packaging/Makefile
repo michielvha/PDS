@@ -1,4 +1,4 @@
-.PHONY: build clean install test help
+.PHONY: build clean install test test-image-provisioning lint-image-provisioning help
 
 # Package configuration
 PACKAGE_NAME := pds
@@ -64,16 +64,31 @@ test: build ## Test the package installation in a Docker container
 		echo 'Package test completed successfully' \
 	"
 
+test-image-provisioning: build ## Test Zi, MOTD and unattended loading in disposable Ubuntu
+	docker build -f ../tests/Dockerfile.image-provisioning -t pds-image-provisioning-test:local ..
+	@set -eu; set -- $(DIST_DIR)/$(PACKAGE_NAME)_*_$(ARCH).deb; \
+	if [ "$$#" -ne 1 ] || [ ! -f "$$1" ]; then \
+		printf '%s\n' 'Expected exactly one built PDS package.' >&2; exit 1; \
+	fi; \
+	docker run --rm --network none -v "$(abspath ..):/work:ro" \
+		-e "PDS_TEST_PACKAGE=/work/packaging/$$1" pds-image-provisioning-test:local
+
+lint-image-provisioning: ## Fail on warnings in the shared image-provisioning path
+	shellcheck -S warning init.sh bin/pds profile.d/pds.sh scripts/*.sh \
+		../tests/check-package.sh ../bash/common/admin/sysadmin.sh \
+		../bash/common/admin/ssh_security.sh ../bash/common/shell/zsh.sh \
+		../bash/common/shell/set_sudo_nopasswd.sh ../bash/debian/admin/setup_motd.sh \
+		../bash/debian/admin/automatic_updates.sh ../bash/config/pds-update.sh \
+		../bash/debian/software/install_gh.sh ../bash/debian/software/install_kubectl.sh
+
 lint: ## Run shellcheck on all scripts
 	@echo "Running shellcheck on scripts..."
 	@find ../bash -name "*.sh" -exec shellcheck {} \; || true
 	@shellcheck init.sh bin/pds profile.d/pds.sh scripts/*.sh
 	@echo "✅ Linting completed"
 
-validate: ## Validate package configuration
-	@echo "Validating package configuration..."
-	@nfpm validate nfpm.yaml
-	@echo "✅ Package configuration is valid"
+validate: build ## Validate configuration by building the Debian package
+	@echo "✅ nFPM accepted the configuration and built the package."
 
 info: ## Show package information
 	@echo "Package Information:"

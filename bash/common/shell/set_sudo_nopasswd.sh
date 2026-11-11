@@ -5,7 +5,7 @@
 # Description: Setup passwordless sudo for a user
 # Usage: set_sudo_nopasswd <username>
 set_sudo_nopasswd() {
-    local user="$1"
+    local user="${1:-${USER:-}}"
     local sudoers_file="/etc/sudoers.d/$user"
 
     if [[ -z "$user" ]]; then
