@@ -416,7 +416,8 @@ run destructive verification against the real host.
 
 ## Tasks
 
-None yet; write one-commit tasks after the specification is reviewed and accepted.
+- [ ] T1 `tests/test_storage_maintenance.py` - add command-fixture safety, monitoring and cleanup tests plus opt-in disposable Fedora/Btrfs scenarios; execute the unit checks and observe failure because the maintenance script does not exist (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08).
+- [ ] T2 `bash/fedora/storage_maintenance.sh`, `docs/fedora-storage-guard.md`, `bash/readme.md`, `changelog.md` - implement the accepted preparation, cleanup, monitoring and native-unit setup; the T1 unit tests, Bash syntax, focused ShellCheck and opt-in Fedora/Btrfs scenarios pass, including native Go builds and calendar/reboot/removal checks (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08).
 
 ## Open Questions
 
