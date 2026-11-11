@@ -1,3 +1,6 @@
+Read [AGENTS.md](../AGENTS.md) for the pinned conventions and lifecycle entry point.
+The existing repository-specific rules below continue to apply.
+
 # Copilot Instructions for PDS (Portable Deploy Suite)
 
 ## Project Overview

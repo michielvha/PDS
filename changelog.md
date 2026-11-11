@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-11
+
+### Added
+
+- Pinned vh-adlc repository entry points, preserving the existing local instructions.
+- Draft Fedora storage-guard specification with live Btrfs measurements, recovery limits and proposed repeatable monitoring. No cleanup script, timer or live repair has been installed.
+
 ## 2026-06-17
 
 ### Added
