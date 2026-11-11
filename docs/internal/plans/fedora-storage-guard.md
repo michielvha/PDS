@@ -417,7 +417,8 @@ run destructive verification against the real host.
 
 ## Tasks
 
-- [ ] T1 `tests/test_storage_maintenance.py` - add command-fixture safety, monitoring and cleanup tests plus opt-in disposable Fedora/Btrfs scenarios; execute the unit checks and observe failure because the maintenance script does not exist (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08).
+- [x] T1 `tests/test_storage_maintenance.py`, `changelog.md` - add command-fixture safety, monitoring and cleanup tests plus opt-in disposable Fedora/Btrfs scenarios; execute the unit checks and observe failure because the maintenance script does not exist (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08).
+      Evidence: The focused unittest run executed 14 tests with 20 failing assertions/subcases and one opt-in skip, all against the missing script. The opt-in Fedora fixture booted with systemd and failed at copying the missing script; its owned container was removed. Pylance reported no Python syntax errors. Manual documentation-impact review found no implemented public behavior yet; the changelog records the new tests.
 - [ ] T2 `bash/fedora/storage_maintenance.sh`, `docs/fedora-storage-guard.md`, `bash/readme.md`, `changelog.md` - implement the accepted preparation, cleanup, monitoring and native-unit setup; the T1 unit tests, Bash syntax, focused ShellCheck and opt-in Fedora/Btrfs scenarios pass, including native Go builds and calendar/reboot/removal checks (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08).
 
 ## Open Questions
