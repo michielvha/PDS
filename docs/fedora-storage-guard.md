@@ -95,8 +95,11 @@ when no desktop session is active.
 
 Preparation can also end with a signal exit code when interrupted. Do not treat
 that as success. Cleanup never uses `go clean -modcache`; command-local
-`GOCACHEPROG` and toolchain settings keep the operation on the selected local
-cache without reconfiguring normal Go use.
+`GOENV=off`, empty `GOFLAGS`/`GOCACHEPROG` and a local toolchain keep the operation
+on the selected cache. This prevents ambient or persisted flags from adding
+other cleanup targets. Preparation still reads the user's configured `GOCACHE`
+before migration; the configuration file and normal Go preferences are not
+modified.
 
 ## Remove the jobs
 
@@ -130,6 +133,9 @@ ownership/mode preservation, physical reclamation while a home snapshot remains,
 reinstallation, conflicting-file refusal, read-only service execution, missed
 calendar catch-up across a systemd/container restart and unrelated-unit
 preservation on uninstall. It does not reboot the real Fedora host.
+Additional native regressions configure persisted `GOFLAGS=-modcache` and an
+inherited service environment, then verify preparation, direct cleanup and the
+installed service leave module data and the Go settings file intact.
 
 The [feature record](internal/plans/fedora-storage-guard.md) contains the original
 ENOSPC measurements, approved recovery operations and acceptance criteria.

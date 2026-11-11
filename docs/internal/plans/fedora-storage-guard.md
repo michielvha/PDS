@@ -1,6 +1,6 @@
 ---
 status: in-progress
-status_description: "Independent review found an inherited-Go-flags module-cache deletion bug; fix and regression verification are required before installation."
+status_description: "R-2 F-01 is fixed with direct and installed-service regressions; independent re-review is required before installation."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Reclaim over-budget Go build cache on a repeatable schedule without home snapshots retaining its discarded contents."
@@ -210,7 +210,7 @@ operation no longer crashes. A new interactive Copilot session was not started.
 ### Implementation verification
 
 The script, guide and tests are implemented on `feat/fedora-storage-guard`.
-The focused suite executes 19 checks, including a real Fedora/systemd container
+The focused suite includes a real Fedora/systemd container
 with owned two-device Btrfs loopback storage. It verifies cache exclusion and
 physical reclamation, interrupted preparation, UID/GID/mode preservation,
 fresh-cache initialization, native units, restrictive-umask installation,
@@ -222,6 +222,15 @@ or its enforcing SELinux policy. Target-host installation and service checks
 remain separate authorized steps. The latest read-only target preflight found
 the expected `/home/m/.cache/go-build`, stable Homebrew Go executable, no active
 Go build tools, an active user bus and enforcing SELinux.
+
+R-2 found that the 19-check baseline did not constrain inherited Go flags.
+Native probes reproduced module deletion with persistent `GOFLAGS=-modcache`.
+T3 adds ambient/persisted-flag regressions and disables Go's persistent env
+configuration only for native cleanup children. Preparation's configuration
+query still reads the existing cache path. Module markers and the user's Go
+settings file now survive direct preparation, direct cleanup and installed
+service execution in disposable Fedora. The blocking review remains history
+until an independent re-review verifies the new commit.
 
 Python test execution validates parsing and runtime behavior. The initial
 Pylance syntax check passed; a later editor syntax-check request timed out.
@@ -450,6 +459,8 @@ run destructive verification against the real host.
       Evidence: The focused unittest run executed 14 tests with 20 failing assertions/subcases and one opt-in skip, all against the missing script. The opt-in Fedora fixture booted with systemd and failed at copying the missing script; its owned container was removed. Pylance reported no Python syntax errors. Manual documentation-impact review found no implemented public behavior yet; the changelog records the new tests.
 - [x] T2 `bash/fedora/storage_maintenance.sh`, `tests/test_storage_maintenance.py`, `docs/fedora-storage-guard.md`, `bash/readme.md`, `changelog.md` - implement the accepted preparation, cleanup, monitoring and native-unit setup; the T1 unit tests, Bash syntax, focused ShellCheck and opt-in Fedora/Btrfs scenarios pass, including native Go builds and calendar/reboot/removal checks (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08).
       Evidence: The full focused unittest run with `PDS_STORAGE_INTEGRATION=1` passed 19 tests. Native red/green iterations caught privileged subvolume detection, a read-only user-service sandbox, restrictive-umask staging and systemd argument expansion. Bash syntax, focused ShellCheck and the repository's existing bootstrap/CLI syntax and Makefile-help checks pass. Manual documentation-impact review matched all script modes, schedules, exit codes and preservation boundaries to the user guide and Bash index. Criteria await the independent committed-state review.
+- [x] T3 `bash/fedora/storage_maintenance.sh`, `tests/test_storage_maintenance.py`, `docs/fedora-storage-guard.md`, `changelog.md` - reproduce R-2 F-01 for ambient and persisted Go flags, then isolate native cleanup from those flags without changing user configuration; direct preparation, direct cleanup and the installed user service preserve module markers and the full focused/native suite passes (AC-03, AC-08).
+      Evidence: Both command fixtures and the native persisted-flag case first reproduced module deletion. After command-local env isolation, all 22 focused/native tests passed. Native preparation, direct cleanup and an installed user service preserved module markers and the Go settings-file hash with `GOFLAGS=-modcache` configured. Bash syntax and focused ShellCheck pass. Manual documentation-impact review updated the guide's isolation contract; R-2 remains unchanged pending re-review.
 
 ## Open Questions
 

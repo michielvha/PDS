@@ -45,7 +45,9 @@ name = Path(sys.argv[0]).name
 args = sys.argv[1:]
 with Path(os.environ['PDS_TEST_LOG']).open('a') as log:
     log.write(json.dumps({'name': name, 'args': args,
-                          'cache': os.environ.get('GOCACHE')}) + '\n')
+                          'cache': os.environ.get('GOCACHE'),
+                          'goflags': os.environ.get('GOFLAGS'),
+                          'goenv': os.environ.get('GOENV')}) + '\n')
 home = Path(state['home'])
 cache = home / '.cache/go-build'
 if name == 'uname':
@@ -119,6 +121,10 @@ elif name == 'go':
             print('injected Go cleanup failure', file=sys.stderr)
             sys.exit(1)
         assert os.environ.get('GOCACHE') == str(cache)
+        flags = os.environ.get('GOFLAGS') or (
+            state.get('persistent_flags', '') if os.environ.get('GOENV') != 'off' else '')
+        if '-modcache' in flags.split() and (home / 'go/pkg/mod').exists():
+            shutil.rmtree(home / 'go/pkg/mod')
         for path in cache.iterdir():
             if path.is_dir():
                 shutil.rmtree(path)
@@ -349,6 +355,21 @@ class StorageUnitTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn('injected Go cleanup failure', result.stderr)
 
+    def test_ac03_ambient_flags_cannot_add_module_cleanup(self):
+        self.environment['GOFLAGS'] = '-modcache'
+        result = self.run_script('cleanup-go', cache_bytes=21 * GIB)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(self.module.exists(), 'ambient GOFLAGS deleted the module cache')
+        self.assertEqual(self.module.read_text(), 'module data must remain')
+
+    def test_ac03_persistent_flags_cannot_add_module_cleanup(self):
+        self.environment.pop('GOFLAGS', None)
+        result = self.run_script('cleanup-go', cache_bytes=21 * GIB,
+                                 persistent_flags='-modcache')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(self.module.exists(), 'persistent GOFLAGS deleted the module cache')
+        self.assertEqual(self.module.read_text(), 'module data must remain')
+
     def test_invalid_mode_and_numeric_output_fail_explicitly(self):
         result = self.run_script('not-a-mode')
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
@@ -418,6 +439,7 @@ class StorageFedoraIntegration(unittest.TestCase):
             cls.docker('build', '-t', cls.image, '-', input=fixture, timeout=600)
         cls.loops = []
         cls.loop_files = []
+        cls.users = [1000]
         cls.addClassCleanup(cls.cleanup_fixture)
         cls.docker('run', '-d', '--name', cls.container, '--privileged',
                    '--cgroupns=private', '--tmpfs', '/run', '--tmpfs', '/run/lock',
@@ -459,9 +481,9 @@ class StorageFedoraIntegration(unittest.TestCase):
     def cleanup_fixture(cls):
         if not hasattr(cls, 'container'):
             return
-        cleanup = cls.execute(
-            'systemctl stop user@1000.service || true; '
-            'umount /test-btrfs', check=False)
+        managers = ' '.join(f'user@{uid}.service' for uid in cls.users)
+        cleanup = cls.execute(f'systemctl stop {managers} || true; '
+                              'umount /test-btrfs', check=False)
         for image in cls.loop_files:
             associated = cls.execute('losetup -j ' + shlex.quote(image))
             for line in associated.stdout.splitlines():
@@ -658,6 +680,52 @@ systemctl enable pds-test-loop.service
         self.assertEqual(self.execute('sha256sum /etc/btrbk/btrbk.conf').stdout, before_backup)
         self.assertEqual(self.execute(f'sha256sum {home}/project/main.go').stdout, before_source)
         self.assertEqual(self.execute(self.cli_command).stdout, self.cli_before)
+
+    def test_ac03_ac08_native_go_flags_preserve_modules(self):
+        script = '/work/bash/fedora/storage_maintenance.sh'
+        home = '/test-btrfs/home/flags-user'
+        cache = home + '/.cache/go-build'
+        marker = home + '/go/pkg/mod/review-module/keep'
+        self.execute(
+            f'useradd -u 1001 -d {home} -M flags-user; mkdir -p {home}; '
+            f'chown 1001:1001 {home}')
+        self.users.append(1001)
+
+        def as_user(command, **kwargs):
+            return self.execute(
+                f'runuser -u flags-user -- env HOME={home} '
+                'XDG_RUNTIME_DIR=/run/user/1001 '
+                'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus '
+                'bash -euc ' + shlex.quote(command), **kwargs)
+
+        as_user(
+            'mkdir -p ~/.cache/go-build ~/go/pkg/mod/review-module; '
+            'printf preserve-module >~/go/pkg/mod/review-module/keep; '
+            'go env -w GOFLAGS=-modcache')
+        settings = as_user('sha256sum ~/.config/go/env').stdout
+        as_user(f'bash {script} prepare-go-cache --user flags-user --go /usr/bin/go')
+        as_user(f'test "$(cat {marker})" = preserve-module')
+        as_user(
+            'mkdir -p ~/.cache/go-build/aa; '
+            'truncate -s 21G ~/.cache/go-build/aa/'
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d')
+        as_user(f'GOFLAGS=-modcache bash {script} cleanup-go --user flags-user --go /usr/bin/go')
+        as_user(f'test "$(cat {marker})" = preserve-module')
+        self.execute('loginctl enable-linger flags-user; systemctl start user@1001.service')
+        self.wait_for('test -S /run/user/1001/bus')
+        as_user(
+            'systemctl --user set-environment GOFLAGS=-modcache; '
+            'mkdir -p ~/.cache/go-build/aa; '
+            'truncate -s 21G ~/.cache/go-build/aa/'
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d')
+        self.execute(
+            f'bash {script} install --user flags-user --mount /test-btrfs --go /usr/bin/go')
+        as_user('systemctl --user start pds-go-cache-clean.service')
+        as_user(f'test "$(cat {marker})" = preserve-module; '
+                'test ! -f ~/.cache/go-build/aa/'
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d')
+        self.assertEqual(as_user('sha256sum ~/.config/go/env').stdout, settings)
+        self.execute(f'bash {script} uninstall --user flags-user --mount /test-btrfs')
 
 
 if __name__ == '__main__':

@@ -250,6 +250,12 @@ _pds_storage_busy() {
     fi
 }
 
+_pds_storage_native_clean() {
+    # Empty flags alone can fall back to settings in Go's persistent env file.
+    GOENV=off GOFLAGS='' GOCACHE="$storage_cache" GOCACHEPROG='' \
+        GOTOOLCHAIN=local "$storage_go" clean -cache
+}
+
 _pds_storage_cleanup_go() {
     local bytes remaining
     _pds_storage_require findmnt du stat pgrep find || return 2
@@ -262,7 +268,7 @@ _pds_storage_cleanup_go() {
     fi
     _pds_storage_busy || return $?
     _pds_storage_cache_contents || return 2
-    if ! GOCACHE="$storage_cache" GOCACHEPROG='' GOTOOLCHAIN=local "$storage_go" clean -cache; then
+    if ! _pds_storage_native_clean; then
         _pds_storage_error 'Native Go cache cleanup failed.'
         return 2
     fi
@@ -322,7 +328,7 @@ _pds_storage_prepare() (
     _pds_storage_require btrfs findmnt stat find pgrep mv || return 2
     _pds_storage_go || return 2
     _pds_storage_busy || return $?
-    configured_cache=$(GOCACHEPROG='' GOTOOLCHAIN=local "$storage_go" env GOCACHE) || {
+    configured_cache=$(GOFLAGS=' ' GOCACHEPROG='' GOTOOLCHAIN=local "$storage_go" env GOCACHE) || {
         _pds_storage_error 'Cannot verify the existing Go cache configuration.'
         return 2
     }
@@ -343,7 +349,7 @@ _pds_storage_prepare() (
         return 0
     fi
     _pds_storage_cache_contents || return 2
-    if ! GOCACHE="$storage_cache" GOCACHEPROG='' GOTOOLCHAIN=local "$storage_go" clean -cache; then
+    if ! _pds_storage_native_clean; then
         _pds_storage_error 'Native cache cleanup failed before preparation.'
         return 2
     fi
