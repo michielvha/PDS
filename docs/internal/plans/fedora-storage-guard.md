@@ -1,6 +1,6 @@
 ---
 status: draft
-status_description: "Diagnosis measured; policy, live recovery and implementation await owner approval."
+status_description: "Cleanup blocked by metadata exhaustion; specific snapshot/disk recovery permission is missing. Scheduling remains a draft."
 issue: null
 goal: "Restore allocatable Btrfs metadata headroom through bounded maintenance and detect its exhaustion before applications fail."
 covers:
@@ -42,18 +42,33 @@ measurements. Recovery is an attempt, not a guarantee: balance can itself fail
 with ENOSPC or fail to produce the requested reserve. Both outcomes must be
 reported as unresolved. Proposed limits are one block group per invocation and
 eight invocations per recovery run, with an early stop when the reserve is met.
-These limits bound selected work, not elapsed time or bytes moved.
+These limits bound selected work, not elapsed time or bytes moved. They do not
+solve a filesystem that lacks the metadata workspace needed to start balance.
 
 Age-only cleanup is inadequate here. All 202,526 measured Go cache objects,
 totalling 38.45 GiB, are newer than seven days. Home snapshots also include the
-cache and may retain deleted extents. Automatic cache deletion and changing
-snapshot policy are excluded from this feature.
+cache and retain deleted extents. The scheduling proposal therefore requires
+separating disposable cache subvolumes from home snapshots before enabling
+budget-triggered Go cleanup. It does not automatically delete snapshots.
 
-Only read-only host measurements have run. The script, timer, repair path and
-their tests do not exist yet. The policy choices below remain unanswered because
-the owner was unavailable. Accepting a reviewed specification would authorize
-its scoped implementation; pushing, installing on Fedora and repairing the live
-filesystem require their own authorization.
+The owner subsequently requested PDS synchronization, repository changes and live
+filesystem repair. Upstream PDS was already onboarded at docs revision
+`0e52f51f01b84eda75a976763c42d8ec0a07b544`. Its instructions and pin are retained
+unchanged after synchronization. The earlier local onboarding additions were
+superseded by the existing upstream versions.
+
+The bounded empty-data and occupied-data balance attempts both failed with
+ENOSPC. The remaining metadata space is held almost entirely by Btrfs's global
+reserve. Recovery is now removing only a verified batch of rebuildable Go cache
+objects created after the latest home snapshot, before retrying allocation
+maintenance. This emergency action is not an automatic deletion policy. No
+browser, profile, source tree, snapshot or volume is selected.
+
+The proposed monitoring and cleanup timers do not exist yet. The owner asked to
+clean caches first and prepare the scheduling plan afterward. Cleanup has not
+restored allocation headroom. Removing a local snapshot or using another disk
+requires a specific decision; neither has been authorized. Nothing has been
+pushed to GitHub.
 
 ### Measured evidence
 
@@ -88,6 +103,48 @@ The measured allocation layout explains why aggregate free space can coexist
 with metadata allocation pressure. No post-repair write test has yet confirmed
 that relieving this pressure resolves the reported Copilot failure.
 
+### Authorized recovery observations
+
+- At 10:37 CET the owner requested synchronization and live repair.
+- Both `btrfs balance start -dusage=0,devid=1,limit=1 /` and
+  `btrfs balance start -ddevid=1,limit=1 /` returned ENOSPC. A subsequent status
+  check found no balance running or paused. Metadata remained RAID1.
+- Sysfs reported `metadata/bytes_may_use` of 530,939,904 bytes and
+  `metadata/bytes_pinned` of 4,390,912 bytes. Metadata used was 39,175,995,392
+  bytes of 39,711,670,272 bytes allocated. The global reserve was 536,870,912
+  bytes, nearly all reserved.
+- GNU `stat` birth times identified 12,526 Go objects totalling 0.81 GiB created
+  after 00:01, after the latest home snapshot. No Go build processes were
+  observed. The deletion scope requires owned, single-link, regular files at
+  depth two with Go's hexadecimal object names.
+- GNU `find -newerBt` is unsupported on this host and failed before deleting
+  anything. The recovery uses verified GNU `stat` birth times instead.
+- The scoped deletion also blocked in `btrfs_reserve_metadata_bytes`. That
+  pipeline was cancelled; its final removal count was not available.
+- The earlier session's browser-cache removal was separately observed blocked
+  in the kernel. It was not terminated by this session.
+- A further attempt to reclaim one completely empty metadata block group,
+  `btrfs balance start -musage=0,limit=1 /`, also failed with ENOSPC. No balance
+  remained active.
+- Go works with a temporary RAM-backed `XDG_CONFIG_HOME`:
+  `GOTOOLCHAIN=local go version` returned `go1.27.4 linux/amd64`. This avoids the
+  failing telemetry counter without changing persistent Go configuration.
+  The subsequent bounded `go clean -cache` did not yield a verified successful
+  completion and its local SSH command was stopped.
+- At 14:39 CET, `df` still reported 567 GiB used and 132 GiB available. Metadata
+  utilization was 98.67%; device 1 still had only 1 MiB unallocated.
+- A later bounded cache-size check still found 40 GiB in `go-build` and 4.5 GiB
+  in `ms-playwright-mcp`. `ms-playwright` no longer existed. Browser-cache
+  deletion has not restored usable allocation headroom; retained snapshots
+  still reference cache data. No temporary `pds-go-clean.*` directory remained
+  in `/dev/shm`.
+- The local November 9 home snapshot's UUID was compared with the backup's
+  received UUID and matched. Its backup is read-only. Specific approval to
+  delete that local copy was requested but not received.
+- Read-only `wipefs --no-act /dev/sdb` found no signatures on a 223.6 GiB SSD.
+  No disk was added, formatted or erased. Missing signatures are not approval
+  to use that disk.
+
 ### Repository evidence
 
 - [The CLI](../../../packaging/bin/pds) provides explicit command dispatch and a
@@ -106,12 +163,13 @@ that relieving this pressure resolves the reported Copilot failure.
 ## Scope
 
 Include a sourceable Bash library that also runs directly from a checkout,
-PDS CLI dispatch, scheduled read-only monitoring, an opt-in bounded Btrfs repair,
-tests and installation/removal documentation.
+PDS CLI dispatch, scheduled monitoring, an opt-in bounded Btrfs repair,
+budget-triggered native Go cache cleanup, a separately approved cache-subvolume
+migration, tests and installation/removal documentation.
 
-Exclude automatic cache deletion, browser installation removal, source/worktree
-deletion, Go telemetry repair, cache migration, `/etc/fstab` changes, snapshot
-deletion or retention changes, container/volume pruning, defragmentation,
+Exclude automatic browser installation removal, source/worktree deletion,
+persistent Go telemetry changes, relocation onto another disk, `/etc/fstab`
+changes, automatic snapshot deletion or retention changes, container/volume pruning, defragmentation,
 filesystem resizing and profile conversion. Do not promise that finite storage
 can never fill. Monitoring requires an operator to respond to unresolved alerts.
 
@@ -127,6 +185,8 @@ All interfaces below are proposed, not installed.
 
 - `pds storage report --mount / --user m`: read-only measurements and status.
 - `pds storage repair --mount / --apply`: bounded data-only recovery.
+- `pds storage cleanup --user m --apply`: native Go build-cache cleanup after
+  verifying that its dedicated cache subvolume is excluded from home snapshots.
 - `pds storage install --mount / --user m`: install the monitor and enable its
   system timer, requiring root and separate deployment authorization.
 - `pds storage uninstall`: disable and remove only PDS-owned monitor files.
@@ -146,6 +206,42 @@ of the named Playwright/Puppeteer installation caches. Missing optional caches
 are reported as absent; inaccessible caches are errors, never zero-sized.
 Metadata utilization is shown with per-device headroom so a high percentage
 alone is not misrepresented as proof of ENOSPC.
+
+### Cache cleanup and scheduling proposal
+
+First recover metadata workspace. Do not start migration or install scheduled
+cleanup while namespace operations are blocked. Removing cached files cannot
+release extents still referenced by home snapshots, and no cron expression
+fixes that retention problem.
+
+After recovery and a quiescent migration window, place only the verified Go
+build cache and browser-installation caches in dedicated nested Btrfs
+subvolumes. Keep their existing application paths and ownership. Do not migrate
+the whole cache tree: it also contains working directories and evidence.
+Verify that btrbk still snapshots only root and home and does not add these
+nested subvolumes. Btrfs snapshots are nonrecursive, so future home snapshots
+will omit their contents. Existing snapshots retain their historical cache
+extents until their approved retention or separately approved deletion.
+
+Propose a per-user cleanup timer every four hours, offset from the filesystem
+check, using `OnCalendar` and `Persistent=true`. Once the Go build cache exceeds
+20 GiB, run `go clean -cache` against its explicitly resolved path. Never use
+`go clean -modcache`, delete source trees or pass wildcard cache roots. Skip a
+busy build window with an explicit warning and retry on the next scheduled run.
+This trades cache hits for reclaimed space. The budget triggers cleanup and
+does not impose a storage quota.
+
+Browser cleanup needs a verified upstream unused-revision mechanism for each
+installed client. Until that is established, audit their 15 GiB combined budget
+and report it; do not schedule wholesale Playwright or Puppeteer removal.
+Keep profiles, authenticated sessions and currently required browser versions.
+
+The root timer separately checks every participating device's allocation
+headroom. Keep the 8 GiB reserve and bounded repair design below. Whether it may
+run that repair automatically before the reserve is exhausted is an explicit
+owner choice. Cache cleanup alone cannot protect RAID1 metadata allocation.
+
+### Measurement and monitoring
 
 Use `LC_ALL=C` and byte-valued Btrfs measurements, with strict parsing and
 explicit errors for missing tools, insufficient permissions or incomplete
@@ -172,7 +268,10 @@ attempt with insufficient headroom and 2 for an error/refused precondition.
 Repair requires `--apply`, root, a writable Btrfs mount, no missing devices or
 reported device errors, no existing exclusive operation, and the supported
 two-device `single` data plus RAID1 metadata/system layout. Unknown or partially
-converted profiles are refused. Acquire a per-filesystem lock.
+converted profiles are refused. Acquire a per-filesystem lock. Refuse an
+attempt without usable metadata workspace and report that recovery needs a
+separately approved operation. Do not fall back to deleting snapshots or adding
+devices.
 
 Choose the constrained device by measured headroom and its discovered device
 ID. First attempt one empty data block group with
@@ -218,6 +317,8 @@ tests against the real host or start a release workflow during development.
 - [ ] AC-04: The installed read-only monitor survives reboot, catches a missed calendar run, remains singular after reinstall, and can be removed without affecting application data or unrelated timers.
 - [ ] AC-05: The same storage commands work from a Fedora checkout and the built PDS Debian package, while ordinary sourcing has no side effects and existing CLI commands retain their behavior.
 - [ ] AC-06: Monitoring exposes the documented cache-budget breaches without deleting recent Go objects, installed browsers, profiles or snapshot-retained data, and redirected/plain output retains explicit partial and failure outcomes.
+- [ ] AC-07: After an approved cache-subvolume migration, native Go cache cleanup reclaims filesystem space even while new home snapshots are retained, without changing application paths, ownership or live source files.
+- [ ] AC-08: The explicitly enabled user cleanup schedule catches missed runs and clears an over-budget Go build cache through the native command while preserving module caches and reporting busy, failed and unsupported cleanup attempts.
 
 ## Test Plan
 
@@ -229,6 +330,8 @@ tests against the real host or start a release workflow during development.
 | AC-04 | In a disposable systemd environment, run `systemd-analyze verify`, install twice, inspect `OnCalendar`/`Persistent`, stop/start the timer across a missed event, reboot and observe the next recorded report; uninstall and verify only owned files/timer were removed. |
 | AC-05 | Run `bash -n`, focused ShellCheck and shell tests. Source the library and compare options, traps and variables. Exercise CLI help/report and existing help/info with a checkout library root. Run the APT workflow's `packaging/build.sh build` and `make test`, inspect/extract the `.deb` and exercise its CLI. Separately execute standalone report on Fedora with read-only authority. |
 | AC-06 | Fixtures include all-new 38.45 GiB Go objects, browser caches, unavailable caches and snapshots. Assert budgets and absence of destructive commands. Capture Unicode/plain and redirected output with `NO_COLOR` absent, empty, `0` and nonempty; verify status words, no terminal control in plain output, and documented exit codes. |
+| AC-07 | Disposable Btrfs scenario: prepare a cache subvolume under home, create cache data, snapshot home, clean the cache and sync. Verify measurable reclaimed bytes, excluded cache contents in the home snapshot, unchanged application paths/ownership, preserved source hashes and unchanged backup retention. |
+| AC-08 | Disposable systemd user scenario with an over-budget cache: inspect calendar/persistence, simulate a missed run, execute native cleanup and verify reclaimed cache space. Assert module/source preservation and explicit busy-build, missing-tool, wrong-subvolume and cleanup-error outcomes. |
 
 ## Tasks
 
@@ -244,7 +347,7 @@ without deleting installed tooling or changing active paths.
 
 | Option | You get | It costs |
 | --- | --- | --- |
-| **A. Read-only monitor and explicit repair** | Proposed four-hour monitoring, 8 GiB per-device reserve, 10% aggregate warning, 20 GiB Go and 15 GiB browser budgets, and at most eight one-block-group repair invocations | Alerts require an operator response; thresholds need acceptance |
+| **A. Read-only filesystem monitor and explicit repair** | Proposed four-hour monitoring, 8 GiB per-device reserve, 10% aggregate warning, separately enabled native Go cleanup after snapshot exclusion, and at most eight one-block-group repair invocations | Filesystem alerts require an operator response; thresholds and migration need acceptance |
 | **B. Automatic bounded balancing** | Allocation maintenance can run without an operator | Recurring root-filesystem writes and I/O; requires a revised scope and safety/operation policy |
 | **C. Selected caches on bulk storage** | Cache growth consumes less root capacity | Slower rotational storage, mount dependency and a separately planned migration |
 
@@ -252,18 +355,19 @@ without deleting installed tooling or changing active paths.
 filesystem changes or trades build performance for capacity. No answer was
 received in this session; option A is a proposal, not acceptance.
 
-### Q2: May the current Fedora host receive bounded live recovery and a monitor installation?
+### Q2: May the backed-up November 9 local home snapshot be removed to attempt recovery?
 
-**Recommendation:** A. Keep this work local until the owner approves the exact
-live operation and reviews the tested implementation.
+**Recommendation:** A. Preserve the verified backup and attempt removal of only
+the local copy before another bounded cleanup attempt.
 
 | Option | You get | It costs |
 | --- | --- | --- |
-| **A. Prepare only** | Persistent diagnosis and a reviewable specification | The current host remains under allocation pressure |
-| **B. Approve bounded recovery after verification** | A tested recovery attempt and measured write checks | Filesystem I/O on the live host; independent approval is still needed for timer installation |
+| **A. Remove that one local copy** | A possible way to free metadata needed for cache deletion; the matching backup and newer local snapshots remain | One local rollback point is removed; recovery can still fail or need a further decision |
+| **B. Preserve every snapshot** | All local rollback points remain | Cleanup stays blocked unless another approved recovery method provides workspace |
 
-**Why this is yours:** Implementation acceptance does not grant live-operation
-or deployment permission. The owner was unavailable when asked.
+**Why this is yours:** Live filesystem repair and cache cleanup do not authorize
+deleting snapshot history. No specific approval was received. Adding the
+apparently unused SSD is also withheld unless that exact disk is authorized.
 
 ## Review Log
 
@@ -275,5 +379,5 @@ or deployment permission. The owner was unavailable when asked.
 - [Btrfs balance manual](https://btrfs.readthedocs.io/en/latest/btrfs-balance.html): data/device/usage/limit filters, workspace requirements and ENOSPC limits.
 - [Btrfs filesystem manual](https://btrfs.readthedocs.io/en/latest/btrfs-man5.html): defragmentation can break reflinks and increase space usage; it is excluded from recovery.
 - [systemd timer manual](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html): persistent catch-up applies to `OnCalendar` timers, not an interval-only timer.
-- [Feature documents](https://github.com/vhco-pro/docs/blob/d8f07c9dd69038375a535af8ad586086688f85ab/conventions/feature-documents.md): draft, review, acceptance and evidence requirements.
-- [Terminal output](https://github.com/vhco-pro/docs/blob/d8f07c9dd69038375a535af8ad586086688f85ab/conventions/terminal-output.md): explicit status, plain output and stream behavior.
+- [Btrfs subvolumes](https://btrfs.readthedocs.io/en/latest/Subvolumes.html): nested subvolumes are excluded from nonrecursive parent snapshots; received UUIDs identify source snapshots.
+- [Feature documents](https://github.com/vhco-pro/docs/blob/0e52f51f01b84eda75a976763c42d8ec0a07b544/conventions/feature-documents.md): draft, review, acceptance and evidence requirements at the existing PDS pin.
