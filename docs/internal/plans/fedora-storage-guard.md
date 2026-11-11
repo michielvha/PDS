@@ -1,8 +1,8 @@
 ---
 status: draft
-status_description: "Host recovered and verified after approved cache/snapshot cleanup. Scheduled prevention is proposed, not implemented."
+status_description: "Owner selected cache exclusion and scheduled native cleanup; independent specification review is pending."
 issue: null
-goal: "Restore allocatable Btrfs metadata headroom through bounded maintenance and detect its exhaustion before applications fail."
+goal: "Reclaim over-budget Go build cache on a repeatable schedule without home snapshots retaining its discarded contents."
 covers:
   - bash/fedora/storage_maintenance.sh
   - tests/test_storage_maintenance.py
@@ -13,8 +13,8 @@ covers:
 
 # Plan: Fedora storage guard
 
-Provide a repeatable PDS storage check and an explicit, bounded recovery command.
-Keep the default scheduled operation read-only.
+Make native Go cache cleanup repeatable and exclude rebuildable Go cache from
+future home snapshots. Keep scheduled filesystem monitoring read-only.
 
 ## Context
 
@@ -37,6 +37,10 @@ The proposed PDS feature keeps caches on SSD. An hourly system timer checks
 each Btrfs device and alerts below a proposed 8 GiB allocation reserve. A
 separate user timer checks the Go build-cache budget every four hours.
 Filesystem monitoring never deletes files or starts a balance.
+
+On 2026-11-11 the owner selected this policy, including Go cache exclusion from
+future home backups and the resulting cold-cache rebuild trade-off. This is
+the selected design, not an installed service or final specification acceptance.
 
 An explicitly authorized manual recovery run may relocate a limited number of data block groups
 from the constrained device. It preserves RAID1 metadata and takes before/after
@@ -202,20 +206,20 @@ operation no longer crashes. A new interactive Copilot session was not started.
 - [The CLI](../../../packaging/bin/pds) provides explicit command dispatch and a
   configurable library root; see `packaging/bin/pds:7`.
 - [Package contents](../../../packaging/nfpm.yaml) already include the common
-  Bash tree; see `packaging/nfpm.yaml:54`.
+  Bash tree; see `packaging/nfpm.yaml:45`.
 - [Initialization](../../../packaging/init.sh) sources common libraries into
-  interactive shells; see `packaging/init.sh:27`. Sourcing a new library must
+  interactive shells; see `packaging/init.sh:29`. Sourcing a new library must
   not run checks or change shell options.
 - [The raw loader](../../../bash/source_all.sh) lists sourced modules explicitly;
-  see `bash/source_all.sh:48`.
+  see `bash/source_all.sh:44`.
 - [The APT workflow](../../../.github/workflows/build-apt-package.yml) runs
   `packaging/build.sh build` and `make test`; see
-  `.github/workflows/build-apt-package.yml:90`.
+  `.github/workflows/build-apt-package.yml:97` and `:101`.
 
 ## Scope
 
 Include one Fedora maintenance script, budget-triggered native Go cache cleanup,
-read-only Btrfs monitoring, a separately approved Go cache-subvolume migration,
+read-only Btrfs monitoring, an explicitly authorized Go cache-subvolume preparation,
 tests and installation/removal documentation. Keep the existing application
 paths and btrbk retention.
 
@@ -250,9 +254,9 @@ cache daemon, general storage framework or package publisher.
 | Term | Meaning |
 | --- | --- |
 | Allocatable headroom | Bytes outside allocated block groups on each device, as distinct from `df` available bytes. |
-| Reserve | Proposed minimum of 8 GiB unallocated on every device required by the supported two-device RAID1 metadata layout. |
+| Reserve | Policy warning threshold of 8 GiB unallocated per participating device, not a Btrfs hard minimum. |
 | Bounded recovery | At most eight synchronous data-only balance invocations, each selecting at most one block group, with remeasurement after each. |
-| Cache budget | An alert threshold, not a deletion target or enforced storage quota. |
+| Cache budget | A threshold for native Go cleanup or a browser-cache warning, not an enforced storage quota. |
 
 The proposed monitor warns below the per-device reserve or below 10% aggregate
 available space. It also warns above a 20 GiB Go build cache or a combined 15 GiB
@@ -291,9 +295,10 @@ and report it; do not schedule wholesale Playwright or Puppeteer removal.
 Keep profiles, authenticated sessions and currently required browser versions.
 
 An hourly root timer separately checks every participating device's allocation
-headroom. Keep the proposed 8 GiB warning reserve and the manual recovery
-runbook below. Reach that reserve in a separate quiet maintenance window before
-treating preventive setup as finished. Cache cleanup alone cannot protect RAID1
+headroom. Use the selected 8 GiB warning reserve. This setup reports a reserve
+breach; it does not restore the reserve or run balancing. The current 3.01 GiB
+device-1 reserve will therefore produce a warning until a separately authorized
+maintenance window improves it. Cache cleanup alone cannot protect RAID1
 metadata allocation.
 
 ### Measurement and monitoring
@@ -383,8 +388,8 @@ run destructive verification against the real host.
 
 ## Acceptance Criteria
 
-- [ ] AC-01: After approved Go cache-subvolume preparation, future home snapshots omit Go cache contents while live application paths, ownership, source files and the existing independent backup policy remain intact.
-- [ ] AC-02: Scheduled operation leaves files, allocation profiles and block-group placement unchanged while surfacing a reserve breach despite abundant aggregate free space, with the documented status and notification outcome.
+- [ ] AC-01: After approved Go cache-subvolume preparation, future home snapshots omit Go cache contents while live application paths, ownership, source files and the independent backup schedule and retention remain intact.
+- [ ] AC-02: Scheduled filesystem monitoring leaves application/cache contents, allocation profiles and block-group placement unchanged while surfacing a reserve breach despite abundant aggregate free space, with the documented status and notification outcome.
 - [ ] AC-03: Unsafe, busy, malformed or unsuccessful cache-preparation and cleanup attempts preserve source/module/profile data and cannot return success when a required check or cleanup fails.
 - [ ] AC-04: The installed read-only monitor survives reboot, catches a missed calendar run, remains singular after reinstall, and can be removed without affecting application data or unrelated timers.
 - [ ] AC-05: The maintenance script works directly from a Fedora checkout and its installed copy, while ordinary sourcing has no side effects and existing PDS commands retain their behavior.
@@ -411,22 +416,7 @@ None yet; write one-commit tasks after the specification is reviewed and accepte
 
 ## Open Questions
 
-### Q1: Approve excluding Go build cache from home backups and the proposed native cleanup schedule?
-
-**Recommendation:** A. Keep the cache on SSD at its existing path, exclude it
-from home snapshots, and schedule native budget-triggered cleanup with
-read-only filesystem monitoring.
-
-| Option | You get | It costs |
-| --- | --- | --- |
-| **A. Cache exclusion and native cleanup** | Four-hour Go checks with cleanup above 20 GiB; hourly read-only filesystem checks; 8 GiB per-device and 10% aggregate warnings | Cold-cache rebuilds; Go build-cache contents are omitted from future home backups; filesystem alerts need an operator |
-| **B. Monitoring only** | No automated cache deletion or backup-coverage change | Growth still needs manual intervention |
-| **C. Selected caches on bulk storage** | Cache growth consumes less root capacity | Slower rotational storage, mount dependency and a separately planned migration |
-
-**Why this is yours:** These choices change backup coverage and trade cache hits
-for capacity. The owner asked for a plan after cleanup, not installation.
-Option A remains a proposal. No timer, backup-policy change, automatic balancing
-or cache-subvolume migration has been installed.
+None.
 
 ## Review Log
 
