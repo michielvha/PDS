@@ -178,3 +178,20 @@ cat readme.md
 | set_bash_prompt | Installs the PDS bash prompt into its own standalone file and wires it into ~/.bashrc via a single guarded source line, so it never clobbers an existing distro .bashrc (Ubuntu/Fedora). Re-running is idempotent. |
 | install_nerd_fonts | Install the recommended fonts for Powerlevel10k and configure GNOME Terminal to use them |
 | pre_commit_hook | Pre-commit hook that automatically formats Go code using gofumpt |
+
+## Fedora storage maintenance
+
+Use [the storage-maintenance guide](../docs/fedora-storage-guard.md) to prepare
+the default Go build cache as a nested Btrfs subvolume, install budget-triggered
+native cleanup and enable read-only allocation checks. Backup retention,
+browser profiles, source trees and Go module caches stay unchanged.
+
+The script runs directly from a checkout:
+
+```bash
+bash bash/fedora/storage_maintenance.sh --help
+```
+
+Sourcing it declares `storage_maintenance` without installing or running
+anything. The helper is Fedora-focused and does not change the PDS package or
+CLI dispatch.

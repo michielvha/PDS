@@ -70,11 +70,18 @@ elif name == 'stat':
               '%a': oct(stat.S_IMODE(info.st_mode))[2:],
               '%h': str(info.st_nlink), '%i': str(info.st_ino),
               '%d': str(info.st_dev)}
+    if (path == cache or cache in path.parents) and state.get('subvolume', True):
+        fields['%d'] = str(info.st_dev + 1)
+        if path == cache:
+            fields['%i'] = '256'
+        if path == cache / 'aa' and state.get('nested_mount'):
+            fields['%d'] = str(info.st_dev + 2)
     for key, replacement in fields.items():
         value = value.replace(key, replacement)
     print(value)
 elif name == 'findmnt':
-    print(state.get('filesystem', 'btrfs'))
+    print(state.get('cache_mount_target', '/') if 'TARGET' in args
+          else state.get('filesystem', 'btrfs'))
 elif name == 'pgrep':
     if state.get('busy'):
         print('12345')
@@ -106,7 +113,7 @@ elif name == 'btrfs':
         sys.exit(2)
 elif name == 'go':
     if args == ['env', 'GOCACHE']:
-        print(cache)
+        print(state.get('configured_cache', str(cache)))
     elif args == ['clean', '-cache']:
         if state.get('go_error'):
             print('injected Go cleanup failure', file=sys.stderr)
@@ -136,7 +143,7 @@ class StorageUnitTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix='pds-storage-unit-')
         self.addCleanup(self.temporary.cleanup)
-        self.base = Path(self.temporary.name)
+        self.base = Path(self.temporary.name).resolve()
         self.home = self.base / 'home'
         self.cache = self.home / '.cache/go-build'
         self.cache.mkdir(parents=True)
@@ -250,9 +257,44 @@ class StorageUnitTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertFalse(self.commands('go'))
 
+    def test_ac03_mount_alias_is_not_treated_as_a_nested_cache_subvolume(self):
+        result = self.run_script('cleanup-go', cache_bytes=30 * GIB,
+                                 cache_mount_target=str(self.cache))
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertFalse(self.commands('go'))
+
+    def test_ac03_custom_go_cache_is_not_silently_reconfigured(self):
+        configured = self.base / 'different-cache'
+        configured.mkdir()
+        keep = configured / 'keep'
+        keep.write_text('custom cache data')
+        result = self.run_script('prepare-go-cache', configured_cache=str(configured))
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(keep.read_text(), 'custom cache data')
+        self.assertFalse(any(entry['args'] == ['clean', '-cache']
+                             for entry in self.commands('go')))
+
     def test_ac03_root_cannot_run_user_cache_cleanup(self):
         result = self.run_script('cleanup-go', root=True, cache_bytes=30 * GIB)
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertFalse(self.commands('go'))
+
+    def test_ac03_unknown_files_and_nested_mounts_are_preserved(self):
+        unknown = self.cache / 'manual-source.txt'
+        unknown.write_text('preserve unknown data')
+        result = self.run_script('cleanup-go', cache_bytes=21 * GIB)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(unknown.read_text(), 'preserve unknown data')
+        self.assertFalse(self.commands('go'))
+
+    def test_ac03_nested_filesystem_is_not_traversed_by_native_cleanup(self):
+        nested = self.cache / 'aa'
+        nested.mkdir()
+        keep = nested / ('a' * 64 + '-d')
+        keep.write_text('another filesystem')
+        result = self.run_script('cleanup-go', cache_bytes=21 * GIB, nested_mount=True)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(keep.read_text(), 'another filesystem')
         self.assertFalse(self.commands('go'))
 
     def test_ac05_sourcing_preserves_options_traps_and_does_not_run_tools(self):
@@ -314,6 +356,16 @@ class StorageUnitTests(unittest.TestCase):
         result = self.run_script('cleanup-go', cache_bytes='not-a-number')
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
 
+    def test_ac03_missing_prerequisite_is_an_explicit_failure(self):
+        (self.bin / 'getent').unlink()
+        self.state_path.write_text(json.dumps(self.state))
+        environment = dict(self.environment, PATH=str(self.bin))
+        result = subprocess.run(
+            ['/bin/bash', str(SCRIPT), 'check', '--user', 'pds-test'],
+            env=environment, text=True, capture_output=True, timeout=20)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('getent', result.stderr)
+
 
 @unittest.skipUnless(os.environ.get('PDS_STORAGE_INTEGRATION') == '1',
                      'set PDS_STORAGE_INTEGRATION=1 for disposable Fedora/Btrfs')
@@ -344,8 +396,12 @@ class StorageFedoraIntegration(unittest.TestCase):
             if result.returncode == 0:
                 return result.stdout
             time.sleep(1)
+        diagnostics = cls.execute(
+            'systemctl --failed --no-pager; journalctl -b -n 40 --no-pager',
+            check=False, timeout=15)
         raise AssertionError(f'Native readiness did not succeed: {command}\n'
-                             f'{result.stdout}\n{result.stderr}')
+                             f'{result.stdout}\n{result.stderr}\n'
+                             f'{diagnostics.stdout}\n{diagnostics.stderr}')
 
     @classmethod
     def setUpClass(cls):
@@ -361,15 +417,26 @@ class StorageFedoraIntegration(unittest.TestCase):
             )
             cls.docker('build', '-t', cls.image, '-', input=fixture, timeout=600)
         cls.loops = []
+        cls.loop_files = []
         cls.addClassCleanup(cls.cleanup_fixture)
         cls.docker('run', '-d', '--name', cls.container, '--privileged',
                    '--cgroupns=private', '--tmpfs', '/run', '--tmpfs', '/run/lock',
                    cls.image)
         cls.wait_for('systemctl show -p Version --value')
-        cls.execute('mkdir -p /work/bash/fedora')
+        cls.execute('mkdir -p /work/bash/fedora /work/packaging/bin /work/lib/common/utils; '
+                    'printf "fixture_noop() { :; }\\n" >/work/lib/common/utils/fixture.sh; '
+                    'printf "0.0.0\\n" >/work/lib/VERSION')
         cls.docker('cp', str(SCRIPT), cls.container + ':/work/bash/fedora/storage_maintenance.sh')
+        cls.docker('cp', str(ROOT / 'packaging/bin/pds'),
+                   cls.container + ':/work/packaging/bin/pds')
+        cls.cli_command = (
+            'PDS_LIB_DIR=/work/lib bash /work/packaging/bin/pds help; '
+            'PDS_LIB_DIR=/work/lib bash /work/packaging/bin/pds info'
+        )
+        cls.cli_before = cls.execute(cls.cli_command).stdout
         cls.execute('mkdir -p /var/tmp/pds-loop /test-btrfs; '
                     'truncate -s 12G /var/tmp/pds-loop/a.img /var/tmp/pds-loop/b.img')
+        cls.loop_files = ['/var/tmp/pds-loop/a.img', '/var/tmp/pds-loop/b.img']
         for image in ('a.img', 'b.img'):
             device = cls.execute('losetup --find --show /var/tmp/pds-loop/' + image).stdout.strip()
             if not re.fullmatch(r'/dev/loop[0-9]+', device):
@@ -395,12 +462,13 @@ class StorageFedoraIntegration(unittest.TestCase):
         cleanup = cls.execute(
             'systemctl stop user@1000.service || true; '
             'umount /test-btrfs', check=False)
-        for device in cls.loops:
-            detached = cls.execute('losetup -d ' + shlex.quote(device), check=False)
-            if detached.returncode:
-                cls.docker('stop', cls.container, check=False)
-                cls.docker('run', '--rm', '--cap-add', 'SYS_ADMIN', '--device', device,
-                           cls.image, 'losetup', '-d', device)
+        for image in cls.loop_files:
+            associated = cls.execute('losetup -j ' + shlex.quote(image))
+            for line in associated.stdout.splitlines():
+                device = line.split(':', 1)[0]
+                if not re.fullmatch(r'/dev/loop[0-9]+', device):
+                    raise AssertionError(f'Cannot safely detach unexpected device: {line}')
+                cls.execute('losetup -d ' + shlex.quote(device))
         removed = cls.docker('rm', '-f', cls.container, check=False)
         if removed.returncode:
             raise AssertionError(f'Owned container cleanup failed:\n{removed.stderr}\n'
@@ -419,7 +487,29 @@ class StorageFedoraIntegration(unittest.TestCase):
             user='1000:1000', check=False)
         self.assertEqual(refused.returncode, 2, refused.stdout + refused.stderr)
         self.execute('test "$(cat ~/.cache/go-build/not-a-go-file)" = source; '
-                     'rm ~/.cache/go-build/not-a-go-file', user='1000:1000')
+                     'rm ~/.cache/go-build/not-a-go-file; chmod 0750 ~/.cache/go-build; '
+                     'mkdir ~/fault-bin; '
+                     'printf \'#!/bin/bash\\nkill -TERM "$PPID"\\nexit 130\\n\' >~/fault-bin/mv; '
+                     'chmod +x ~/fault-bin/mv',
+                     user='1000:1000')
+        interrupted = self.execute(
+            f'PATH="$HOME/fault-bin:$PATH" bash {script} prepare-go-cache '
+            '--user pds-test --go /usr/bin/go', user='1000:1000', check=False)
+        self.assertNotEqual(interrupted.returncode, 0)
+        self.execute('test "$(cat ~/go/pkg/mod/pds-keep)" = keep; '
+                     'test "$(cat ~/.config/pds-keep)" = profile; '
+                     'rm ~/fault-bin/mv; rmdir ~/fault-bin',
+                     user='1000:1000')
+        self.execute(
+            f'bash {script} prepare-go-cache --user pds-test --go /usr/bin/go',
+            user='1000:1000')
+        self.assertEqual(self.execute(f'stat -c "%u:%g:%a" {cache}').stdout.strip(),
+                         '1000:1000:750')
+        repeated = self.execute(
+            f'bash {script} prepare-go-cache --user pds-test --go /usr/bin/go',
+            user='1000:1000')
+        self.assertIn('SKIP', repeated.stdout)
+        self.execute(f'btrfs subvolume delete {cache}; btrfs filesystem sync /test-btrfs')
         self.execute(
             f'bash {script} prepare-go-cache --user pds-test --go /usr/bin/go',
             user='1000:1000')
@@ -430,6 +520,8 @@ class StorageFedoraIntegration(unittest.TestCase):
             'go telemetry off; cd ~/project; '
             'CGO_ENABLED=0 GOTOOLCHAIN=local go build -o app main.go; ./app',
             user='1000:1000', timeout=180)
+        self.assertEqual(self.execute('go env GOCACHE', user='1000:1000').stdout.strip(),
+                         cache)
         before_source = self.execute(f'sha256sum {home}/project/main.go').stdout
         before_backup = self.execute('sha256sum /etc/btrbk/btrbk.conf').stdout
         self.execute(
@@ -443,27 +535,69 @@ class StorageFedoraIntegration(unittest.TestCase):
             'truncate -s 21G ~/.cache/go-build/aa/'
             'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d',
             user='1000:1000')
+        self.execute('btrfs filesystem sync /test-btrfs')
         before_free = int(self.execute(
             "btrfs filesystem usage -b /test-btrfs | "
             "awk '/Free \\(statfs, df\\):/ {print $4}'").stdout.strip())
-        self.execute(
+        cleanup = self.execute(
             f'bash {script} cleanup-go --user pds-test --go /usr/bin/go',
             user='1000:1000', timeout=180)
         self.execute('btrfs filesystem sync /test-btrfs')
         after_free = int(self.execute(
             "btrfs filesystem usage -b /test-btrfs | "
             "awk '/Free \\(statfs, df\\):/ {print $4}'").stdout.strip())
-        self.assertGreater(after_free, before_free)
+        self.assertGreater(after_free, before_free, cleanup.stdout + cleanup.stderr)
         self.assertEqual(self.execute(f'sha256sum {home}/project/main.go').stdout, before_source)
         self.assertEqual(self.execute('sha256sum /etc/btrbk/btrbk.conf').stdout, before_backup)
         self.execute(f'test "$(cat {home}/go/pkg/mod/pds-keep)" = keep; '
                      f'test "$(cat {home}/.config/pds-keep)" = profile')
+        self.execute('printf "unrelated administrator content\\n" '
+                     '>/etc/systemd/system/pds-btrfs-headroom.service')
+        conflicting = self.execute(
+            f'bash {script} install --user pds-test --mount /test-btrfs --go /usr/bin/go',
+            check=False)
+        self.assertEqual(conflicting.returncode, 2, conflicting.stdout + conflicting.stderr)
+        self.execute('grep -Fx "unrelated administrator content" '
+                     '/etc/systemd/system/pds-btrfs-headroom.service; '
+                     'test ! -e /usr/local/libexec/pds-storage-maintenance; '
+                     'rm /etc/systemd/system/pds-btrfs-headroom.service')
+        self.execute("""cat >/etc/systemd/system/pds-storage-fixture-unrelated.service <<'UNIT'
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/true
+UNIT
+cat >/etc/systemd/system/pds-storage-fixture-unrelated.timer <<'UNIT'
+[Timer]
+OnCalendar=daily
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now pds-storage-fixture-unrelated.timer
+""")
+        unrelated = self.execute(
+            'sha256sum /etc/systemd/system/pds-storage-fixture-unrelated.*').stdout
+        unit_go = '/usr/local/bin/pds${go}%fixture'
+        self.execute('mkdir -p /usr/local/bin; ln -s /usr/bin/go ' + shlex.quote(unit_go))
         for _ in range(2):
             self.execute(
-                f'bash {script} install --user pds-test --mount /test-btrfs --go /usr/bin/go')
+                f'umask 077; bash {script} install --user pds-test --mount /test-btrfs '
+                f'--go {shlex.quote(unit_go)}')
+        installed = self.execute(
+            'sha256sum /etc/systemd/system/pds-btrfs-headroom.service').stdout
+        changed_mount = self.execute(
+            f'bash {script} install --user pds-test --mount / --go /usr/bin/go',
+            check=False)
+        self.assertEqual(changed_mount.returncode, 2)
+        self.assertEqual(self.execute(
+            'sha256sum /etc/systemd/system/pds-btrfs-headroom.service').stdout, installed)
         self.execute(
             'systemd-analyze verify /etc/systemd/system/pds-btrfs-headroom.service '
             '/etc/systemd/system/pds-btrfs-headroom.timer')
+        self.execute('systemctl start pds-btrfs-headroom.service; '
+                     'test "$(systemctl show -p Result --value pds-btrfs-headroom.service)" = success')
+        self.execute('systemctl --user start pds-go-cache-clean.service',
+                     user='1000:1000')
         self.execute(
             'systemctl --user is-enabled pds-go-cache-clean.timer; '
             'systemctl --user cat pds-go-cache-clean.timer | grep -Fx Persistent=true; '
@@ -477,9 +611,29 @@ class StorageFedoraIntegration(unittest.TestCase):
             'truncate -s 21G ~/.cache/go-build/aa/'
             'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d',
             user='1000:1000')
-        self.execute(
-            f'printf "%s /test-btrfs btrfs defaults 0 0\\n" '
-            f'{shlex.quote(self.loops[0])} >>/etc/fstab')
+        self.execute("""cat >/var/tmp/pds-loop/boot.sh <<'BOOT'
+#!/bin/bash
+set -euo pipefail
+a=$(losetup --find --show --nooverlap /var/tmp/pds-loop/a.img)
+b=$(losetup --find --show --nooverlap /var/tmp/pds-loop/b.img)
+btrfs device scan "$a" "$b"
+mount -t btrfs "$a" /test-btrfs
+BOOT
+cat >/etc/systemd/system/pds-test-loop.service <<'UNIT'
+[Unit]
+Description=Restore only the disposable test's loopback filesystem
+DefaultDependencies=no
+Before=local-fs.target systemd-user-sessions.service user@1000.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash /var/tmp/pds-loop/boot.sh
+RemainAfterExit=true
+[Install]
+WantedBy=local-fs.target
+UNIT
+systemctl daemon-reload
+systemctl enable pds-test-loop.service
+""")
         self.docker('restart', self.container, timeout=90)
         self.wait_for('test -S /run/user/1000/bus')
         self.wait_for(
@@ -496,6 +650,14 @@ class StorageFedoraIntegration(unittest.TestCase):
             'test -f /etc/btrbk/btrbk.conf; '
             'test ! -e /etc/systemd/system/pds-btrfs-headroom.timer; '
             f'test ! -e {home}/.config/systemd/user/pds-go-cache-clean.timer')
+        self.execute('systemctl is-active pds-storage-fixture-unrelated.timer; '
+                     f'test "$(cat {home}/go/pkg/mod/pds-keep)" = keep; '
+                     f'test "$(cat {home}/.config/pds-keep)" = profile')
+        self.assertEqual(self.execute(
+            'sha256sum /etc/systemd/system/pds-storage-fixture-unrelated.*').stdout, unrelated)
+        self.assertEqual(self.execute('sha256sum /etc/btrbk/btrbk.conf').stdout, before_backup)
+        self.assertEqual(self.execute(f'sha256sum {home}/project/main.go').stdout, before_source)
+        self.assertEqual(self.execute(self.cli_command).stdout, self.cli_before)
 
 
 if __name__ == '__main__':

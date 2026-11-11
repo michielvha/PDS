@@ -1,6 +1,6 @@
 ---
 status: in-progress
-status_description: "Claimed for test-first implementation; publication and verified Fedora installation are authorized."
+status_description: "Implementation passes focused and native Fedora verification; independent implementation review and live installation are pending."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Reclaim over-budget Go build cache on a repeatable schedule without home snapshots retaining its discarded contents."
@@ -45,7 +45,8 @@ accepted the independently reviewed specification. The owner authorized the
 required documentation/claim publication, a verified implementation PR and
 installation for user `m` on `fedora-43` after disposable verification. This
 grants no merge, release, disk formatting, extra snapshot deletion or automatic
-balancing. Implementation and installation have not yet started.
+balancing. Implementation has passed the focused tests and disposable Fedora verification.
+Live installation remains pending independent implementation review.
 
 An explicitly authorized manual recovery run may relocate a limited number of data block groups
 from the constrained device. It preserves RAID1 metadata and takes before/after
@@ -75,7 +76,7 @@ snapshot could not be removed normally. Removing the separately approved local
 home snapshots released enough working room for native Go cleanup. Source
 files, live browser profiles, module caches and volumes were not selected.
 
-The proposed monitoring and cleanup timers do not exist yet. The owner asked to
+The live host's monitoring and cleanup timers are not installed yet. The owner asked to
 clean caches first and prepare the scheduling plan afterward. The owner then
 approved removing the November 9 local home snapshot, followed by explicit
 approval for the November 10 and 11 copies. Their matching read-only backups
@@ -205,6 +206,26 @@ operation no longer crashes. A new interactive Copilot session was not started.
 - Read-only `wipefs --no-act /dev/sdb` found no signatures on a 223.6 GiB SSD.
   No disk was added, formatted or erased. Missing signatures are not approval
   to use that disk.
+
+### Implementation verification
+
+The script, guide and tests are implemented on `feat/fedora-storage-guard`.
+The focused suite executes 19 checks, including a real Fedora/systemd container
+with owned two-device Btrfs loopback storage. It verifies cache exclusion and
+physical reclamation, interrupted preparation, UID/GID/mode preservation,
+fresh-cache initialization, native units, restrictive-umask installation,
+literal executable paths, conflicting-file refusal, reinstallation, reboot
+catch-up, safe uninstall and unchanged existing PDS CLI output.
+
+The native run uses a local Docker Desktop kernel, not the live Fedora kernel
+or its enforcing SELinux policy. Target-host installation and service checks
+remain separate authorized steps. The latest read-only target preflight found
+the expected `/home/m/.cache/go-build`, stable Homebrew Go executable, no active
+Go build tools, an active user bus and enforcing SELinux.
+
+Python test execution validates parsing and runtime behavior. The initial
+Pylance syntax check passed; a later editor syntax-check request timed out.
+No editor type-check result is claimed.
 
 ### Repository evidence
 
@@ -419,7 +440,8 @@ run destructive verification against the real host.
 
 - [x] T1 `tests/test_storage_maintenance.py`, `changelog.md` - add command-fixture safety, monitoring and cleanup tests plus opt-in disposable Fedora/Btrfs scenarios; execute the unit checks and observe failure because the maintenance script does not exist (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08).
       Evidence: The focused unittest run executed 14 tests with 20 failing assertions/subcases and one opt-in skip, all against the missing script. The opt-in Fedora fixture booted with systemd and failed at copying the missing script; its owned container was removed. Pylance reported no Python syntax errors. Manual documentation-impact review found no implemented public behavior yet; the changelog records the new tests.
-- [ ] T2 `bash/fedora/storage_maintenance.sh`, `docs/fedora-storage-guard.md`, `bash/readme.md`, `changelog.md` - implement the accepted preparation, cleanup, monitoring and native-unit setup; the T1 unit tests, Bash syntax, focused ShellCheck and opt-in Fedora/Btrfs scenarios pass, including native Go builds and calendar/reboot/removal checks (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08).
+- [x] T2 `bash/fedora/storage_maintenance.sh`, `tests/test_storage_maintenance.py`, `docs/fedora-storage-guard.md`, `bash/readme.md`, `changelog.md` - implement the accepted preparation, cleanup, monitoring and native-unit setup; the T1 unit tests, Bash syntax, focused ShellCheck and opt-in Fedora/Btrfs scenarios pass, including native Go builds and calendar/reboot/removal checks (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08).
+      Evidence: The full focused unittest run with `PDS_STORAGE_INTEGRATION=1` passed 19 tests. Native red/green iterations caught privileged subvolume detection, a read-only user-service sandbox, restrictive-umask staging and systemd argument expansion. Bash syntax, focused ShellCheck and the repository's existing bootstrap/CLI syntax and Makefile-help checks pass. Manual documentation-impact review matched all script modes, schedules, exit codes and preservation boundaries to the user guide and Bash index. Criteria await the independent committed-state review.
 
 ## Open Questions
 

@@ -4,13 +4,14 @@
 
 ### Documentation
 
-- Record the verified Fedora Btrfs recovery and the accepted cache-exclusion/scheduled-cleanup policy in `docs/internal/plans/fedora-storage-guard.md`. The specification has a clean independent review; automation is not installed.
+- Record the verified Fedora Btrfs recovery and the accepted cache-exclusion/scheduled-cleanup policy in `docs/internal/plans/fedora-storage-guard.md`.
 - Refresh the root README with platform coverage, usage examples, and light and dark project banners. Record backlog dispositions and deferred ideas in `docs/internal/analysis/readme-refresh.md`.
 - Move the Debian workstation bootstrap reference to `docs/workstation-bootstrap.md` and describe its remaining validation gaps.
 - Add pinned agent instructions for vh-adlc, with Copilot and Claude entry points. Preserve platform and changelog requirements from the earlier instructions.
 
 ### Added
 
+- Add `bash/fedora/storage_maintenance.sh` with explicit Go-cache subvolume preparation, four-hour native cleanup above 20 GiB, hourly read-only Btrfs checks and managed systemd install/removal. Preserve source/module/profile data and backup retention; never balance or delete snapshots automatically.
 - Add command-fixture and disposable Fedora/Btrfs regression scenarios for storage maintenance, including the observed failing baseline before implementation.
 - Render the official GitHub organization logo silhouettes as plain ASCII above the VHCO and Stackweaver FIGlet Big wordmarks; preserve EdgeForge artwork.
 
