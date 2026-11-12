@@ -1,6 +1,6 @@
 ---
-status: in-progress
-status_description: "R-7 independently verified all twelve criteria; live Fedora installation and PR delivery are next."
+status: complete
+status_description: "All twelve criteria independently verified; four jobs installed and exercised on Fedora with explicit safety warnings. PR delivery is next."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Keep disposable build/package/container caches bounded and surface persistent developer-storage growth without deleting project or volume data."
@@ -54,17 +54,54 @@ is needed. Runtime endpoint selection is confined to this host, not inherited
 remote Docker/Podman contexts. Rollback removes only managed jobs/scripts;
 already discarded caches/images regenerate on demand.
 
-No broader live cleanup has run. The owner accepted R-5 and authorized
-installation after verification. The full focused suite now passes 39 checks,
+The owner accepted R-5 and authorized installation after verification. The
+full focused suite passes 39 checks,
 including native isolated Docker/Podman image retention, persistent-data
 preservation, linked-uv-environment refusal, npm verification, original Go
 cache safety and missed-calendar behavior. Bash syntax and source-aware
-ShellCheck pass. Independent committed-state review remains before deployment.
+ShellCheck pass. R-7 independently returned met for all twelve criteria. Live deployment is
+recorded below.
 Native rootless Podman tests use single-ID mappings because nested Docker
 Desktop cannot grant another subordinate-ID range; real Fedora's enforcing
 SELinux and normal rootless service behavior require deployment verification.
 
-### Original incident and verified recovery
+### Verified deployment on 2026-11-12
+
+- Both installed scripts match the reviewed local SHA-256 checksums. The Go
+  cache became nested subvolume 278 at its existing path, UID/GID/mode
+  preserved. Preparation initially refused an empty `fuzz` directory skeleton;
+  only verified empty directories were removed. No fuzz corpus files existed
+  or were deleted. A future unrecognized cache layout remains a safe refusal.
+- Four timers are enabled and active: hourly `pds-btrfs-headroom`, four-hour
+  `pds-go-cache-clean`, daily 04:45 `pds-cache-docker` and daily 05:15
+  `pds-cache-user`. Fedora local time is CET. SELinux remains enforcing;
+  expected installed-file labels were restored without changing policy.
+- The Go service returned success; a direct installed invocation confirmed
+  below-budget skip with a zero-byte prepared cache.
+- Installed Docker retention reclaimed 18.49 GB of old unreferenced images.
+  Its accounting dropped from 46.95 GB to 28.46 GB. Container and volume
+  inventory hashes were identical before/after. All 118 volumes, including
+  109 unattached ones, remain. The service returned documented warning status
+  1 for retained 47.57 GB of volumes and the unattached-volume count.
+- The user job completed with explicit status 2. Native Podman retention ran,
+  uv safely skipped the protected `environments-v2` bucket, and npm verification
+  was refused because ordinary npx content contains aliases. This conservative
+  guard preserves data rather than forcing reclamation; npm remains audited.
+  Review/maintenance scans also reported real permission errors, and an
+  initial module scan timed out. These are incomplete readings, not zero totals.
+- The Btrfs monitor measured approximately 4.03 GiB unallocated on device 1
+  and emitted the expected below-8-GiB warning. Desktop notification delivery
+  timed out on the existing session bus, yielding documented status 2; the
+  measurements and warning remain in the system journal. No desktop service
+  was restarted and no success-shaped fallback hid the delivery failure.
+- Backup configuration SHA-256 stayed
+  `d14193be47a410a2a5fb5c2b2158a371406ec31f3eb64bb5aa2e5bd111c36d66`.
+  No container, volume, worktree, review archive, Go module or editor data was
+  selected for deletion. Temporary deployment files were removed. Final `df`
+  still reported approximately 267 GiB available; native reclaimed-image bytes
+  are not a promise of immediate exclusive physical reclamation under snapshots.
+
+### Incident background
 
 Fedora's root and home share a two-device Btrfs filesystem. During the failure,
 metadata was RAID1 and 98.65% used, while the smaller device had only 1 MiB
