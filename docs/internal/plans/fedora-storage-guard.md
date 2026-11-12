@@ -36,7 +36,7 @@ It adds daily host-local Docker build-cache pruning to a 20 GB target with a
 10 GB reserve, and daily native pruning of unreferenced images created more
 than seven days ago. Referenced images, containers and volumes remain. Images
 previously used for rollback or local builds may need downloading or rebuilding.
-Npm verification and non-forced uv pruning run as the user; no whole-cache
+Npm verification and eligibility-guarded non-forced uv pruning run as the user; no whole-cache
 wildcard deletion is introduced. These are native retention targets, not
 hard quotas, and active/required content may keep usage above target.
 
@@ -373,20 +373,35 @@ the final result must still report incomplete/failed work.
 
 The root job uses only `unix:///var/run/docker.sock` and builder `default`,
 ignoring ambient remote endpoints/contexts and builder selection. It invokes
-`docker buildx prune --builder default --max-used-space 20GB --reserved-space 10GB --force`
+`docker buildx prune --builder default --max-used-space 20000000000 --reserved-space 10000000000 --force`
 and `docker image prune --all --filter until=168h --force`. The space settings
-are decimal GB as accepted by BuildKit. In-use records are preserved by the
+are explicit bytes for decimal 20 GB and 10 GB; no suffix-dependent parsing is
+assumed. In-use records are preserved by the
 engine. Any excess that cannot be reclaimed remains visible in the report.
 No Docker daemon configuration is changed or restarted.
 
 The user job uses only local rootless Podman and invokes
 `podman --remote=false image prune --all --filter until=168h --force`,
 `npm cache verify` with an explicit validated account-local cache and
-`uv --no-config --offline cache prune` with an explicit validated cache path.
+`uv --no-config --offline cache prune` with an explicit validated cache path only
+after the eligibility checks below pass.
 Do not pass uv `--force` or `--ci`. Missing optional tools are reported as
 skipped, while installed but inaccessible engines/caches are errors. Native
 npm verification is not a promise to clear all npx or content bytes; any
 remaining over-budget cache still warns.
+
+The owner selected an eligibility guard for uv because native pruning can
+delete cached environments still linked by projects. Only source-reviewed and
+native-tested uv versions are eligible; initially whitelist exactly 0.10.9.
+Upgrades do not silently inherit approval. Resolve the default account-local
+cache, reject path aliases/symlinks and unknown top-level cache buckets, and
+refuse pruning if any `environments-*` bucket exists, even if it looks old or
+empty. An active uv process or an unreadable eligibility check also prevents
+pruning. Preserve and report the skip reason. Current host uv 0.10.9 has an
+`environments-v2` bucket, so its expected outcome is audit-only. Do not remove
+that bucket to make the guard pass. The native in-use check remains enabled;
+never use `--force`. Fixtures and a native linked-project-environment regression
+must prove the refusal preserves its marker and does not invoke prune.
 
 `until=168h` is an image-creation cutoff as enforced by the engines, not proof
 that an image has gone unused for seven days. Images referenced by even stopped
@@ -578,7 +593,7 @@ run destructive verification against the real host.
 | AC-07 | Disposable Btrfs scenario: prepare a cache subvolume under home, create cache data, snapshot home, clean the cache and sync. Verify measurable reclaimed bytes, excluded cache contents in the home snapshot, unchanged application paths/ownership, preserved source hashes and unchanged backup retention. |
 | AC-08 | Disposable systemd user scenario with an over-budget cache: inspect calendar/persistence, simulate a missed run, execute native cleanup and verify reclaimed cache space. Assert module/source preservation and explicit busy-build, missing-tool, wrong-subvolume and cleanup-error outcomes. |
 | AC-09 | Fixtures assert exact BuildKit space options, 168h image cutoff, fixed host socket/default builder and forbidden command absence. A disposable Docker daemon contains an active/referenced image, unused candidate, stopped container and unattached volume marker; native pruning preserves protected content while reclaiming eligible cache/image records. |
-| AC-10 | Command fixtures assert rootless/local Podman, native npm verify, non-forced offline uv prune, validated paths and visible missing-tool/failure outcomes. Disposable native Podman/npm/uv scenarios verify generated package/image caches, referenced-image and project/environment marker preservation. |
+| AC-10 | Command fixtures assert rootless/local Podman, native npm verify, non-forced offline uv prune only for the eligible version/layout, validated paths and visible missing-tool/failure outcomes. Disposable native Podman/npm/uv scenarios verify generated package/image caches, referenced-image and project/environment marker preservation. A project symlink into an environments bucket, an unknown version/bucket and active uv each prevent prune; their markers remain. |
 | AC-11 | Fixtures reproduce the supplied growth classes and incomplete readings, including directory names with shell metacharacters, locked/dirty/unmerged worktrees, orphan volumes, unknown editor cache, permission errors and timeout. Assert explicit class/path/threshold warnings and no destructive commands or filesystem changes in audit modes. |
 | AC-12 | Disposable systemd/container runtime: install twice, inspect exact daily/root/user calendars plus Persistent=true, force missed timestamps, restart, observe intended services and remove. Retain unrelated unit/data hashes. Inject ambient remote contexts, unavailable daemon, malformed accounting and prune failure; assert no remote command, no success-shaped fallback and preserved configuration. |
 
@@ -603,6 +618,7 @@ None.
 | 2026-11-11 | R-1 | spec | `64464540e5510f3bc2d66aba09819842a9f7dc56` | n/a | n/a | accepted by owner |
 | 2026-11-11 | R-2 | implementation | `63b87884abe8ccfbb3d3bc3234d857c7c157e078` | unknown | procedural | Six criteria met; AC-03 and AC-08 not met; blocking F-01; model identity not attested |
 | 2026-11-12 | R-3 | implementation | `28bbadca764f060d5ddb5cb6f4516e3a918813db` | unknown | procedural | All eight Go-only criteria met; model identity not attested; broader storage scope requested afterward |
+| 2026-11-12 | R-4 | spec | `47b18f429fa6038d1b3b548b5374a7d85460bddd` | unknown | procedural | Blocking uv environment-preservation conflict and byte-unit correction; model identity not attested |
 
 ### R-1
 
@@ -683,6 +699,22 @@ CRITERION: AC-08 The explicitly enabled user cleanup schedule catches missed run
 VERDICT: met
 EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, native tests passed direct and installed-service cleanup under ambient/persisted GOFLAGS=-modcache with modules/settings preserved. Additional probes verified the exact *-*-* 00/4:15:00 calendar and Persistent=true, then observed missed-run cleanup after disposable restart at 2026-11-12 00:44:01 UTC. Over-budget objects disappeared while modules, source, profiles, browsers and Go settings remained intact. Busy, failed and unsupported cases returned documented nonzero outcomes.
 
+### R-4
+
+FINDING: F-01
+KIND: factual
+SEVERITY: blocking
+WHERE: Design: Additional consumer policy; AC-10; Test Plan AC-10
+EVIDENCE: docs/internal/plans/fedora-storage-guard.md:385 requires uv cache prune, while AC-10:564 promises project/environment preservation. Released uv 0.13.7 removes all cached environments, including centralized project environments referenced by .venv links: https://github.com/astral-sh/uv/blob/0.13.7/crates/uv-cache/src/lib.rs#L710-L723. Neither offline mode nor omission of --force prevents this removal.
+PROPOSAL: Require fail-closed eligibility checks protecting centralized project environments, leaving uv audit-only when preservation cannot be established. Add a native regression with a linked project environment and protected marker.
+
+FINDING: F-02
+KIND: factual
+SEVERITY: should-fix
+WHERE: Design: Additional consumer policy, lines 376-378
+EVIDENCE: The specification calls 20GB/10GB decimal values. Buildx v0.39.0 commands/prune.go uses opts.MemBytes; Docker CLI v29.9.3 opts/opts.go:420-423 parses that type with units.RAMInBytes. These arguments therefore mean 21,474,836,480 and 10,737,418,240 bytes, contradicting the stated decimal targets.
+PROPOSAL: Pass explicit values 20000000000 and 10000000000 for the specified decimal targets. Update the command expectations to verify their byte meanings.
+
 ## Sources
 
 - [Btrfs balance manual](https://btrfs.readthedocs.io/en/latest/btrfs-balance.html): data/device/usage/limit filters, workspace requirements and ENOSPC limits.
@@ -691,3 +723,4 @@ EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, native tests passed direc
 - [Btrfs subvolumes](https://btrfs.readthedocs.io/en/latest/Subvolumes.html): nested subvolumes are excluded from nonrecursive parent snapshots; received UUIDs identify source snapshots.
 - [Feature documents](https://github.com/vhco-pro/docs/blob/0e52f51f01b84eda75a976763c42d8ec0a07b544/conventions/feature-documents.md): draft, review, acceptance and evidence requirements at the existing PDS pin.
 - [Docker build garbage collection](https://docs.docker.com/build/cache/garbage-collection/): native size/age retention targets and their distinction from hard quotas.
+- [uv 0.10.9 cache pruning](https://github.com/astral-sh/uv/blob/0.10.9/crates/uv-cache/src/lib.rs): environment-bucket and unknown-bucket removal requires conservative eligibility checks, not just omission of `--force`.
