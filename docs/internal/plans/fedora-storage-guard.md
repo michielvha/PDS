@@ -1,6 +1,6 @@
 ---
 status: in-progress
-status_description: "R-2 F-01 is fixed with direct and installed-service regressions; independent re-review is required before installation."
+status_description: "R-2 F-01 is fixed and 22 checks pass; independent re-review could not start, so live installation and PR delivery remain pending."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Reclaim over-budget Go build cache on a repeatable schedule without home snapshots retaining its discarded contents."
@@ -231,6 +231,14 @@ query still reads the existing cache path. Module markers and the user's Go
 settings file now survive direct preparation, direct cleanup and installed
 service execution in disposable Fedora. The blocking review remains history
 until an independent re-review verifies the new commit.
+
+The repaired source target is `3f1aa2fd7bb3a16118f5eb5f366bd691cdf9e58c`.
+The original synchronous reviewer could not accept a follow-up. A fresh bounded
+independent re-review dispatch failed before returning a result because its
+model HTTP connection closed after five native retries. No review row or model
+identity is fabricated for that failure. No live preparation, timer
+installation, feature-branch push or implementation PR has run. The accepted
+publication and live-operation permissions remain scoped to verified delivery.
 
 Python test execution validates parsing and runtime behavior. The initial
 Pylance syntax check passed; a later editor syntax-check request timed out.
