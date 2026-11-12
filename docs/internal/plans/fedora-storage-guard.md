@@ -481,6 +481,7 @@ None.
 | 2026-11-11 | R-1 | spec | `64464540e5510f3bc2d66aba09819842a9f7dc56` | unknown | procedural | No findings; model identity not attested |
 | 2026-11-11 | R-1 | spec | `64464540e5510f3bc2d66aba09819842a9f7dc56` | n/a | n/a | accepted by owner |
 | 2026-11-11 | R-2 | implementation | `63b87884abe8ccfbb3d3bc3234d857c7c157e078` | unknown | procedural | Six criteria met; AC-03 and AC-08 not met; blocking F-01; model identity not attested |
+| 2026-11-12 | R-3 | implementation | `28bbadca764f060d5ddb5cb6f4516e3a918813db` | unknown | procedural | All eight Go-only criteria met; model identity not attested; broader storage scope requested afterward |
 
 ### R-1
 
@@ -526,6 +527,40 @@ SEVERITY: blocking
 WHERE: bash/fedora/storage_maintenance.sh:265 and bash/fedora/storage_maintenance.sh:346
 EVIDENCE: Both native clean invocations constrain GOCACHE, GOCACHEPROG and GOTOOLCHAIN but inherit effective GOFLAGS, including persistent go env configuration. In disposable Fedora at 63b87884abe8ccfbb3d3bc3234d857c7c157e078, go env -w GOFLAGS=-modcache caused preparation and direct cleanup to delete module-cache data while returning 0. The installed user service independently reproduced deletion and reported success. Thus the apparently fixed clean -cache command also performs explicitly excluded module-cache removal.
 PROPOSAL: Constrain effective Go flags for both preparation and cleanup, including persistent configuration, so additional cleanup targets cannot be selected. Add native direct-command and installed-user-service regression checks asserting module-cache preservation with GOFLAGS=-modcache configured.
+
+### R-3
+
+CRITERION: AC-01 After approved Go cache-subvolume preparation, future home snapshots omit Go cache contents while live application paths, ownership, source files and the independent backup schedule and retention remain intact.
+VERDICT: met
+EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, the executed native Fedora/Btrfs lifecycle test verified cache exclusion from a retained home snapshot, unchanged application path, preserved UID/GID/mode and unchanged source and backup-configuration hashes. Verification used disposable storage, not the live host.
+
+CRITERION: AC-02 Scheduled filesystem monitoring leaves application/cache contents, allocation profiles and block-group placement unchanged while surfacing a reserve breach despite abundant aggregate free space, with the documented status and notification outcome.
+VERDICT: met
+EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, executed fixtures reported the constrained device despite abundant aggregate space and verified notification success, absence and failure outcomes. Native monitoring preserved the complete chunk-tree dump, cache measurements/content digest and protected-data hashes. A failed native desktop delivery returned documented status 2; installed monitoring produced journal measurements.
+
+CRITERION: AC-03 Unsafe, busy, malformed or unsuccessful cache-preparation and cleanup attempts preserve source/module/profile data and cannot return success when a required check or cleanup fails.
+VERDICT: met
+EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, executed tests covered unsafe paths/layouts, unknown files, busy builds, missing tools, malformed measurements, cleanup failure and interrupted preparation. Native ambient/persisted GOFLAGS=-modcache regressions preserved modules and Go settings. Additional native probes verified custom configured GOCACHE refusal without changing settings and safe preparation with hostile GOFLAGS, GOCACHEPROG and GOTOOLCHAIN settings.
+
+CRITERION: AC-04 The installed read-only monitor survives reboot, catches a missed calendar run, remains singular after reinstall, and can be removed without affecting application data or unrelated timers.
+VERDICT: met
+EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, native lifecycle tests passed reinstall, conflicting-file refusal, unit validation and selective uninstall with preserved unrelated timers/data. An additional probe aged the hourly Persistent=true timer stamp, restarted the disposable systemd container and observed its new trigger at 2026-11-12 00:44:00 UTC with journal measurements. This establishes disposable restart behavior, not a live Fedora reboot or enforcing-SELinux installation.
+
+CRITERION: AC-05 The maintenance script works directly from a Fedora checkout and its installed copy, while ordinary sourcing has no side effects and existing PDS commands retain their behavior.
+VERDICT: met
+EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, bash -n and ShellCheck passed. Unittest discovery executed all 22 tests successfully, including native checkout/installed execution, unchanged sourcing options/traps with no tool execution and identical existing CLI help/info output. Test scratch paths alone were redirected in memory outside the checkout and within disposable containers; repository files were not edited.
+
+CRITERION: AC-06 Monitoring exposes the documented cache-budget breaches without deleting recent Go objects, installed browsers, profiles or snapshot-retained data, and redirected/plain output retains explicit partial and failure outcomes.
+VERDICT: met
+EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, executed fixtures verified browser-budget warnings, plain captured output, absent-cache reporting and explicit measurement failures. Additional native monitoring reported a newly populated 21 GiB apparent Go-cache breach while preserving cache content, browser/profile/source/module hashes and the chunk tree. Inspection confirmed check mode invokes no cleanup or snapshot deletion.
+
+CRITERION: AC-07 After an approved cache-subvolume migration, native Go cache cleanup reclaims filesystem space even while new home snapshots are retained, without changing application paths, ownership or live source files.
+VERDICT: met
+EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, the executed native lifecycle test prepared the nested cache, built a real Go program and retained a parent home snapshot. After native cleanup and filesystem sync, Btrfs-reported free bytes increased; cache exclusion, path, ownership and source-hash assertions passed. Evidence is from owned two-device loopback Btrfs storage.
+
+CRITERION: AC-08 The explicitly enabled user cleanup schedule catches missed runs and clears an over-budget Go build cache through the native command while preserving module caches and reporting busy, failed and unsupported cleanup attempts.
+VERDICT: met
+EVIDENCE: At 28bbadca764f060d5ddb5cb6f4516e3a918813db, native tests passed direct and installed-service cleanup under ambient/persisted GOFLAGS=-modcache with modules/settings preserved. Additional probes verified the exact *-*-* 00/4:15:00 calendar and Persistent=true, then observed missed-run cleanup after disposable restart at 2026-11-12 00:44:01 UTC. Over-budget objects disappeared while modules, source, profiles, browsers and Go settings remained intact. Busy, failed and unsupported cases returned documented nonzero outcomes.
 
 ## Sources
 
