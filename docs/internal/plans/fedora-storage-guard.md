@@ -1,6 +1,6 @@
 ---
-status: in-progress
-status_description: "R-2 F-01 is fixed and 22 checks pass; independent re-review could not start, so live installation and PR delivery remain pending."
+status: draft
+status_description: "Go-only implementation passed R-3; owner selected broader native-cache/image cleanup and audit-only protection for persistent storage. Revised scope awaits review and acceptance."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Reclaim over-budget Go build cache on a repeatable schedule without home snapshots retaining its discarded contents."
