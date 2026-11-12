@@ -101,6 +101,13 @@ SELinux and normal rootless service behavior require deployment verification.
   still reported approximately 267 GiB available; native reclaimed-image bytes
   are not a promise of immediate exclusive physical reclamation under snapshots.
 
+The first PR CI run built and tested the Debian package but its existing
+Ubuntu image-provisioning fixture discovered the new consumer unit tests
+without jq installed. The fixture now includes the already-required structured
+parser. This is a test-runtime dependency correction; installed scripts and
+their reviewed checksums are unchanged. The failed run is retained as history,
+and completion delivery waits for the rerun.
+
 ### Incident background
 
 Fedora's root and home share a two-device Btrfs filesystem. During the failure,
