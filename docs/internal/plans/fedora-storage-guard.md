@@ -1,6 +1,6 @@
 ---
-status: draft
-status_description: "Go-only implementation passed R-3; owner selected broader native-cache/image cleanup and audit-only protection for persistent storage. Revised scope awaits review and acceptance."
+status: planned
+status_description: "Owner accepted R-5 and authorized verified expanded jobs on Fedora; new implementation tasks remain."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Keep disposable build/package/container caches bounded and surface persistent developer-storage growth without deleting project or volume data."
@@ -620,6 +620,7 @@ None.
 | 2026-11-12 | R-3 | implementation | `28bbadca764f060d5ddb5cb6f4516e3a918813db` | unknown | procedural | All eight Go-only criteria met; model identity not attested; broader storage scope requested afterward |
 | 2026-11-12 | R-4 | spec | `47b18f429fa6038d1b3b548b5374a7d85460bddd` | unknown | procedural | Blocking uv environment-preservation conflict and byte-unit correction; model identity not attested |
 | 2026-11-12 | R-5 | spec | `02f884eff2e6e26cc0e80232a5d868699604f6b3` | unknown | procedural | No findings after uv eligibility and explicit-byte fixes; model identity not attested |
+| 2026-11-12 | R-5 | spec | `02f884eff2e6e26cc0e80232a5d868699604f6b3` | n/a | n/a | accepted by owner |
 
 ### R-1
 
