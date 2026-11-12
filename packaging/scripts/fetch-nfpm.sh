@@ -5,8 +5,8 @@ set -euo pipefail
 [[ "$(uname -s)" == Linux && "$(uname -m)" == x86_64 ]] || { printf '%s\n' 'This bounded package check needs an amd64 Linux host.' >&2; exit 1; }
 destination=$1
 # renovate: datasource=github-release-attachments depName=goreleaser/nfpm
-nfpm_version=v2.48.0
-nfpm_sha256=6d7f9a28b2f397934403950fcbba83f598b08d02edbe79a0815b3b4897341750
+nfpm_version=v2.49.0
+nfpm_sha256=2afaa5ffb5e3493402e31e7c67a5a1fb42133e3f66fc315ca0051934125561c7
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
 mkdir -- "$destination"
