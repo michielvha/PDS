@@ -619,6 +619,7 @@ None.
 | 2026-11-11 | R-2 | implementation | `63b87884abe8ccfbb3d3bc3234d857c7c157e078` | unknown | procedural | Six criteria met; AC-03 and AC-08 not met; blocking F-01; model identity not attested |
 | 2026-11-12 | R-3 | implementation | `28bbadca764f060d5ddb5cb6f4516e3a918813db` | unknown | procedural | All eight Go-only criteria met; model identity not attested; broader storage scope requested afterward |
 | 2026-11-12 | R-4 | spec | `47b18f429fa6038d1b3b548b5374a7d85460bddd` | unknown | procedural | Blocking uv environment-preservation conflict and byte-unit correction; model identity not attested |
+| 2026-11-12 | R-5 | spec | `02f884eff2e6e26cc0e80232a5d868699604f6b3` | unknown | procedural | No findings after uv eligibility and explicit-byte fixes; model identity not attested |
 
 ### R-1
 
@@ -714,6 +715,10 @@ SEVERITY: should-fix
 WHERE: Design: Additional consumer policy, lines 376-378
 EVIDENCE: The specification calls 20GB/10GB decimal values. Buildx v0.39.0 commands/prune.go uses opts.MemBytes; Docker CLI v29.9.3 opts/opts.go:420-423 parses that type with units.RAMInBytes. These arguments therefore mean 21,474,836,480 and 10,737,418,240 bytes, contradicting the stated decimal targets.
 PROPOSAL: Pass explicit values 20000000000 and 10000000000 for the specified decimal targets. Update the command expectations to verify their byte meanings.
+
+### R-5
+
+NO FINDINGS
 
 ## Sources
 
