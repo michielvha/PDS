@@ -1,6 +1,6 @@
 ---
-status: planned
-status_description: "Owner accepted R-5 and authorized verified expanded jobs on Fedora; new implementation tasks remain."
+status: in-progress
+status_description: "Implementing the R-5 accepted broader retention/audit policy on the existing owning branch."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Keep disposable build/package/container caches bounded and surface persistent developer-storage growth without deleting project or volume data."
@@ -605,6 +605,8 @@ run destructive verification against the real host.
       Evidence: The full focused unittest run with `PDS_STORAGE_INTEGRATION=1` passed 19 tests. Native red/green iterations caught privileged subvolume detection, a read-only user-service sandbox, restrictive-umask staging and systemd argument expansion. Bash syntax, focused ShellCheck and the repository's existing bootstrap/CLI syntax and Makefile-help checks pass. Manual documentation-impact review matched all script modes, schedules, exit codes and preservation boundaries to the user guide and Bash index. Criteria await the independent committed-state review.
 - [x] T3 `bash/fedora/storage_maintenance.sh`, `tests/test_storage_maintenance.py`, `docs/fedora-storage-guard.md`, `changelog.md` - reproduce R-2 F-01 for ambient and persisted Go flags, then isolate native cleanup from those flags without changing user configuration; direct preparation, direct cleanup and the installed user service preserve module markers and the full focused/native suite passes (AC-03, AC-08).
       Evidence: Both command fixtures and the native persisted-flag case first reproduced module deletion. After command-local env isolation, all 22 focused/native tests passed. Native preparation, direct cleanup and an installed user service preserved module markers and the Go settings-file hash with `GOFLAGS=-modcache` configured. Bash syntax and focused ShellCheck pass. Manual documentation-impact review updated the guide's isolation contract; R-2 remains unchanged pending re-review.
+- [ ] T4 `tests/test_storage_consumers.py`, `tests/test_storage_maintenance.py` - add command-fixture retention/audit/uv-eligibility tests and disposable native container/package/service preservation scenarios; observe failures before the companion and extra units exist (AC-09, AC-10, AC-11, AC-12).
+- [ ] T5 `bash/fedora/storage_consumers.sh`, `bash/fedora/storage_maintenance.sh`, `tests/test_storage_consumers.py`, `tests/test_storage_maintenance.py`, `docs/fedora-storage-guard.md`, `bash/readme.md`, `changelog.md` - implement host-confined native retention, complete bounded reports and managed daily units; focused shell checks plus fixture/native regressions preserve protected markers and pass (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12).
 
 ## Open Questions
 
