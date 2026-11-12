@@ -1,6 +1,6 @@
 ---
 status: in-progress
-status_description: "Expanded preservation defects are repaired with regressions and native over-target BuildKit proof; independent re-review remains before deployment."
+status_description: "R-7 independently verified all twelve criteria; live Fedora installation and PR delivery are next."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Keep disposable build/package/container caches bounded and surface persistent developer-storage growth without deleting project or volume data."
@@ -571,23 +571,30 @@ run destructive verification against the real host.
 
 ## Acceptance Criteria
 
-- [ ] AC-01: After approved Go cache-subvolume preparation, future home snapshots omit Go cache contents while live application paths, ownership, source files and the independent backup schedule and retention remain intact.
-- [ ] AC-02: Scheduled filesystem monitoring leaves application/cache contents, allocation profiles and block-group placement unchanged while surfacing a reserve breach despite abundant aggregate free space, with the documented status and notification outcome.
-- [ ] AC-03: Unsafe, busy, malformed or unsuccessful cache-preparation and cleanup attempts preserve source/module/profile data and cannot return success when a required check or cleanup fails.
-      Evidence: R-6 returned not met; native npm subtree aliasing and malformed Docker accounting require repair.
-- [ ] AC-04: The installed read-only monitor survives reboot, catches a missed calendar run, remains singular after reinstall, and can be removed without affecting application data or unrelated timers.
-- [ ] AC-05: The maintenance script works directly from a Fedora checkout and its installed copy, while ordinary sourcing has no side effects and existing PDS commands retain their behavior.
-- [ ] AC-06: Monitoring exposes the documented cache-budget breaches without deleting recent Go objects, installed browsers, profiles or snapshot-retained data, and redirected/plain output retains explicit partial and failure outcomes.
-- [ ] AC-07: After an approved cache-subvolume migration, native Go cache cleanup reclaims filesystem space even while new home snapshots are retained, without changing application paths, ownership or live source files.
-- [ ] AC-08: The explicitly enabled user cleanup schedule catches missed runs and clears an over-budget Go build cache through the native command while preserving module caches and reporting busy, failed and unsupported cleanup attempts.
-- [ ] AC-09: Scheduled native Docker retention reclaims eligible local build cache and unreferenced images older than seven days while preserving referenced images, all containers, volume contents and remote engines.
-      Evidence: R-6 returned untested for the composite criterion; native image preservation passed but over-target BuildKit cache reclamation was not observed.
-- [ ] AC-10: Scheduled local rootless Podman, npm and uv maintenance uses only the approved native operations, preserves referenced images and project/environment data, and reports skipped, failed or still-over-budget outcomes.
-      Evidence: R-6 returned not met; an npm _cacache symlink reached project data in a disposable reproduction.
-- [ ] AC-11: Daily reports identify Docker/Podman image and volume usage, unattached Docker volumes, builders directories, review archives, registered/locked worktrees, Go modules, npm, Zed and the remaining user cache without deleting any audit-only content or hiding partial scans.
-      Evidence: R-6 returned not met; a malformed Docker size field was silently omitted.
-- [ ] AC-12: The additional managed timers preserve their exact cadence and retention after reboot/reinstall, can be removed without disturbing unrelated jobs or data, and never broaden cleanup through inherited endpoints or configuration.
-      Evidence: R-6 returned not met; the root service PATH could resolve a user-owned Docker executable.
+- [x] AC-01: After approved Go cache-subvolume preparation, future home snapshots omit Go cache contents while live application paths, ownership, source files and the independent backup schedule and retention remain intact.
+      Evidence: R-7 met at `94a4351d60408b48f27b0367fcaa0e1e718f98e5`; native snapshot/cache preparation and source/backup/ownership checks.
+- [x] AC-02: Scheduled filesystem monitoring leaves application/cache contents, allocation profiles and block-group placement unchanged while surfacing a reserve breach despite abundant aggregate free space, with the documented status and notification outcome.
+      Evidence: R-7 met at the reviewed target; reserve, read-only and notification outcome checks.
+- [x] AC-03: Unsafe, busy, malformed or unsuccessful cache-preparation and cleanup attempts preserve source/module/profile data and cannot return success when a required check or cleanup fails.
+      Evidence: R-7 met at the reviewed target; native npm alias/subvolume and Go settings preservation plus 27 malformed-accounting probes.
+- [x] AC-04: The installed read-only monitor survives reboot, catches a missed calendar run, remains singular after reinstall, and can be removed without affecting application data or unrelated timers.
+      Evidence: R-7 met at the reviewed target; native systemd restart, overdue stamp, reinstall and selective-removal proof, not a live-host reboot.
+- [x] AC-05: The maintenance script works directly from a Fedora checkout and its installed copy, while ordinary sourcing has no side effects and existing PDS commands retain their behavior.
+      Evidence: R-7 met at the reviewed target; all 39 checks, ShellCheck, sourcing and CLI preservation passed.
+- [x] AC-06: Monitoring exposes the documented cache-budget breaches without deleting recent Go objects, installed browsers, profiles or snapshot-retained data, and redirected/plain output retains explicit partial and failure outcomes.
+      Evidence: R-7 met at the reviewed target; explicit budgets/failures and non-destructive plain reports.
+- [x] AC-07: After an approved cache-subvolume migration, native Go cache cleanup reclaims filesystem space even while new home snapshots are retained, without changing application paths, ownership or live source files.
+      Evidence: R-7 met at the reviewed target; native physical byte reclamation with a retained home snapshot and unchanged source hashes.
+- [x] AC-08: The explicitly enabled user cleanup schedule catches missed runs and clears an over-budget Go build cache through the native command while preserving module caches and reporting busy, failed and unsupported cleanup attempts.
+      Evidence: R-7 met at the reviewed target; overdue user timer, exact four-hour calendar, Go flags and unsafe/busy/error regressions.
+- [x] AC-09: Scheduled native Docker retention reclaims eligible local build cache and unreferenced images older than seven days while preserving referenced images, all containers, volume contents and remote engines.
+      Evidence: R-7 met at the reviewed target; real roughly 29 GB BuildKit cache shrank through production byte limits; referenced images/container and unattached-volume marker remained.
+- [x] AC-10: Scheduled local rootless Podman, npm and uv maintenance uses only the approved native operations, preserves referenced images and project/environment data, and reports skipped, failed or still-over-budget outcomes.
+      Evidence: R-7 met at the reviewed target; native package/image/linked-environment preservation and independent npm bind-mount refusal.
+- [x] AC-11: Daily reports identify Docker/Podman image and volume usage, unattached Docker volumes, builders directories, review archives, registered/locked worktrees, Go modules, npm, Zed and the remaining user cache without deleting any audit-only content or hiding partial scans.
+      Evidence: R-7 met at the reviewed target; all-category audit, partial-scan continuation, protected markers and malformed-field rejection.
+- [x] AC-12: The additional managed timers preserve their exact cadence and retention after reboot/reinstall, can be removed without disturbing unrelated jobs or data, and never broaden cleanup through inherited endpoints or configuration.
+      Evidence: R-7 met at the reviewed target; all four calendars/persistence, native restart/removal, no root execution from user paths and endpoint confinement.
 
 ## Test Plan
 
@@ -637,6 +644,7 @@ None.
 | 2026-11-12 | R-5 | spec | `02f884eff2e6e26cc0e80232a5d868699604f6b3` | unknown | procedural | No findings after uv eligibility and explicit-byte fixes; model identity not attested |
 | 2026-11-12 | R-5 | spec | `02f884eff2e6e26cc0e80232a5d868699604f6b3` | n/a | n/a | accepted by owner |
 | 2026-11-12 | R-6 | implementation | `e8f6d2ffc1f6aab05f5f1e8e625eeba8e88d9836` | unknown | procedural | Seven criteria met; four not met and one untested; three findings; model identity not attested |
+| 2026-11-12 | R-7 | implementation | `94a4351d60408b48f27b0367fcaa0e1e718f98e5` | unknown | procedural | All twelve criteria met; no findings; model identity not attested |
 
 ### R-1
 
@@ -807,6 +815,56 @@ SEVERITY: should-fix
 WHERE: bash/fedora/storage_consumers.sh:35-48; AC-11; AC-12
 EVIDENCE: A nonmatching capture() emits no byte value, shortening the collected TSV row instead of raising an error. An executed fixture with four valid categories but Images Size="1", other sizes 0B and no unattached volumes invoked both prune commands, omitted reclaimable output and returned healthy status 0.
 PROPOSAL: Make unmatched size parsing an explicit error and validate every required field before rendering or pruning. Add malformed-field regressions requiring status 2 and zero prune calls.
+
+### R-7
+
+CRITERION: AC-01 After approved Go cache-subvolume preparation, future home snapshots omit Go cache contents while live application paths, ownership, source files and the independent backup schedule and retention remain intact.
+VERDICT: met
+EVIDENCE: At 94a4351d60408b48f27b0367fcaa0e1e718f98e5, the native lifecycle tests passed. An actual Go build populated the prepared cache; retained home snapshots omitted its contents. Cache ownership/mode, source hashes and backup configuration remained unchanged. Inspection found no backup-schedule changes.
+
+CRITERION: AC-02 Scheduled filesystem monitoring leaves application/cache contents, allocation profiles and block-group placement unchanged while surfacing a reserve breach despite abundant aggregate free space, with the documented status and notification outcome.
+VERDICT: met
+EVIDENCE: At the reviewed target, executed reserve, healthy-headroom and notification tests passed. The reserve fixture reported warning status despite abundant aggregate free space. Notification submission, absent-session skips and delivery failures remained explicit. Recorded commands contained no balance, deletion, resize or profile conversion.
+
+CRITERION: AC-03 Unsafe, busy, malformed or unsuccessful cache-preparation and cleanup attempts preserve source/module/profile data and cannot return success when a required check or cleanup fails.
+VERDICT: met
+EVIDENCE: At the reviewed target, executed unsafe-path, unknown-content, nested-filesystem, busy-build, missing-tool, malformed-measurement, interruption and cleanup-failure tests passed. Native Go environment-isolation tests preserved module markers and persistent settings. Native npm symlink/subvolume regressions preserved project markers. Additional malformed Docker probes rejected 27 cases with status 2 before retention.
+
+CRITERION: AC-04 The installed read-only monitor survives reboot, catches a missed calendar run, remains singular after reinstall, and can be removed without affecting application data or unrelated timers.
+VERDICT: met
+EVIDENCE: At the reviewed target, native lifecycle tests verified installation twice, systemd unit validation, timer survival across a disposable systemd-container restart and removal preserving unrelated timers/data. An additional independent probe forced an overdue hourly timestamp and observed the resulting filesystem report in the journal. This establishes disposable restart behavior, not a live-host reboot or SELinux deployment.
+
+CRITERION: AC-05 The maintenance script works directly from a Fedora checkout and its installed copy, while ordinary sourcing has no side effects and existing PDS commands retain their behavior.
+VERDICT: met
+EVIDENCE: At the reviewed target, the requested integration-enabled unittest discovery passed all 39 tests in 71.626 seconds. Native tests exercised checkout and installed scripts and preserved PDS help/info output. Sourcing tests preserved options/traps and executed no tools. The requested ShellCheck command and bash syntax checks passed.
+
+CRITERION: AC-06 Monitoring exposes the documented cache-budget breaches without deleting recent Go objects, installed browsers, profiles or snapshot-retained data, and redirected/plain output retains explicit partial and failure outcomes.
+VERDICT: met
+EVIDENCE: At the reviewed target, executed budget, browser-preservation, malformed-reading and failed-measurement tests passed. Captured output retained explicit warnings/errors and documented statuses without terminal-control output. Monitoring invoked no Go cleanup or destructive Btrfs operation. Native snapshot and source/profile preservation assertions passed.
+
+CRITERION: AC-07 After an approved cache-subvolume migration, native Go cache cleanup reclaims filesystem space even while new home snapshots are retained, without changing application paths, ownership or live source files.
+VERDICT: met
+EVIDENCE: At the reviewed target, executed native two-device Btrfs tests prepared the cache subvolume, populated it through Go, retained a home snapshot and ran native cleanup. Filesystem available bytes increased after synchronization; snapshot exclusion, cache ownership/mode, application paths and source hashes remained intact.
+
+CRITERION: AC-08 The explicitly enabled user cleanup schedule catches missed runs and clears an over-budget Go build cache through the native command while preserving module caches and reporting busy, failed and unsupported cleanup attempts.
+VERDICT: met
+EVIDENCE: At the reviewed target, native lifecycle tests forced overdue user-timer timestamps and observed over-budget cache removal after the disposable restart. Native scheduled cleanup preserved module markers despite ambient/persistent Go flags. Executed boundary, busy-build, unsafe-layout and cleanup-failure tests passed. An additional probe confirmed the exact four-hour calendar and Persistent=true after reinstall.
+
+CRITERION: AC-09 Scheduled native Docker retention reclaims eligible local build cache and unreferenced images older than seven days while preserving referenced images, all containers, volume contents and remote engines.
+VERDICT: met
+EVIDENCE: At the reviewed target, the native over-target BuildKit test executed successfully using four 7000 MiB cache mounts. Measured cache exceeded 20000000000 bytes before production cleanup and decreased afterward. Production arguments retained the exact 20000000000/10000000000 byte limits. Native image retention removed the eligible old image while preserving recent/referenced images, the stopped container and volume marker. Endpoint fixtures confined operations to the local socket/default builder.
+
+CRITERION: AC-10 Scheduled local rootless Podman, npm and uv maintenance uses only the approved native operations, preserves referenced images and project/environment data, and reports skipped, failed or still-over-budget outcomes.
+VERDICT: met
+EVIDENCE: At the reviewed target, executed native Podman/npm/uv tests preserved referenced images, project/module markers and linked environments; eligible uv pruning also ran. Fixtures verified approved operations and version/layout/activity refusals. Native npm symlink and nested Btrfs-root regressions returned status 2 with markers intact. Additional independent probes rejected cache-root and nested bind mounts. Inspection confirmed failed confinement prevents npm verification and subsequent audits retain budget/error reporting.
+
+CRITERION: AC-11 Daily reports identify Docker/Podman image and volume usage, unattached Docker volumes, builders directories, review archives, registered/locked worktrees, Go modules, npm, Zed and the remaining user cache without deleting any audit-only content or hiding partial scans.
+VERDICT: met
+EVIDENCE: At the reviewed target, executed audit tests reported the required storage classes, volume count and warnings, preserved archive/project markers and treated failed directory scans as incomplete while continuing other categories. Inspection confirmed native read-only worktree registration/lock inventory. Independent malformed-accounting probes rejected missing, invalid and duplicate required Docker fields/categories instead of silently omitting rows.
+
+CRITERION: AC-12 The additional managed timers preserve their exact cadence and retention after reboot/reinstall, can be removed without disturbing unrelated jobs or data, and never broaden cleanup through inherited endpoints or configuration.
+VERDICT: met
+EVIDENCE: At the reviewed target, native lifecycle tests verified daily timers, missed-run execution after disposable restart, reinstall and removal preserving unrelated jobs/data. Independent checks confirmed all four exact calendars and Persistent=true. Native regression hid system Docker and observed no user executable running as root; inspection confirmed user paths remain confined to the nonroot service. Endpoint/Go-configuration isolation tests passed, and 27 malformed Docker probes prevented retention. No live-host reboot, deployment or SELinux claim is made.
 
 ## Sources
 
