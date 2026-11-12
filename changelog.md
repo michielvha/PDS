@@ -30,6 +30,7 @@
 
 ### Fixed
 
+- Refuse npm verification through subtree aliases/mounts, keep user executables out of root-service resolution, and reject malformed container byte accounting before pruning. Add native over-target BuildKit reclamation and data-preservation regressions.
 - Isolate native cache-maintenance children from ambient and persisted Go flags so `GOFLAGS=-modcache` cannot extend cleanup into module storage. Preserve the user's Go configuration.
 - Keep ordinary Krew installs per user when an image profile exports the shared root, export shell-local custom roots, and keep root/PATH selection together when switching roots.
 - Load installed libraries and resolve their imports/assets in Zsh without downloads or changes to caller options.

@@ -1,6 +1,6 @@
 ---
 status: in-progress
-status_description: "Expanded review found npm path confinement, root PATH and malformed-accounting defects; repair and native cache-reclamation proof are pending."
+status_description: "Expanded preservation defects are repaired with regressions and native over-target BuildKit proof; independent re-review remains before deployment."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Keep disposable build/package/container caches bounded and surface persistent developer-storage growth without deleting project or volume data."
@@ -55,7 +55,7 @@ remote Docker/Podman contexts. Rollback removes only managed jobs/scripts;
 already discarded caches/images regenerate on demand.
 
 No broader live cleanup has run. The owner accepted R-5 and authorized
-installation after verification. The full focused suite now passes 36 checks,
+installation after verification. The full focused suite now passes 39 checks,
 including native isolated Docker/Podman image retention, persistent-data
 preservation, linked-uv-environment refusal, npm verification, original Go
 cache safety and missed-calendar behavior. Bash syntax and source-aware
@@ -618,6 +618,8 @@ run destructive verification against the real host.
       Evidence: The initial targeted discovery observed nine failed assertions/subcases against the missing companion. Fixture cases cover exact host-local cleanup commands, 109 unattached-volume warning, malformed accounting, native user operations, linked uv environment preservation and read-only archive/worktree handling. Native coverage is added with T5 before its verification.
 - [x] T5 `bash/fedora/storage_consumers.sh`, `bash/fedora/storage_maintenance.sh`, `tests/test_storage_consumers.py`, `tests/test_storage_maintenance.py`, `docs/fedora-storage-guard.md`, `bash/readme.md`, `changelog.md` - implement host-confined native retention, complete bounded reports and managed daily units; focused shell checks plus fixture/native regressions preserve protected markers and pass (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12).
       Evidence: `PDS_STORAGE_INTEGRATION=1 PDS_STORAGE_TEST_IMAGE=pds-storage-consumers:1b889891 python3 -m unittest discover -s tests -p 'test_storage_*.py' -v` passed 36 checks. Native Docker removed a backdated unreferenced image while preserving a referenced image/container and an unattached volume marker; native rootless Podman retained its referenced image/container. Npm verification and uv eligible/refusal paths passed. Exact daily units survived systemd restart and missed stamps; managed removal preserved unrelated jobs. Native testing caught npm duplicate-config and rootless subordinate-ID privilege problems before deployment. Both Bash scripts pass source-aware ShellCheck; manual documentation-impact review updated actual modes, schedules, warning classes and preservation limits.
+- [x] T6 `bash/fedora/storage_consumers.sh`, `bash/fedora/storage_maintenance.sh`, `tests/test_storage_consumers.py`, `tests/test_storage_maintenance.py`, `docs/fedora-storage-guard.md`, `changelog.md` - reproduce and repair R-6 npm subtree aliasing, root-service executable resolution and malformed accounting; verify native BuildKit reclamation above the production byte target and preserve all protected markers (AC-03, AC-09, AC-10, AC-11, AC-12).
+      Evidence: Added failing npm-subtree and malformed-size regressions, then refused npm symlinks/nested mounts/subvolumes, removed user paths from the root service and made unmatched size/field parsing fail before pruning. Native service testing hid the system Docker CLI and verified no user executable ran as root. Native over-target proof populated four real cache mounts totalling about 29 GB and observed reduction through the production retention command. All 39 focused/native checks passed, followed by the additional nested-subvolume preservation check and ShellCheck. The source remains pending independent re-review; old R-6 records are retained unchanged.
 
 ## Open Questions
 

@@ -82,8 +82,11 @@ elif name == 'stat':
         value = value.replace(key, replacement)
     print(value)
 elif name == 'findmnt':
-    print(state.get('cache_mount_target', '/') if 'TARGET' in args
-          else state.get('filesystem', 'btrfs'))
+    if '--json' in args:
+        print(json.dumps({'filesystems': [{'target': '/'}]}))
+    else:
+        print(state.get('cache_mount_target', '/') if 'TARGET' in args
+              else state.get('filesystem', 'btrfs'))
 elif name == 'pgrep':
     if state.get('busy'):
         print('12345')
@@ -622,6 +625,17 @@ systemctl enable --now pds-storage-fixture-unrelated.timer
             '/etc/systemd/system/pds-btrfs-headroom.timer')
         self.execute('systemctl start pds-btrfs-headroom.service; '
                      'test "$(systemctl show -p Result --value pds-btrfs-headroom.service)" = success')
+        self.execute(
+            'mkdir -p ~/.local/bin; '
+            'printf \'#!/bin/bash\\nid -u >/test-btrfs/home/pds-test/root-docker-executed\\n\' >~/.local/bin/docker; '
+            'chmod +x ~/.local/bin/docker', user='1000:1000')
+        self.execute('mv /usr/bin/docker /usr/bin/pds-test-held-docker')
+        try:
+            no_cli = self.execute('systemctl start pds-cache-docker.service', check=False)
+            self.execute(f'test ! -e {home}/root-docker-executed')
+        finally:
+            self.execute('mv /usr/bin/pds-test-held-docker /usr/bin/docker')
+            self.execute('rm ~/.local/bin/docker', user='1000:1000')
         self.execute('systemctl --user start pds-go-cache-clean.service',
                      user='1000:1000')
         self.execute(

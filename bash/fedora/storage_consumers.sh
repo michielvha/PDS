@@ -34,12 +34,18 @@ _pds_consumer_docker_audit() {
     fi
     rows=$(printf '%s\n' "$records" | jq -ser '
         def bytes:
-            capture("^(?<n>[0-9]+(?:\\.[0-9]+)?)(?<u>B|kB|KB|MB|GB|TB)$") |
+            (capture("^(?<n>[0-9]+(?:\\.[0-9]+)?)(?<u>B|kB|KB|MB|GB|TB)$")
+             // error("invalid Docker size")) |
             (.n|tonumber) * ({B:1,kB:1000,KB:1000,MB:1000000,GB:1000000000,TB:1000000000000}[.u]);
         if length != 4 or
            ([.[].Type]|sort) != (["Images","Containers","Local Volumes","Build Cache"]|sort)
         then error("incomplete Docker accounting") else . end |
-        .[] | [.Type, (.TotalCount|tonumber), (.Size|bytes), .Size, .Reclaimable] | @tsv
+        .[] | if (.TotalCount|type)!="string" or
+                  (.TotalCount|test("^[0-9]+$")|not) or
+                  (.Reclaimable|type)!="string" or .Reclaimable==""
+              then error("missing Docker fields") else . end |
+        (.Reclaimable|split(" ")[0]|bytes) as $reclaimable_bytes |
+        [.Type, (.TotalCount|tonumber), (.Size|bytes), .Size, .Reclaimable] | @tsv
     ') || {
         _pds_consumer_error 'Malformed or incomplete Docker accounting; refuse retention.'
         return 2
@@ -211,8 +217,12 @@ _pds_consumer_cleanup_user() {
     path="$storage_home/.npm"
     if command -v npm >/dev/null; then
         if [[ -d "$path" && ! -L "$path" && "$(realpath -e -- "$path")" == "$path" ]]; then
-            env NPM_CONFIG_USERCONFIG=/dev/null NPM_CONFIG_GLOBALCONFIG=/etc/npmrc \
-                npm cache verify --cache "$path" || _pds_consumer_error 'Native npm verification failed.'
+            if _pds_consumer_npm_confined "$path"; then
+                env NPM_CONFIG_USERCONFIG=/dev/null NPM_CONFIG_GLOBALCONFIG=/etc/npmrc \
+                    npm cache verify --cache "$path" || _pds_consumer_error 'Native npm verification failed.'
+            else
+                _pds_consumer_error 'Npm cache aliases or unreadable subtrees prevent safe verification.'
+            fi
         else
             printf 'SKIP npm verification: cache absent or unsafe\n'
         fi
@@ -221,6 +231,25 @@ _pds_consumer_cleanup_user() {
     fi
     _pds_consumer_uv || _pds_consumer_error 'UV eligibility/pruning failed; no forced fallback.'
 }
+
+_pds_consumer_npm_confined() (
+    local path="$1" listing mounts
+    listing=$(mktemp) || return 2
+    trap 'rm -f -- "$listing"' EXIT
+    # Nested Btrfs subvolume roots (inode 256) need not appear in mountinfo.
+    if ! find "$path" -mindepth 1 -xdev \
+        \( -type l -o \( -type d -inum 256 \) \) -print0 >"$listing"; then return 2; fi
+    if [[ -s "$listing" ]]; then
+        printf 'ERROR npm cache contains an alias; no verification ran\n' >&2
+        return 2
+    fi
+    mounts=$(findmnt --list --json --output TARGET) || return 2
+    printf '%s\n' "$mounts" | jq -e --arg path "$path" '
+        .filesystems | if type!="array" then error("invalid mount inventory") else . end |
+        all(.[]; (.target|type)=="string" and
+            (.target != $path and (.target|startswith($path+"/")|not)))
+    ' >/dev/null
+)
 
 storage_consumers() (
     set -euo pipefail

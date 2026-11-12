@@ -476,7 +476,7 @@ _pds_storage_work_cleanup() {
 }
 
 _pds_storage_install() (
-    local work source_file consumer_source go_arg mount_arg role calendar file no_new_privileges
+    local work source_file consumer_source go_arg mount_arg role calendar file no_new_privileges service_path
     [[ "$(id -u)" == 0 ]] || {
         _pds_storage_error 'install requires root.'
         return 2
@@ -563,8 +563,10 @@ EOF
     for role in docker user; do
         if [[ "$role" == docker ]]; then
             calendar='*-*-* 04:45:00'; no_new_privileges=true
+            service_path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         else
             calendar='*-*-* 05:15:00'; no_new_privileges=false
+            service_path="/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$storage_home/.local/bin"
         fi
         cat >"$work/$role-daily.service" <<EOF
 # Managed by PDS storage maintenance.
@@ -575,7 +577,7 @@ Description=PDS $role native cache retention and storage audit
 [Service]
 Type=oneshot
 ExecStart=:/usr/bin/bash $storage_consumer_program cleanup-$role --user $storage_user
-Environment=PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$storage_home/.local/bin
+Environment=PATH=$service_path
 NoNewPrivileges=$no_new_privileges
 Nice=10
 IOSchedulingClass=idle

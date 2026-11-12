@@ -39,6 +39,8 @@ if name == 'docker':
                                       ('Containers', '687MB', '69'),
                                       ('Local Volumes', '47.57GB', '118'),
                                       ('Build Cache', '121GB', '600')]:
+                if kind == 'Images':
+                    size = state.get('image_size', size)
                 print(json.dumps({'Type': kind, 'Size': size,
                                   'Reclaimable': size, 'TotalCount': count, 'Active': '0'}))
     elif args[:2] == ['volume', 'ls']:
@@ -119,12 +121,14 @@ class ConsumerTests(unittest.TestCase):
         self.assertFalse(any('prune' in call['args'] for call in self.commands('docker')))
 
     def test_ac12_failed_prune_and_malformed_accounting_are_not_success(self):
-        for state in ({'consumer_failure': 'docker'}, {'malformed_accounting': True}):
+        for state in ({'consumer_failure': 'docker'}, {'malformed_accounting': True},
+                      {'image_size': '1'}, {'image_size': 'invalid'}):
             with self.subTest(state=state):
                 result = self.run_consumer('cleanup-docker', root=True, **state)
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                 self.state['consumer_failure'] = ''
                 self.state['malformed_accounting'] = False
+                self.state.pop('image_size', None)
 
     def test_ac10_native_user_operations_do_not_prune_persistent_data(self):
         result = self.run_consumer('cleanup-user')
@@ -204,6 +208,16 @@ class ConsumerTests(unittest.TestCase):
         self.assertEqual((unknown / 'keep').read_text(), 'must not disappear')
         self.assertFalse(any('prune' in call['args'] for call in self.commands('uv')))
 
+    def test_ac10_npm_subtree_symlink_is_preserved_and_refused(self):
+        outside = self.home / 'code/project-cache'
+        outside.mkdir()
+        (outside / 'keep').write_text('project source')
+        (self.home / '.npm/_cacache').symlink_to(outside, target_is_directory=True)
+        result = self.run_consumer('cleanup-user')
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertFalse(self.commands('npm'))
+        self.assertEqual((outside / 'keep').read_text(), 'project source')
+
 
 @unittest.skipUnless(os.environ.get('PDS_STORAGE_INTEGRATION') == '1',
                      'set PDS_STORAGE_INTEGRATION=1 for disposable native consumers')
@@ -213,7 +227,8 @@ class ConsumerNativeTests(go_tests.StorageFedoraIntegration):
         super().setUpClass()
         cls.execute('mkdir -p /etc/docker; '
                     'printf \'{"storage-driver":"vfs","iptables":false,"bridge":"none",'
-                    '"features":{"containerd-snapshotter":false}}\\n\' >/etc/docker/daemon.json; '
+                    '"features":{"containerd-snapshotter":false},'
+                    '"builder":{"gc":{"enabled":false}}}\\n\' >/etc/docker/daemon.json; '
                     'systemctl enable --now docker')
         cls.wait_for('docker info >/dev/null')
         # Docker Desktop cannot grant a second subordinate-ID range to nested Podman.
@@ -251,6 +266,30 @@ printf preserve-volume >"$volume/keep"
         self.assertEqual(self.execute(
             "docker inspect -f '{{.Id}}' pds-retained; "
             "docker image inspect -f '{{.Id}}' pds-old-referenced").stdout, before)
+
+    def test_ac09_native_over_target_buildkit_cache_is_reclaimed(self):
+        self.execute("""
+mkdir -p /var/tmp/pds-large-cache
+printf 'FROM busybox:1.37.0@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec\\n' >/var/tmp/pds-large-cache/Dockerfile
+for slot in 1 2 3 4; do
+  printf 'RUN --mount=type=cache,id=pds-large-%s,target=/cache dd if=/dev/zero of=/cache/payload bs=1048576 count=7000\\n' "$slot" >>/var/tmp/pds-large-cache/Dockerfile
+done
+docker build --network=none -t pds-cache-fixture /var/tmp/pds-large-cache
+""", timeout=600)
+        query = (
+            "docker buildx du --format json | jq -s "
+            """'[.[].Size | capture("^(?<n>[0-9.]+)(?<u>B|kB|MB|GB|TB)$") |
+            (.n|tonumber)*({B:1,kB:1000,MB:1000000,GB:1000000000,TB:1000000000000}[.u])]
+            | add // 0'"""
+        )
+        before = int(self.execute(query).stdout.strip())
+        self.assertGreater(before, 20000000000)
+        result = self.execute(
+            'bash /work/bash/fedora/storage_consumers.sh cleanup-docker --user pds-test',
+            check=False, timeout=600)
+        self.assertIn(result.returncode, (0, 1), result.stdout + result.stderr)
+        after = int(self.execute(query).stdout.strip())
+        self.assertLess(after, before, result.stdout + result.stderr)
 
     def test_ac10_native_packages_and_linked_uv_environment_remain(self):
         home = '/test-btrfs/home/pds-test'
@@ -304,6 +343,31 @@ chmod 0644 /var/tmp/pds-podman-images.tar
         result = self.execute(f'runuser -u uv-only -- env HOME={home} bash -euc '
                               + shlex.quote(command))
         self.assertNotIn('SKIP', result.stdout + result.stderr)
+
+    def test_ac10_native_npm_symlink_does_not_remove_project_marker(self):
+        self.execute(
+            'mkdir -p ~/code/project/content-v2/aa/bb ~/.npm; '
+            'printf preserve-source >~/code/project/content-v2/aa/bb/marker; '
+            'ln -s ~/code/project ~/.npm/_cacache', user='1000:1000')
+        result = self.execute(
+            'bash /work/bash/fedora/storage_consumers.sh cleanup-user --user pds-test',
+            user='1000:1000', check=False, timeout=180)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.execute('test "$(cat ~/code/project/content-v2/aa/bb/marker)" = preserve-source',
+                     user='1000:1000')
+        self.execute('rm ~/.npm/_cacache', user='1000:1000')
+        self.execute(
+            'btrfs subvolume create ~/.npm/_cacache; '
+            'mkdir -p ~/.npm/_cacache/content-v2/aa/bb; '
+            'printf preserve-nested >~/.npm/_cacache/content-v2/aa/bb/marker',
+            user='1000:1000')
+        nested = self.execute(
+            'bash /work/bash/fedora/storage_consumers.sh cleanup-user --user pds-test',
+            user='1000:1000', check=False, timeout=180)
+        self.assertEqual(nested.returncode, 2, nested.stdout + nested.stderr)
+        self.execute('test "$(cat ~/.npm/_cacache/content-v2/aa/bb/marker)" = preserve-nested',
+                     user='1000:1000')
+        self.execute('btrfs subvolume delete /test-btrfs/home/pds-test/.npm/_cacache')
 
 
 if __name__ == '__main__':
