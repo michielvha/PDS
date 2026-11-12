@@ -428,12 +428,14 @@ class StorageFedoraIntegration(unittest.TestCase):
     def setUpClass(cls):
         cls.container = 'pds-storage-' + uuid.uuid4().hex[:12]
         cls.image = os.environ.get('PDS_STORAGE_TEST_IMAGE',
-                                   'pds-storage-fixture:fedora43-cd9d2565')
+                                   'pds-storage-fixture:fedora43-consumers-v1')
         if cls.docker('image', 'inspect', cls.image, check=False).returncode:
             fixture = (
                 f'FROM {FEDORA_IMAGE}\n'
                 'RUN dnf -y install btrfs-progs golang systemd python3 util-linux '
-                'procps-ng dbus-daemon libnotify shadow-utils findutils && dnf clean all\n'
+                'procps-ng dbus-daemon libnotify shadow-utils findutils jq npm podman '
+                'moby-engine docker-cli docker-buildx python3-pip && dnf clean all\n'
+                'RUN python3 -m pip install --no-cache-dir uv==0.10.9\n'
                 'ENV container=docker\nSTOPSIGNAL SIGRTMIN+3\nCMD ["/sbin/init"]\n'
             )
             cls.docker('build', '-t', cls.image, '-', input=fixture, timeout=600)
@@ -449,6 +451,8 @@ class StorageFedoraIntegration(unittest.TestCase):
                     'printf "fixture_noop() { :; }\\n" >/work/lib/common/utils/fixture.sh; '
                     'printf "0.0.0\\n" >/work/lib/VERSION')
         cls.docker('cp', str(SCRIPT), cls.container + ':/work/bash/fedora/storage_maintenance.sh')
+        cls.docker('cp', str(ROOT / 'bash/fedora/storage_consumers.sh'),
+                   cls.container + ':/work/bash/fedora/storage_consumers.sh')
         cls.docker('cp', str(ROOT / 'packaging/bin/pds'),
                    cls.container + ':/work/packaging/bin/pds')
         cls.cli_command = (
@@ -627,12 +631,18 @@ systemctl enable --now pds-storage-fixture-unrelated.timer
             user='1000:1000')
         self.execute(
             'systemctl --user stop pds-go-cache-clean.timer; '
+            'systemctl --user stop pds-cache-user.timer; '
             'mkdir -p ~/.local/share/systemd/timers; '
             'touch -d "2 days ago" ~/.local/share/systemd/timers/stamp-pds-go-cache-clean.timer; '
+            'touch -d "2 days ago" ~/.local/share/systemd/timers/stamp-pds-cache-user.timer; '
             'mkdir -p ~/.cache/go-build/aa; '
             'truncate -s 21G ~/.cache/go-build/aa/'
             'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d',
             user='1000:1000')
+        self.execute(
+            'systemctl stop pds-cache-docker.timer; '
+            'mkdir -p /var/lib/systemd/timers; '
+            'touch -d "2 days ago" /var/lib/systemd/timers/stamp-pds-cache-docker.timer')
         self.execute("""cat >/var/tmp/pds-loop/boot.sh <<'BOOT'
 #!/bin/bash
 set -euo pipefail
@@ -663,15 +673,31 @@ systemctl enable pds-test-loop.service
             'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d',
             seconds=60)
         self.execute('systemctl is-active pds-btrfs-headroom.timer')
+        self.execute('systemctl is-active pds-cache-docker.timer; '
+                     'systemctl cat pds-cache-docker.timer | grep -Fx "OnCalendar=*-*-* 04:45:00"; '
+                     'systemctl cat pds-cache-docker.timer | grep -Fx Persistent=true')
         self.execute('systemctl --user is-active pds-go-cache-clean.timer',
                      user='1000:1000')
+        self.execute('systemctl --user is-active pds-cache-user.timer; '
+                     'systemctl --user cat pds-cache-user.timer | grep -Fx "OnCalendar=*-*-* 05:15:00"; '
+                     'systemctl --user cat pds-cache-user.timer | grep -Fx Persistent=true',
+                     user='1000:1000')
+        self.wait_for(
+            'test "$(systemctl show -p ExecMainStartTimestampMonotonic --value '
+            'pds-cache-docker.service)" != 0')
+        self.execute(
+            'test "$(systemctl --user show -p ExecMainStartTimestampMonotonic --value '
+            'pds-cache-user.service)" != 0', user='1000:1000')
         self.execute(
             f'bash {script} uninstall --user pds-test --mount /test-btrfs')
         self.execute(
             f'test -d {cache}; test -f {home}/go/pkg/mod/pds-keep; '
             'test -f /etc/btrbk/btrbk.conf; '
             'test ! -e /etc/systemd/system/pds-btrfs-headroom.timer; '
-            f'test ! -e {home}/.config/systemd/user/pds-go-cache-clean.timer')
+            'test ! -e /etc/systemd/system/pds-cache-docker.timer; '
+            'test ! -e /usr/local/libexec/pds-storage-consumers; '
+            f'test ! -e {home}/.config/systemd/user/pds-go-cache-clean.timer; '
+            f'test ! -e {home}/.config/systemd/user/pds-cache-user.timer')
         self.execute('systemctl is-active pds-storage-fixture-unrelated.timer; '
                      f'test "$(cat {home}/go/pkg/mod/pds-keep)" = keep; '
                      f'test "$(cat {home}/.config/pds-keep)" = profile')

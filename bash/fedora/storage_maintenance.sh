@@ -433,6 +433,7 @@ _pds_storage_units() {
     storage_user_service="$storage_user_dir/pds-go-cache-clean.service"
     storage_user_timer="$storage_user_dir/pds-go-cache-clean.timer"
     storage_wanted="$storage_user_dir/timers.target.wants/pds-go-cache-clean.timer"
+    storage_consumer_program=/usr/local/libexec/pds-storage-consumers
     _pds_storage_owned "$storage_program" 0 || return 2
     _pds_storage_owned "$storage_root_service" 0 identity || return 2
     _pds_storage_owned "$storage_root_timer" 0 identity || return 2
@@ -444,21 +445,43 @@ _pds_storage_units() {
             return 2
         }
     fi
+    _pds_storage_owned "$storage_consumer_program" 0 || return 2
+    local role suffix file wanted
+    for role in docker user; do
+        for suffix in service timer; do
+            if [[ "$role" == docker ]]; then
+                file="/etc/systemd/system/pds-cache-$role.$suffix"
+                _pds_storage_owned "$file" 0 identity || return 2
+            else
+                file="$storage_user_dir/pds-cache-$role.$suffix"
+                _pds_storage_owned "$file" "$storage_uid" identity || return 2
+            fi
+        done
+    done
+    wanted="$storage_user_dir/timers.target.wants/pds-cache-user.timer"
+    if [[ -e "$wanted" || -L "$wanted" ]]; then
+        [[ -L "$wanted" && "$(realpath -e -- "$wanted")" == "$storage_user_dir/pds-cache-user.timer" ]] || {
+            _pds_storage_error "Refusing an unrelated daily user timer: $wanted"
+            return 2
+        }
+    fi
 }
 
 _pds_storage_work_cleanup() {
     local work="$1"
     rm -f -- "$work/root.service" "$work/root.timer" "$work/user.service" "$work/user.timer" || return 2
+    rm -f -- "$work/docker-daily.service" "$work/docker-daily.timer" \
+        "$work/user-daily.service" "$work/user-daily.timer" || return 2
     rmdir -- "$work"
 }
 
 _pds_storage_install() (
-    local work source_file go_arg mount_arg
+    local work source_file consumer_source go_arg mount_arg role calendar file no_new_privileges
     [[ "$(id -u)" == 0 ]] || {
         _pds_storage_error 'install requires root.'
         return 2
     }
-    _pds_storage_require install systemctl runuser btrfs stat grep || return 2
+    _pds_storage_require install systemctl runuser btrfs stat grep jq timeout || return 2
     [[ -n "$storage_go" && "$storage_go" == /* && -x "$storage_go" ]] || {
         _pds_storage_error 'install needs --go with the existing stable Go executable path.'
         return 2
@@ -467,6 +490,13 @@ _pds_storage_install() (
     storage_mount=$(realpath -e -- "$storage_mount") || return 2
     _pds_storage_units || return 2
     source_file=$(realpath -e -- "${BASH_SOURCE[0]}") || return 2
+    consumer_source="$(dirname -- "$source_file")/storage_consumers.sh"
+    if [[ "$source_file" == "$storage_program" ]]; then consumer_source="$storage_consumer_program"; fi
+    [[ -r "$consumer_source" && ! -L "$consumer_source" ]] || {
+        _pds_storage_error 'The consumer companion is missing; install from a complete checkout.'
+        return 2
+    }
+    bash -n "$consumer_source" || return 2
     bash -n "$source_file" || return 2
     go_arg=$(_pds_storage_unit_arg "$storage_go") || return 2
     mount_arg=$(_pds_storage_unit_arg "$storage_mount") || return 2
@@ -530,13 +560,52 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 EOF
+    for role in docker user; do
+        if [[ "$role" == docker ]]; then
+            calendar='*-*-* 04:45:00'; no_new_privileges=true
+        else
+            calendar='*-*-* 05:15:00'; no_new_privileges=false
+        fi
+        cat >"$work/$role-daily.service" <<EOF
+# Managed by PDS storage maintenance.
+# PDS user: $storage_user
+# PDS mount: $storage_mount
+[Unit]
+Description=PDS $role native cache retention and storage audit
+[Service]
+Type=oneshot
+ExecStart=:/usr/bin/bash $storage_consumer_program cleanup-$role --user $storage_user
+Environment=PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$storage_home/.local/bin
+NoNewPrivileges=$no_new_privileges
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=30min
+EOF
+        cat >"$work/$role-daily.timer" <<EOF
+# Managed by PDS storage maintenance.
+# PDS user: $storage_user
+# PDS mount: $storage_mount
+[Unit]
+Description=PDS daily $role cache retention
+[Timer]
+OnCalendar=$calendar
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOF
+    done
     chmod 0644 "$work/root.service" "$work/root.timer" \
-        "$work/user.service" "$work/user.timer" || return 2
+        "$work/user.service" "$work/user.timer" "$work/docker-daily.service" \
+        "$work/docker-daily.timer" "$work/user-daily.service" "$work/user-daily.timer" || return 2
     systemd-analyze verify "$work/root.service" "$work/root.timer" \
-        "$work/user.service" "$work/user.timer" || return 2
+        "$work/user.service" "$work/user.timer" "$work/docker-daily.service" \
+        "$work/docker-daily.timer" "$work/user-daily.service" "$work/user-daily.timer" || return 2
     install -d -m 0755 /usr/local/libexec || return 2
     if [[ "$source_file" != "$storage_program" ]]; then
         install -m 0755 -o root -g root -- "$source_file" "$storage_program" || return 2
+    fi
+    if [[ "$consumer_source" != "$storage_consumer_program" ]]; then
+        install -m 0755 -o root -g root -- "$consumer_source" "$storage_consumer_program" || return 2
     fi
     install -m 0644 -o root -g root -- "$work/root.service" "$storage_root_service" || return 2
     install -m 0644 -o root -g root -- "$work/root.timer" "$storage_root_timer" || return 2
@@ -546,15 +615,30 @@ EOF
     if [[ ! -L "$storage_wanted" ]]; then
         runuser -u "$storage_user" -- ln -s ../pds-go-cache-clean.timer "$storage_wanted" || return 2
     fi
+    for role in docker user; do
+        for file in service timer; do
+            if [[ "$role" == docker ]]; then
+                install -m 0644 -o root -g root -- "$work/$role-daily.$file" \
+                    "/etc/systemd/system/pds-cache-docker.$file" || return 2
+            else
+                runuser -u "$storage_user" -- install -m 0644 -- "$work/$role-daily.$file" \
+                    "$storage_user_dir/pds-cache-user.$file" || return 2
+            fi
+        done
+    done
+    if [[ ! -L "$storage_user_dir/timers.target.wants/pds-cache-user.timer" ]]; then
+        runuser -u "$storage_user" -- ln -s ../pds-cache-user.timer \
+            "$storage_user_dir/timers.target.wants/pds-cache-user.timer" || return 2
+    fi
     systemctl daemon-reload || return 2
-    systemctl enable --now pds-btrfs-headroom.timer || return 2
+    systemctl enable --now pds-btrfs-headroom.timer pds-cache-docker.timer || return 2
     if [[ -S "/run/user/$storage_uid/bus" ]]; then
         _pds_storage_userctl daemon-reload || return 2
-        _pds_storage_userctl enable --now pds-go-cache-clean.timer || return 2
+        _pds_storage_userctl enable --now pds-go-cache-clean.timer pds-cache-user.timer || return 2
     else
         printf 'SKIP starting user timer: enabled for the next login; lingering was not changed\n'
     fi
-    printf 'OK installed hourly read-only checks and four-hour native Go cleanup\n'
+    printf 'OK installed hourly Btrfs checks, four-hour Go cleanup and daily native consumer retention/audits\n'
 )
 
 _pds_storage_uninstall() {
@@ -570,6 +654,10 @@ _pds_storage_uninstall() {
     if [[ -f "$storage_root_service" ]]; then
         systemctl stop pds-btrfs-headroom.service || return 2
     fi
+    if [[ -f /etc/systemd/system/pds-cache-docker.timer ]]; then
+        systemctl disable --now pds-cache-docker.timer || return 2
+        systemctl stop pds-cache-docker.service || return 2
+    fi
     if [[ -S "/run/user/$storage_uid/bus" ]]; then
         if [[ -f "$storage_user_timer" ]]; then
             _pds_storage_userctl disable --now pds-go-cache-clean.timer || return 2
@@ -577,10 +665,19 @@ _pds_storage_uninstall() {
         if [[ -f "$storage_user_service" ]]; then
             _pds_storage_userctl stop pds-go-cache-clean.service || return 2
         fi
+        if [[ -f "$storage_user_dir/pds-cache-user.timer" ]]; then
+            _pds_storage_userctl disable --now pds-cache-user.timer || return 2
+            _pds_storage_userctl stop pds-cache-user.service || return 2
+        fi
     fi
     for file in "$storage_wanted" "$storage_user_timer" "$storage_user_service"; do
         runuser -u "$storage_user" -- rm -f -- "$file" || return 2
     done
+    runuser -u "$storage_user" -- rm -f -- \
+        "$storage_user_dir/timers.target.wants/pds-cache-user.timer" \
+        "$storage_user_dir/pds-cache-user.timer" "$storage_user_dir/pds-cache-user.service" || return 2
+    rm -f -- /etc/systemd/system/pds-cache-docker.timer \
+        /etc/systemd/system/pds-cache-docker.service "$storage_consumer_program" || return 2
     rm -f -- "$storage_root_timer" "$storage_root_service" "$storage_program" || return 2
     systemctl daemon-reload || return 2
     if [[ -S "/run/user/$storage_uid/bus" ]]; then
@@ -595,7 +692,7 @@ storage_maintenance() (
     local mode="${1:-}" storage_user="${SUDO_USER:-${USER:-}}" storage_mount=/
     local storage_go='' storage_account storage_uid storage_gid storage_home storage_cache
     local storage_program storage_root_service storage_root_timer storage_user_dir
-    local storage_user_service storage_user_timer storage_wanted
+    local storage_user_service storage_user_timer storage_wanted storage_consumer_program
     case "$mode" in
         --help|-h|help)
             printf '%s\n' \

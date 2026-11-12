@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import subprocess
 state = json.loads(Path(os.environ['PDS_TEST_STATE']).read_text())
 name = Path(sys.argv[0]).name
 args = sys.argv[1:]
@@ -62,6 +63,9 @@ elif name == 'uv':
 elif name == 'npm':
     if 'verify' not in args:
         sys.exit(2)
+elif name == 'timeout':
+    result = subprocess.run(args[2:], timeout=10)
+    sys.exit(result.returncode)
 else:
     sys.exit(2)
 '''
@@ -78,7 +82,7 @@ class ConsumerTests(unittest.TestCase):
         (self.home / '.npm').mkdir()
         (self.home / 'code/.cache/builders-active').mkdir(parents=True)
         (self.home / 'code/.triage-review-archive').mkdir()
-        for name in ('docker', 'podman', 'uv', 'npm'):
+        for name in ('docker', 'podman', 'uv', 'npm', 'timeout'):
             path = self.bin / name
             path.write_text(CONSUMER_STUB)
             path.chmod(0o755)
@@ -174,6 +178,132 @@ class ConsumerTests(unittest.TestCase):
                                 env=self.environment, timeout=10)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertFalse(self.log.exists())
+
+    def test_ac11_failed_directory_scans_remain_explicit_and_continue(self):
+        result = self.run_consumer('audit-user', du_error=True)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        for label in ('Go modules', 'npm', 'uv', 'all user caches', 'builders',
+                      'review archive'):
+            self.assertIn(label, result.stdout + result.stderr)
+        self.assertIn('Incomplete', result.stderr)
+        self.assertFalse(any('prune' in call['args'] for call in self.commands('uv')))
+
+    def test_ac10_unknown_uv_layout_version_and_active_process_are_skipped(self):
+        for state in ({'uv_version': 'uv 99.0.0'}, {'busy': True}):
+            with self.subTest(state=state):
+                result = self.run_consumer('cleanup-user', **state)
+                self.assertIn(result.returncode, (0, 1), result.stdout + result.stderr)
+                self.assertIn('SKIP uv', result.stdout)
+                self.state['uv_version'] = 'uv 0.10.9'
+                self.state['busy'] = False
+        unknown = self.home / '.cache/uv/unknown-bucket'
+        unknown.mkdir()
+        (unknown / 'keep').write_text('must not disappear')
+        result = self.run_consumer('cleanup-user')
+        self.assertIn(result.returncode, (0, 1), result.stdout + result.stderr)
+        self.assertEqual((unknown / 'keep').read_text(), 'must not disappear')
+        self.assertFalse(any('prune' in call['args'] for call in self.commands('uv')))
+
+
+@unittest.skipUnless(os.environ.get('PDS_STORAGE_INTEGRATION') == '1',
+                     'set PDS_STORAGE_INTEGRATION=1 for disposable native consumers')
+class ConsumerNativeTests(go_tests.StorageFedoraIntegration):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.execute('mkdir -p /etc/docker; '
+                    'printf \'{"storage-driver":"vfs","iptables":false,"bridge":"none",'
+                    '"features":{"containerd-snapshotter":false}}\\n\' >/etc/docker/daemon.json; '
+                    'systemctl enable --now docker')
+        cls.wait_for('docker info >/dev/null')
+        # Docker Desktop cannot grant a second subordinate-ID range to nested Podman.
+        cls.execute("sed -i '/^pds-test:/d' /etc/subuid /etc/subgid")
+
+    def test_ac09_native_docker_keeps_volumes_containers_and_referenced_images(self):
+        self.execute("""
+mkdir -p /var/tmp/pds-native-build
+printf cache-fixture >/var/tmp/pds-native-build/marker
+printf 'FROM scratch\\nCOPY marker /marker\\n' >/var/tmp/pds-native-build/Dockerfile
+docker build --build-arg SOURCE_DATE_EPOCH=1577836800 --label pds.fixture=unused -t pds-old-unused /var/tmp/pds-native-build
+docker build --build-arg SOURCE_DATE_EPOCH=1577836800 --label pds.fixture=referenced -t pds-old-referenced /var/tmp/pds-native-build
+docker build --label pds.fixture=recent -t pds-recent /var/tmp/pds-native-build
+docker create --name pds-retained --entrypoint /not-running pds-old-referenced
+docker volume create pds-unattached
+volume=$(docker volume inspect -f '{{.Mountpoint}}' pds-unattached)
+printf preserve-volume >"$volume/keep"
+""", timeout=180)
+        self.assertIn('2020-', self.execute(
+            "docker image inspect -f '{{.Created}}' pds-old-unused").stdout)
+        before = self.execute(
+            "docker inspect -f '{{.Id}}' pds-retained; "
+            "docker image inspect -f '{{.Id}}' pds-old-referenced").stdout
+        result = self.execute(
+            'DOCKER_CONTEXT=remote-context DOCKER_HOST=ssh://unrelated '
+            'BUILDX_BUILDER=remote-builder '
+            'bash /work/bash/fedora/storage_consumers.sh cleanup-docker --user pds-test',
+            check=False, timeout=180)
+        self.assertIn(result.returncode, (0, 1), result.stdout + result.stderr)
+        self.assertNotEqual(self.execute('docker image inspect pds-old-unused',
+                                         check=False).returncode, 0)
+        self.execute('docker image inspect pds-recent >/dev/null; '
+                     'volume=$(docker volume inspect -f "{{.Mountpoint}}" pds-unattached); '
+                     'test "$(cat "$volume/keep")" = preserve-volume')
+        self.assertEqual(self.execute(
+            "docker inspect -f '{{.Id}}' pds-retained; "
+            "docker image inspect -f '{{.Id}}' pds-old-referenced").stdout, before)
+
+    def test_ac10_native_packages_and_linked_uv_environment_remain(self):
+        home = '/test-btrfs/home/pds-test'
+        self.execute("""
+mkdir -p /var/tmp/pds-podman-build
+printf native-image >/var/tmp/pds-podman-build/marker
+printf 'FROM scratch\\nCOPY marker /marker\\n' >/var/tmp/pds-podman-build/Dockerfile
+docker build --build-arg SOURCE_DATE_EPOCH=1577836800 --label pds.podman=unused -t pds-podman-unused /var/tmp/pds-podman-build
+docker build --build-arg SOURCE_DATE_EPOCH=1577836800 --label pds.podman=referenced -t pds-podman-referenced /var/tmp/pds-podman-build
+docker save pds-podman-unused pds-podman-referenced -o /var/tmp/pds-podman-images.tar
+chmod 0644 /var/tmp/pds-podman-images.tar
+""", timeout=180)
+        self.execute(
+            'mkdir -p ~/.cache/uv/environments-v2/project ~/project ~/.npm '
+            '~/package; printf keep-python >~/.cache/uv/environments-v2/project/keep; '
+            'printf "Signature: 8a477f597d28d172789f06886806bc55" >~/.cache/uv/CACHEDIR.TAG; '
+            'ln -s ~/.cache/uv/environments-v2/project ~/project/.venv; '
+            'printf \'{"name":"pds-native-fixture","version":"1.0.0"}\\n\' >~/package/package.json; '
+            'tar -czf ~/package.tgz -C "$HOME" package; '
+            'npm cache add ~/package.tgz --cache ~/.npm; '
+            'podman --remote=false load --input /var/tmp/pds-podman-images.tar; '
+            'podman --remote=false create --name retained --entrypoint /not-running '
+            'localhost/pds-podman-referenced; '
+            'printf go-module >~/go-module-marker; printf live-source >~/project/source',
+            user='1000:1000', timeout=120)
+        result = self.execute(
+            'bash /work/bash/fedora/storage_consumers.sh cleanup-user --user pds-test',
+            user='1000:1000', check=False, timeout=240)
+        self.assertIn(result.returncode, (0, 1), result.stdout + result.stderr)
+        self.assertIn('protected environment bucket', result.stdout)
+        self.assertIn('Cache verified', result.stdout)
+        self.execute(f'test "$(cat {home}/project/.venv/keep)" = keep-python; '
+                     f'test "$(cat {home}/project/source)" = live-source; '
+                     f'test "$(cat {home}/go-module-marker)" = go-module')
+        self.execute('podman --remote=false container exists retained; '
+                     'podman --remote=false image exists localhost/pds-podman-referenced; '
+                     '! podman --remote=false image exists localhost/pds-podman-unused',
+                     user='1000:1000')
+
+    def test_ac10_verified_uv_layout_can_run_native_prune(self):
+        home = '/test-btrfs/home/uv-only'
+        self.execute(f'useradd -u 1002 -d {home} -M uv-only; '
+                     f'mkdir -p {home}/.cache/uv; chown -R 1002:1002 {home}')
+        self.users.append(1002)
+        command = (
+            'printf "Signature: 8a477f597d28d172789f06886806bc55" >~/.cache/uv/CACHEDIR.TAG; '
+            'source /work/bash/fedora/storage_maintenance.sh; '
+            'source /work/bash/fedora/storage_consumers.sh; '
+            'storage_home="$HOME"; storage_uid=1002; _pds_consumer_uv'
+        )
+        result = self.execute(f'runuser -u uv-only -- env HOME={home} bash -euc '
+                              + shlex.quote(command))
+        self.assertNotIn('SKIP', result.stdout + result.stderr)
 
 
 if __name__ == '__main__':

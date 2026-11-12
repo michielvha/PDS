@@ -1,6 +1,6 @@
 ---
 status: in-progress
-status_description: "Implementing the R-5 accepted broader retention/audit policy on the existing owning branch."
+status_description: "Expanded implementation passes 36 fixture/native checks; committed-state independent review and live installation remain."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Keep disposable build/package/container caches bounded and surface persistent developer-storage growth without deleting project or volume data."
@@ -54,11 +54,15 @@ is needed. Runtime endpoint selection is confined to this host, not inherited
 remote Docker/Podman contexts. Rollback removes only managed jobs/scripts;
 already discarded caches/images regenerate on demand.
 
-No broader cleanup has run. The revised tests must prove command allowlists,
-seven-day filters, no volume/container/worktree deletion, endpoint confinement,
-failure reporting and preservation in native disposable container engines.
-Acceptance of the reviewed revision authorizes scoped implementation; installing
-the additional jobs and applying retention needs renewed explicit live approval.
+No broader live cleanup has run. The owner accepted R-5 and authorized
+installation after verification. The full focused suite now passes 36 checks,
+including native isolated Docker/Podman image retention, persistent-data
+preservation, linked-uv-environment refusal, npm verification, original Go
+cache safety and missed-calendar behavior. Bash syntax and source-aware
+ShellCheck pass. Independent committed-state review remains before deployment.
+Native rootless Podman tests use single-ID mappings because nested Docker
+Desktop cannot grant another subordinate-ID range; real Fedora's enforcing
+SELinux and normal rootless service behavior require deployment verification.
 
 ### Original incident and verified recovery
 
@@ -607,7 +611,8 @@ run destructive verification against the real host.
       Evidence: Both command fixtures and the native persisted-flag case first reproduced module deletion. After command-local env isolation, all 22 focused/native tests passed. Native preparation, direct cleanup and an installed user service preserved module markers and the Go settings-file hash with `GOFLAGS=-modcache` configured. Bash syntax and focused ShellCheck pass. Manual documentation-impact review updated the guide's isolation contract; R-2 remains unchanged pending re-review.
 - [x] T4 `tests/test_storage_consumers.py` - add command-fixture retention/audit/uv-eligibility tests; observe failures before the companion exists (AC-09, AC-10, AC-11, AC-12).
       Evidence: The initial targeted discovery observed nine failed assertions/subcases against the missing companion. Fixture cases cover exact host-local cleanup commands, 109 unattached-volume warning, malformed accounting, native user operations, linked uv environment preservation and read-only archive/worktree handling. Native coverage is added with T5 before its verification.
-- [ ] T5 `bash/fedora/storage_consumers.sh`, `bash/fedora/storage_maintenance.sh`, `tests/test_storage_consumers.py`, `tests/test_storage_maintenance.py`, `docs/fedora-storage-guard.md`, `bash/readme.md`, `changelog.md` - implement host-confined native retention, complete bounded reports and managed daily units; focused shell checks plus fixture/native regressions preserve protected markers and pass (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12).
+- [x] T5 `bash/fedora/storage_consumers.sh`, `bash/fedora/storage_maintenance.sh`, `tests/test_storage_consumers.py`, `tests/test_storage_maintenance.py`, `docs/fedora-storage-guard.md`, `bash/readme.md`, `changelog.md` - implement host-confined native retention, complete bounded reports and managed daily units; focused shell checks plus fixture/native regressions preserve protected markers and pass (AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12).
+      Evidence: `PDS_STORAGE_INTEGRATION=1 PDS_STORAGE_TEST_IMAGE=pds-storage-consumers:1b889891 python3 -m unittest discover -s tests -p 'test_storage_*.py' -v` passed 36 checks. Native Docker removed a backdated unreferenced image while preserving a referenced image/container and an unattached volume marker; native rootless Podman retained its referenced image/container. Npm verification and uv eligible/refusal paths passed. Exact daily units survived systemd restart and missed stamps; managed removal preserved unrelated jobs. Native testing caught npm duplicate-config and rootless subordinate-ID privilege problems before deployment. Both Bash scripts pass source-aware ShellCheck; manual documentation-impact review updated actual modes, schedules, warning classes and preservation limits.
 
 ## Open Questions
 

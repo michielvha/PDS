@@ -186,6 +186,11 @@ the default Go build cache as a nested Btrfs subvolume, install budget-triggered
 native cleanup and enable read-only allocation checks. Backup retention,
 browser profiles, source trees and Go module caches stay unchanged.
 
+The companion also schedules native Docker/Podman image and build-cache
+retention, npm verification and eligibility-guarded uv pruning. Volumes,
+builders/review directories, Git worktrees and editor data are reported, never
+automatically deleted.
+
 The script runs directly from a checkout:
 
 ```bash
