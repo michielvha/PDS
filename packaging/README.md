@@ -273,6 +273,14 @@ The local check does not tag, publish a package or deploy the APT repository. `m
 checks the relevant shell files without suppressing failures. The older broad lint target retains
 its existing behavior for unrelated scripts.
 
+## VirtIO driver ISO helpers
+
+`install_virtio_win_iso` and `enable_virtio_win_iso_updates` keep the VirtIO driver ISO for Windows
+guests current in a Proxmox VE or other ISO directory. The weekly job in `/etc/cron.d/pds-virtio-win`
+sources the packaged library, so an APT upgrade of PDS also updates the refresh logic. See
+[VirtIO drivers for Windows guests](../bash/debian/readme.md#virtio-drivers-for-windows-guests) for
+the one-command setup and behavior.
+
 ## Update and SSH policy helpers
 
 `update_system_cron_entry` selects the nightly midnight APT update/upgrade policy. Install cron
