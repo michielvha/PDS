@@ -57,6 +57,8 @@ pds bootstrap repos
 
 See [packaging](packaging/README.md) for the build and installation instructions.
 
+On a Proxmox VE host, one command installs the VirtIO driver ISO for Windows guests and keeps it current. See [VirtIO drivers for Windows guests](bash/debian/readme.md#virtio-drivers-for-windows-guests).
+
 ### Windows
 
 Import the PowerShell module from your checkout:

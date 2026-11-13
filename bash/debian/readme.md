@@ -20,3 +20,17 @@
 | install_consul | Installs HashiCorp Consul on a Debian-based system |
 | install_nomad | Installs HashiCorp Nomad on a Debian-based system |
 | install_packer | (legacy standalone) Installs HashiCorp's Packer and configures the system as a Packer build host. |
+| install_virtio_win_iso | Downloads or refreshes the Fedora "stable" VirtIO driver ISO for Windows guests (default: Proxmox VE `/var/lib/vz/template/iso`) |
+| enable_virtio_win_iso_updates | Schedules a weekly `install_virtio_win_iso` run through `/etc/cron.d/pds-virtio-win` |
+
+### VirtIO drivers for Windows guests
+
+Proxmox VE and Debian do not package `virtio-win`, and upstream only publishes a dnf repository, so there is no APT source to subscribe to. `install_virtio_win_iso` keeps a single `virtio-win.iso` current instead. It follows upstream's `stable-virtio` link over HTTPS only (upstream's redirects fall back to plain HTTP), reads the version from the ISO header, and downloads only when that version changed. The new file replaces the old one atomically, so attached VMs keep working.
+
+On a Proxmox host, as root, after adding the PDS APT repository (see [packaging](../../packaging/README.md#apt-repository-recommended)):
+
+```bash
+apt install -y pds && bash -c '. /usr/share/pds/debian/admin/virtio_win.sh && install_virtio_win_iso && enable_virtio_win_iso_updates'
+```
+
+`apt upgrade` updates the function and the weekly cron job runs the installed version. Pass another ISO directory as the only argument to use different storage. Remove `/etc/cron.d/pds-virtio-win` to stop the refresh. The ISO then shows up as `local:iso/virtio-win.iso`; attach it as a second CD/DVD drive and run `virtio-win-gt-x64.msi` from it inside Windows.
