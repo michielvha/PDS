@@ -46,7 +46,7 @@ Below is a list of software and tools supported by the custom PowerShell functio
    - Includes settings for Azure, Git branches, and Git commits.
 6. **numlock on by default**: 
 7. **longpath support**: `Enable-LongPaths` allows support for longerfile paths.  
-8. **SSH server**: `Enable-SshServer` installs/enables OpenSSH server, opens the firewall and authorizes public keys.  
+8. **SSH server**: `Enable-SshServer` installs/enables OpenSSH server, opens the firewall and optionally authorizes public keys.  
 **TODO: expand with all functions**
 
 ### Additional Notes

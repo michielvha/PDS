@@ -11,6 +11,7 @@
 
 ### Added
 
+- Make the public key optional in PowerShell `Enable-SshServer`. Without `-PublicKey` or `-PublicKeyPath` it only installs and starts the OpenSSH server and opens the firewall, so users sign in with their Windows password. `-DisablePasswordAuthentication` still requires a key so the machine cannot be locked out.
 - Add `install_virtio_win_iso` and `enable_virtio_win_iso_updates` to keep the VirtIO driver ISO for Windows guests current in Proxmox VE (or other) ISO storage. Downloads follow upstream's stable link over HTTPS only, skip unchanged versions, and replace the ISO atomically. A weekly cron job runs the packaged function, so APT upgrades update the logic.
 - Add PowerShell `Enable-SshServer` to install and start Windows OpenSSH server, allow the SSH port through the firewall and authorize public keys. Administrator keys go in `administrators_authorized_keys` with the ACLs sshd requires. Port, default shell and password authentication are configurable.
 - Add `bash/fedora/storage_maintenance.sh` with explicit Go-cache subvolume preparation, four-hour native cleanup above 20 GiB, hourly read-only Btrfs checks and managed systemd install/removal. Preserve source/module/profile data and backup retention; never balance or delete snapshots automatically.
