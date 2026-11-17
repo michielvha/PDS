@@ -9,6 +9,10 @@
 - Move the Debian workstation bootstrap reference to `docs/workstation-bootstrap.md` and describe its remaining validation gaps.
 - Add pinned agent instructions for vh-adlc, with Copilot and Claude entry points. Preserve platform and changelog requirements from the earlier instructions.
 
+### Fixed
+
+- `Enable-SshServer` now always creates or corrects its own firewall rule for every network profile. It used to accept any existing rule for the SSH port, including the one Windows creates for the Private profile only, which left SSH blocked on networks Windows classes as Public.
+
 ### Added
 
 - Make the public key optional in PowerShell `Enable-SshServer`. Without `-PublicKey` or `-PublicKeyPath` it only installs and starts the OpenSSH server and opens the firewall, so users sign in with their Windows password. `-DisablePasswordAuthentication` still requires a key so the machine cannot be locked out.

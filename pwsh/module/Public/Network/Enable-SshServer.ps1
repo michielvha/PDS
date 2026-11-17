@@ -7,7 +7,7 @@ Function Enable-SshServer {
         Configures a Windows machine for SSH access:
         - Installs the OpenSSH.Server Windows capability if it is missing
         - Starts sshd and sets it to start automatically
-        - Ensures an inbound firewall rule exists for the SSH port
+        - Ensures its own inbound firewall rule allows the SSH port on every network profile
         - When -PublicKey or -PublicKeyPath is given, adds the key(s) to the correct authorized keys file:
             * Members of the local Administrators group use
               C:\ProgramData\ssh\administrators_authorized_keys (default sshd_config Match rule)
@@ -168,19 +168,18 @@ Function Enable-SshServer {
             Write-Host "Default SSH shell set to $DefaultShell" -ForegroundColor Cyan
         }
 
-        # 5. Firewall
-        $existingRule = Get-NetFirewallPortFilter -Protocol TCP -ErrorAction SilentlyContinue |
-            Where-Object { $_.LocalPort -contains "$Port" } |
-            Get-NetFirewallRule -ErrorAction SilentlyContinue |
-            Where-Object { $_.Direction -eq 'Inbound' -and $_.Enabled -eq 'True' -and $_.Action -eq 'Allow' } |
-            Select-Object -First 1
-        if ($existingRule) {
-            Write-Host "Firewall rule '$($existingRule.DisplayName)' already allows TCP $Port." -ForegroundColor Green
+        # 5. Firewall - always our own rule for every profile. The rule Windows creates with the
+        #    capability (OpenSSH-Server-In-TCP) can cover only the Private profile, so trusting any
+        #    existing rule left SSH blocked on Public networks.
+        $ruleName = "PDS-OpenSSH-Server-In-TCP-$Port"
+        if (Get-NetFirewallRule -Name $ruleName -ErrorAction SilentlyContinue) {
+            Set-NetFirewallRule -Name $ruleName -Enabled True -Direction Inbound -Action Allow -Profile Any
+            Write-Host "Firewall rule '$ruleName' allows TCP $Port on all network profiles." -ForegroundColor Green
         }
         else {
-            New-NetFirewallRule -Name "PDS-OpenSSH-Server-In-TCP-$Port" -DisplayName "OpenSSH Server (sshd) TCP $Port" `
-                -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort $Port | Out-Null
-            Write-Host "Created inbound firewall rule for TCP $Port." -ForegroundColor Cyan
+            New-NetFirewallRule -Name $ruleName -DisplayName "OpenSSH Server (sshd) TCP $Port" `
+                -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort $Port -Profile Any | Out-Null
+            Write-Host "Created inbound firewall rule '$ruleName' for TCP $Port on all network profiles." -ForegroundColor Cyan
         }
 
         if ($withKeys) {
