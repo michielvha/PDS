@@ -1,30 +1,31 @@
 Function Enable-SshServer {
     <#
     .SYNOPSIS
-        Installs and enables the Windows OpenSSH server and authorizes one or more public keys.
+        Installs and enables the Windows OpenSSH server and optionally authorizes public keys.
 
     .DESCRIPTION
-        Configures a Windows machine for key-based SSH access:
+        Configures a Windows machine for SSH access:
         - Installs the OpenSSH.Server Windows capability if it is missing
         - Starts sshd and sets it to start automatically
         - Ensures an inbound firewall rule exists for the SSH port
-        - Adds the given public key(s) to the correct authorized keys file:
+        - When -PublicKey or -PublicKeyPath is given, adds the key(s) to the correct authorized keys file:
             * Members of the local Administrators group use
               C:\ProgramData\ssh\administrators_authorized_keys (default sshd_config Match rule)
             * Other users use C:\Users\<user>\.ssh\authorized_keys
         - Applies the strict ACLs sshd requires on that file
 
+        Without a key, only the server is installed and started; users sign in with their Windows password.
         Optionally changes the SSH port, sets the default shell and disables password authentication.
         The function is idempotent; keys that are already present are not added twice.
 
     .PARAMETER PublicKey
-        One or more public key strings, e.g. "ssh-ed25519 AAAA... user@host".
+        Optional. One or more public key strings, e.g. "ssh-ed25519 AAAA... user@host".
 
     .PARAMETER PublicKeyPath
-        Path to a public key file (e.g. id_ed25519.pub). Every key line in the file is added.
+        Optional. Path to a public key file (e.g. id_ed25519.pub). Every key line in the file is added.
 
     .PARAMETER UserName
-        Local user the keys are authorized for. Defaults to the current user.
+        Local user the keys are authorized for. Defaults to the current user. Only used with a key.
 
     .PARAMETER Port
         TCP port sshd listens on. Defaults to 22.
@@ -35,6 +36,13 @@ Function Enable-SshServer {
 
     .PARAMETER DisablePasswordAuthentication
         Disables password authentication in sshd_config so only key-based logins are accepted.
+        Requires -PublicKey or -PublicKeyPath, so the machine cannot be locked out. Passing a key
+        that is already authorized is safe.
+
+    .EXAMPLE
+        Enable-SshServer
+
+        Installs and starts sshd and opens the firewall. Users sign in with their Windows password.
 
     .EXAMPLE
         Enable-SshServer -PublicKey "ssh-ed25519 AAAAC3Nza... me@laptop"
@@ -57,7 +65,7 @@ Function Enable-SshServer {
         https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_keymanagement
     #>
 
-    [CmdletBinding(DefaultParameterSetName = 'Key')]
+    [CmdletBinding(DefaultParameterSetName = 'NoKey')]
     param(
         [Parameter(Mandatory = $true, ParameterSetName = 'Key')]
         [string[]]$PublicKey,
@@ -87,23 +95,31 @@ Function Enable-SshServer {
         return
     }
 
-    if ($PSCmdlet.ParameterSetName -eq 'Path') {
-        $PublicKey = Get-Content -LiteralPath $PublicKeyPath
-    }
-    $keyPattern = '^(ssh-(rsa|ed25519|dss)|ecdsa-sha2-nistp\d+|sk-(ssh-ed25519|ecdsa-sha2-nistp256)@openssh\.com)\s+\S+'
-    $keys = @($PublicKey | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('#') })
-    $invalid = @($keys | Where-Object { $_ -notmatch $keyPattern })
-    if ($keys.Count -eq 0 -or $invalid.Count -gt 0) {
-        Write-Error "No valid OpenSSH public key provided. Invalid entries: $($invalid -join '; ')"
-        return
-    }
+    $withKeys = $PSCmdlet.ParameterSetName -ne 'NoKey'
+    $keys = @()
+    if ($withKeys) {
+        if ($PSCmdlet.ParameterSetName -eq 'Path') {
+            $PublicKey = Get-Content -LiteralPath $PublicKeyPath
+        }
+        $keyPattern = '^(ssh-(rsa|ed25519|dss)|ecdsa-sha2-nistp\d+|sk-(ssh-ed25519|ecdsa-sha2-nistp256)@openssh\.com)\s+\S+'
+        $keys = @($PublicKey | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith('#') })
+        $invalid = @($keys | Where-Object { $_ -notmatch $keyPattern })
+        if ($keys.Count -eq 0 -or $invalid.Count -gt 0) {
+            Write-Error "No valid OpenSSH public key provided. Invalid entries: $($invalid -join '; ')"
+            return
+        }
 
-    try {
-        $account = New-Object System.Security.Principal.NTAccount($UserName)
-        $userSid = $account.Translate([System.Security.Principal.SecurityIdentifier]).Value
+        try {
+            $account = New-Object System.Security.Principal.NTAccount($UserName)
+            $userSid = $account.Translate([System.Security.Principal.SecurityIdentifier]).Value
+        }
+        catch {
+            Write-Error "User '$UserName' could not be resolved: $_"
+            return
+        }
     }
-    catch {
-        Write-Error "User '$UserName' could not be resolved: $_"
+    elseif ($DisablePasswordAuthentication) {
+        Write-Error "-DisablePasswordAuthentication requires -PublicKey or -PublicKeyPath; without a key nobody could sign in."
         return
     }
 
@@ -167,56 +183,58 @@ Function Enable-SshServer {
             Write-Host "Created inbound firewall rule for TCP $Port." -ForegroundColor Cyan
         }
 
-        # 6. Authorized keys - administrators use a shared file because of the default 'Match Group administrators' block
-        $adminGroupSid = 'S-1-5-32-544'
-        $isTargetAdmin = $false
-        try {
-            $isTargetAdmin = [bool](Get-LocalGroupMember -SID $adminGroupSid -ErrorAction Stop | Where-Object { $_.SID.Value -eq $userSid })
-        }
-        catch {
-            # Get-LocalGroupMember fails on orphaned domain SIDs; the elevated current user is an admin by definition
-            $isTargetAdmin = $userSid -eq [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
-            Write-Warning "Could not enumerate local Administrators; assuming '$UserName' is $(if (-not $isTargetAdmin) { 'not ' })an administrator."
-        }
-
-        $usesAdminKeysFile = $isTargetAdmin -and ($config -match '(?mi)^\s*Match\s+Group\s+administrators')
-        if ($usesAdminKeysFile) {
-            $authorizedKeysFile = Join-Path $sshDataDir 'administrators_authorized_keys'
-        }
-        else {
-            $profilePath = (Get-CimInstance -ClassName Win32_UserProfile -Filter "SID = '$userSid'" -ErrorAction SilentlyContinue).LocalPath
-            if (-not $profilePath) {
-                $profilePath = Join-Path (Split-Path $env:PUBLIC -Parent) $UserName
-                Write-Warning "No profile found for '$UserName'; using $profilePath. Log in once as this user first if Windows creates a different profile folder."
+        if ($withKeys) {
+            # 6. Authorized keys - administrators use a shared file because of the default 'Match Group administrators' block
+            $adminGroupSid = 'S-1-5-32-544'
+            $isTargetAdmin = $false
+            try {
+                $isTargetAdmin = [bool](Get-LocalGroupMember -SID $adminGroupSid -ErrorAction Stop | Where-Object { $_.SID.Value -eq $userSid })
             }
-            $userSshDir = Join-Path $profilePath '.ssh'
-            if (-not (Test-Path -LiteralPath $userSshDir)) {
-                New-Item -ItemType Directory -Path $userSshDir -Force | Out-Null
+            catch {
+                # Get-LocalGroupMember fails on orphaned domain SIDs; the elevated current user is an admin by definition
+                $isTargetAdmin = $userSid -eq [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+                Write-Warning "Could not enumerate local Administrators; assuming '$UserName' is $(if (-not $isTargetAdmin) { 'not ' })an administrator."
             }
-            $authorizedKeysFile = Join-Path $userSshDir 'authorized_keys'
-        }
 
-        $existingKeys = @()
-        if (Test-Path -LiteralPath $authorizedKeysFile) {
-            $existingKeys = @(Get-Content -LiteralPath $authorizedKeysFile | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-        }
-        $newKeys = @($keys | Where-Object { $existingKeys -notcontains $_ } | Select-Object -Unique)
-        if ($newKeys.Count -gt 0) {
-            [System.IO.File]::WriteAllLines($authorizedKeysFile, [string[]]($existingKeys + $newKeys), (New-Object System.Text.UTF8Encoding($false)))
-            Write-Host "Added $($newKeys.Count) key(s) to $authorizedKeysFile" -ForegroundColor Cyan
-        }
-        else {
-            Write-Host "All keys already present in $authorizedKeysFile" -ForegroundColor Green
-        }
+            $usesAdminKeysFile = $isTargetAdmin -and ($config -match '(?mi)^\s*Match\s+Group\s+administrators')
+            if ($usesAdminKeysFile) {
+                $authorizedKeysFile = Join-Path $sshDataDir 'administrators_authorized_keys'
+            }
+            else {
+                $profilePath = (Get-CimInstance -ClassName Win32_UserProfile -Filter "SID = '$userSid'" -ErrorAction SilentlyContinue).LocalPath
+                if (-not $profilePath) {
+                    $profilePath = Join-Path (Split-Path $env:PUBLIC -Parent) $UserName
+                    Write-Warning "No profile found for '$UserName'; using $profilePath. Log in once as this user first if Windows creates a different profile folder."
+                }
+                $userSshDir = Join-Path $profilePath '.ssh'
+                if (-not (Test-Path -LiteralPath $userSshDir)) {
+                    New-Item -ItemType Directory -Path $userSshDir -Force | Out-Null
+                }
+                $authorizedKeysFile = Join-Path $userSshDir 'authorized_keys'
+            }
 
-        # sshd rejects key files writable by anyone other than SYSTEM, Administrators or the owning user
-        $grants = @('/grant', '*S-1-5-18:F', '/grant', "*${adminGroupSid}:F")
-        if (-not $usesAdminKeysFile) {
-            $grants += @('/grant', "*${userSid}:F")
-        }
-        & icacls.exe $authorizedKeysFile /inheritance:r @grants | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to set ACLs on $authorizedKeysFile"
+            $existingKeys = @()
+            if (Test-Path -LiteralPath $authorizedKeysFile) {
+                $existingKeys = @(Get-Content -LiteralPath $authorizedKeysFile | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+            }
+            $newKeys = @($keys | Where-Object { $existingKeys -notcontains $_ } | Select-Object -Unique)
+            if ($newKeys.Count -gt 0) {
+                [System.IO.File]::WriteAllLines($authorizedKeysFile, [string[]]($existingKeys + $newKeys), (New-Object System.Text.UTF8Encoding($false)))
+                Write-Host "Added $($newKeys.Count) key(s) to $authorizedKeysFile" -ForegroundColor Cyan
+            }
+            else {
+                Write-Host "All keys already present in $authorizedKeysFile" -ForegroundColor Green
+            }
+
+            # sshd rejects key files writable by anyone other than SYSTEM, Administrators or the owning user
+            $grants = @('/grant', '*S-1-5-18:F', '/grant', "*${adminGroupSid}:F")
+            if (-not $usesAdminKeysFile) {
+                $grants += @('/grant', "*${userSid}:F")
+            }
+            & icacls.exe $authorizedKeysFile /inheritance:r @grants | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to set ACLs on $authorizedKeysFile"
+            }
         }
 
         Restart-Service -Name sshd -Force
@@ -225,7 +243,12 @@ Function Enable-SshServer {
             Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
             Select-Object -ExpandProperty IPAddress)
         $portArg = if ($Port -ne 22) { " -p $Port" } else { "" }
-        Write-Host "`nOpenSSH server is running with key-based access for '$UserName'." -ForegroundColor Green
+        if ($withKeys) {
+            Write-Host "`nOpenSSH server is running with key-based access for '$UserName'." -ForegroundColor Green
+        }
+        else {
+            Write-Host "`nOpenSSH server is running. No key was authorized; sign in with your Windows password." -ForegroundColor Green
+        }
         foreach ($ip in $ips) {
             Write-Host "  ssh$portArg $UserName@$ip" -ForegroundColor Green
         }
