@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Features
+
+- Add `Enable-WinRmServer` and `Disable-WinRmServer`, which prepare a Windows test host for Ansible over WinRM with NTLM authentication, also on networks classed Public, and undo it.
+
 ### Documentation
 
 - Record the verified Fedora Btrfs recovery and the accepted cache-exclusion/scheduled-cleanup policy in `docs/internal/plans/fedora-storage-guard.md`.
