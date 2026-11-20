@@ -34,6 +34,7 @@ function Set-AutoAdminLogin {
 
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Alias("u")]
         [string]$Username,
@@ -51,7 +52,7 @@ function Set-AutoAdminLogin {
     $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 
     # Set the DefaultUserName and password (creates the key if it doesn't exist)
-    if ($Username) {
+    if ($Username -and $PSCmdlet.ShouldProcess("$registryPath\DefaultUserName", 'Set registry value')) {
         try {
             Write-Output "setting ${Username} as DefaultUserName"
             Set-ItemProperty -Path $registryPath -Name "DefaultUserName" -Value $Username
@@ -60,7 +61,7 @@ function Set-AutoAdminLogin {
             Write-Output "An error occured while trying to set the ``DefaultUserName``: $_"
         }
     }
-    if ($Password) {
+    if ($Password -and $PSCmdlet.ShouldProcess("$registryPath\DefaultPassword", 'Set registry value')) {
         try {
             Write-Output "setting DefaultPassword"
             Set-ItemProperty -Path $registryPath -Name "DefaultPassword" -Value $Password
@@ -71,7 +72,9 @@ function Set-AutoAdminLogin {
     }
 
     # Enable AutoAdminLogon by setting it to "1"
-    Set-ItemProperty -Path $registryPath -Name "AutoAdminLogon" -Value "1"
+    if ($PSCmdlet.ShouldProcess("$registryPath\AutoAdminLogon", 'Set registry value to 1')) {
+        Set-ItemProperty -Path $registryPath -Name "AutoAdminLogon" -Value "1"
+    }
 
     # Verify the changes were applied
     Get-ItemProperty -Path $registryPath | Select-Object DefaultUserName, DefaultPassword, AutoAdminLogon

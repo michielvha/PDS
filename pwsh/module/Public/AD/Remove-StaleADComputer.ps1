@@ -11,9 +11,6 @@ function Remove-StaleADComputer {
         The number of years to look back for the last logon date. Computers that haven't logged on within this timeframe will be removed.
         Default is 1 year.
 
-    .PARAMETER WhatIf
-        Shows what would be removed without actually performing the removal.
-
     .EXAMPLE
         Remove-StaleADComputer
 
@@ -35,12 +32,10 @@ function Remove-StaleADComputer {
         Requires ActiveDirectory PowerShell module and appropriate permissions to remove computer objects.
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $false)]
-        [int]$Years = 1,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$WhatIf
+        [int]$Years = 1
     )
 
     Import-Module ActiveDirectory
@@ -52,14 +47,14 @@ function Remove-StaleADComputer {
     foreach ($computer in $computers) {
         if ($computer.LastLogonDate -lt $cutoffDate) {
             try {
-                if ($WhatIf) {
-                    Set-Log "$($computer.name) - Would be removed - Last Seen: $($computer.LastLogonDate)"
-                    Write-Host "$($computer.name) - Would be removed - Last Seen: $($computer.LastLogonDate)"
-                }
-                else {
+                if ($PSCmdlet.ShouldProcess($computer.DistinguishedName, 'Remove AD computer')) {
                     Remove-ADComputer -Identity $computer.DistinguishedName -Confirm:$false
                     Set-Log "$($computer.name) - Removed - Last Seen: $($computer.LastLogonDate)"
                     Write-Host "$($computer.name) - Removed - Last Seen: $($computer.LastLogonDate)"
+                }
+                else {
+                    Set-Log "$($computer.name) - Would be removed - Last Seen: $($computer.LastLogonDate)"
+                    Write-Host "$($computer.name) - Would be removed - Last Seen: $($computer.LastLogonDate)"
                 }
             }
             catch {

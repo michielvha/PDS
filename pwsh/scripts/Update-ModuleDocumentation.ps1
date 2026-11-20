@@ -92,6 +92,7 @@ else {
 
 # Function to create directory structure that matches Public folder structure
 function New-DirectoryStructure {
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
         [string]$SourcePath,
@@ -108,7 +109,7 @@ function New-DirectoryStructure {
         $relativePath = $dir.FullName.Substring($SourcePath.Length)
         $newPath = Join-Path $TargetPath $relativePath
 
-        if (-not (Test-Path -Path $newPath)) {
+        if (-not (Test-Path -Path $newPath) -and $PSCmdlet.ShouldProcess($newPath, 'Create directory')) {
             New-Item -ItemType Directory -Path $newPath | Out-Null
             Write-Host "Created directory: $newPath"
         }

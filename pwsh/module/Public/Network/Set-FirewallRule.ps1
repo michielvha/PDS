@@ -52,7 +52,7 @@ function Set-FirewallRule {
         https://docs.microsoft.com/en-us/powershell/module/netsecurity/new-netfirewallrule
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $true)]
         [ValidateRange(1, 65535)]
@@ -82,6 +82,10 @@ function Set-FirewallRule {
     else {
         $inboundName = "$DisplayName - In"
         $outboundName = "$DisplayName - Out"
+    }
+
+    if (-not $PSCmdlet.ShouldProcess("$Protocol port $Port", "Create firewall rules '$inboundName' and '$outboundName'")) {
+        return
     }
 
     try {

@@ -60,4 +60,15 @@ Describe 'Update-Env' {
             $Object -eq 'Environment variables refreshed successfully!'
         }
     }
+
+    It 'changes nothing under -WhatIf' {
+        Update-Env -WhatIf
+
+        # The session variables are written with [Environment]::SetEnvironmentVariable, which
+        # cannot be mocked, so the test checks that none of them changed.
+        $env:PDS_T21_SYSTEM | Should -BeNullOrEmpty
+        $env:PDS_T21_USER | Should -BeNullOrEmpty
+        $env:PDS_T21_SHARED | Should -BeNullOrEmpty
+        $env:Path | Should -Be $script:sessionPath
+    }
 }

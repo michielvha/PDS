@@ -55,4 +55,13 @@ Describe 'Set-AwsCli' {
         $errorRecord.Exception.Message | Should -Be 'AWS CLI is not installed. Please install it first.'
         Get-Content -Raw -Path $script:profilePath | Should -BeNullOrEmpty
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock Add-Content -ModuleName PDS { }
+
+        Set-AwsCli -WhatIf 6>$null
+
+        Should -Invoke Add-Content -ModuleName PDS -Times 0 -Exactly
+        Get-Content -Raw -Path $script:profilePath | Should -BeNullOrEmpty
+    }
 }

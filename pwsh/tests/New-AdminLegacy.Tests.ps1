@@ -80,4 +80,11 @@ Describe 'New-AdminLegacy' {
         }
         Should -Invoke Add-LocalGroupMember -ModuleName PDS -Times 0 -Exactly
     }
+
+    It 'changes nothing under -WhatIf' {
+        New-AdminLegacy -Credential $script:credential -WhatIf
+
+        Should -Invoke New-LocalUser -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Add-LocalGroupMember -ModuleName PDS -Times 0 -Exactly
+    }
 }

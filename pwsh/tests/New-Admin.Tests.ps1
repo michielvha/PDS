@@ -47,4 +47,16 @@ Describe 'New-Admin' {
         }
         Get-LocalUser $userName -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
     }
+
+    It 'changes nothing under -WhatIf' {
+        $userName = 'pdst23x{0}' -f (Get-Random -Minimum 10000 -Maximum 99999)
+
+        New-Admin -Credential (Get-TestCredential -UserName $userName) -WhatIf
+
+        Should -Invoke New-Object -ModuleName PDS -Times 0 -Exactly -ParameterFilter {
+            $TypeName -eq 'System.DirectoryServices.AccountManagement.UserPrincipal'
+        }
+        Should -Invoke Write-Error -ModuleName PDS -Times 0 -Exactly
+        Get-LocalUser $userName -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+    }
 }

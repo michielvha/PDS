@@ -52,6 +52,18 @@ Describe 'Set-StarshipConfigForEveryUser' {
         Join-Path $script:system '.config' | Should -Not -Exist
     }
 
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS New-Item { }
+        Mock -ModuleName PDS Out-File { }
+
+        Set-StarshipConfigForEveryUser -configContent $script:config -WhatIf | Out-Null
+
+        Should -Invoke -ModuleName PDS New-Item -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Out-File -Times 0 -Exactly
+        Join-Path $script:alice '.config' | Should -Not -Exist
+        Get-Content -Path (Join-Path $script:bob '.config' 'starship.toml') | Should -Be 'existing'
+    }
+
     It 'still runs under its old name' {
         $old = Get-Command 'Set-StarshipConfigForAllUsers' -Module PDS
         $old.CommandType | Should -Be 'Alias'

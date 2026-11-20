@@ -53,7 +53,7 @@ function Get-RDSActiveSessions {
         https://docs.microsoft.com/en-us/powershell/module/remotedesktop/get-rdusersession
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $false)]
         [int]$IdleThresholdMinutes = 60,
@@ -83,13 +83,15 @@ function Get-RDSActiveSessions {
     }
 
     # Start transcript if not disabled
-    if (-not $NoTranscript) {
+    $transcriptStarted = $false
+    if (-not $NoTranscript -and $PSCmdlet.ShouldProcess($TranscriptPath, 'Start transcript')) {
         try {
             $transcriptDir = Split-Path -Path $TranscriptPath -Parent
             if (-not (Test-Path $transcriptDir)) {
                 New-Item -ItemType Directory -Path $transcriptDir -Force | Out-Null
             }
             Start-Transcript -Path $TranscriptPath -Append -ErrorAction Stop
+            $transcriptStarted = $true
         }
         catch {
             Write-Warning "Failed to start transcript: $_"
@@ -106,6 +108,7 @@ function Get-RDSActiveSessions {
 
         # Helper function for logging
         function Set-Log {
+            [CmdletBinding(SupportsShouldProcess)]
             param (
                 [string]$Message,
                 [string]$Path = $LogPath
@@ -115,11 +118,13 @@ function Get-RDSActiveSessions {
             $logEntry = "$timestamp,$Message"
 
             try {
-                $logDir = Split-Path -Path $Path -Parent
-                if (-not (Test-Path $logDir)) {
-                    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+                if ($PSCmdlet.ShouldProcess($Path, 'Append log entry')) {
+                    $logDir = Split-Path -Path $Path -Parent
+                    if (-not (Test-Path $logDir)) {
+                        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+                    }
+                    Add-Content -Path $Path -Value $logEntry -ErrorAction Stop
                 }
-                Add-Content -Path $Path -Value $logEntry -ErrorAction Stop
             }
             catch {
                 Write-Error "An error occurred while adding the log entry: $_"
@@ -153,7 +158,9 @@ function Get-RDSActiveSessions {
                 Set-Log "$($signInData.userName),$($signInData.idleTimeMinutes),$($signInData.serverName),$($signInData.createTime),$($signInData.disconnectTime),$($signInData.sessionState)"
 
                 # Export to CSV
-                $signInData | Export-Csv -Path $ExportPath -NoTypeInformation -Append
+                if ($PSCmdlet.ShouldProcess($ExportPath, 'Export session to CSV')) {
+                    $signInData | Export-Csv -Path $ExportPath -NoTypeInformation -Append
+                }
 
                 Write-Host "Collected log entry for $($signInData.userName)" -ForegroundColor Green
             }
@@ -169,7 +176,7 @@ function Get-RDSActiveSessions {
     }
     finally {
         # Stop transcript if it was started
-        if (-not $NoTranscript) {
+        if ($transcriptStarted) {
             try {
                 Stop-Transcript -ErrorAction SilentlyContinue
             }

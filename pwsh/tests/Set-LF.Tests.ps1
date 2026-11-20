@@ -60,4 +60,13 @@ Describe 'Set-LF' {
 
         "$warnings" | Should -Be "Path does not exist: $missing"
     }
+
+    It 'changes nothing under -WhatIf' {
+        Set-LF -Path $script:root -WhatIf 6>$null
+        Set-LF -Path $script:root -Method Git -WhatIf 6>$null
+
+        Should -Invoke git -ModuleName PDS -Times 0 -Exactly
+        [System.IO.File]::ReadAllText($script:topScript) | Should -BeExactly "#!/bin/sh`r`necho one`r`n"
+        [System.IO.File]::ReadAllText($script:nestedScript) | Should -BeExactly "#!/bin/sh`recho two`r"
+    }
 }

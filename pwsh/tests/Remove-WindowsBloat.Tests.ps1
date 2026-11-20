@@ -53,4 +53,11 @@ Describe 'Remove-WindowsBloat' {
 
         Should -Invoke Write-Host -ModuleName PDS -Times 1 -Exactly -ParameterFilter { $Object -like '*reboot*' }
     }
+
+    It 'changes nothing under -WhatIf' {
+        $null = Remove-WindowsBloat -WhatIf
+
+        Should -Invoke Stop-Service -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Set-Service -ModuleName PDS -Times 0 -Exactly
+    }
 }

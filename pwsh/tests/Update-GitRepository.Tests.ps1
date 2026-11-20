@@ -66,6 +66,13 @@ Describe 'Update-GitRepository' {
         Should -Invoke git -ModuleName PDS -Times 0 -Exactly
     }
 
+    It 'changes nothing under -WhatIf' {
+        Update-GitRepository -RootDirectory $script:root -WhatIf 6>$null
+
+        Should -Invoke git -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Set-Location -ModuleName PDS -Times 0 -Exactly -ParameterFilter { $Path -like '*\repo-*' }
+    }
+
     It 'still runs under its old name' {
         $command = Get-Command 'Update-GitRepositories' -Module PDS
         $command.CommandType | Should -Be 'Alias'

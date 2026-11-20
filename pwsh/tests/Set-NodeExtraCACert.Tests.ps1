@@ -74,4 +74,12 @@ Describe 'Set-NodeExtraCACert' {
         }
         Should -Invoke Write-Error -ModuleName PDS -Times ([int](-not $script:isElevated)) -Exactly
     }
+
+    It 'changes nothing under -WhatIf' {
+        Set-NodeExtraCACert -CertPath $script:harmlessValue -WhatIf
+
+        # The real write either succeeds and reports, or fails with an error; neither may happen.
+        Should -Invoke Write-Host -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Write-Error -ModuleName PDS -Times 0 -Exactly
+    }
 }

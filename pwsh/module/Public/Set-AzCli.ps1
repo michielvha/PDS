@@ -1,4 +1,4 @@
-Function Set-AzCli {
+function Set-AzCli {
     <#
     .SYNOPSIS
 
@@ -21,6 +21,10 @@ Function Set-AzCli {
         https://learn.microsoft.com/en-us/cli/azure/azure-cli-extensions-list
 
     #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
 
-    az extension add --name ssh, aks-preview, mesh, terraform, storage
+    if ($PSCmdlet.ShouldProcess('Azure CLI', 'Add extensions ssh, aks-preview, mesh, terraform, storage')) {
+        az extension add --name ssh, aks-preview, mesh, terraform, storage
+    }
 }

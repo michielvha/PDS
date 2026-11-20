@@ -31,12 +31,15 @@ function Set-LogProject {
         The project name persists for the entire PowerShell session or until changed with another call to Set-LogProject.
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
         [string]$ProjectName
     )
-    $Script:LogProjectName = $ProjectName
-    Write-Host "Log project name set to: $ProjectName"
+    if ($PSCmdlet.ShouldProcess($ProjectName, 'Set log project name')) {
+        $Script:LogProjectName = $ProjectName
+        Write-Host "Log project name set to: $ProjectName"
+    }
 }
 
 function Set-Log {
@@ -79,6 +82,7 @@ function Set-Log {
         If an error occurs while writing to the log file, it will attempt to log the error and display it to the console.
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Message,
@@ -89,9 +93,13 @@ function Set-Log {
 
     $timestamp = Get-Date -Format "yyyy-MM-dd | HH:mm:ss"
     $logEntry = "$timestamp : $Message"
+    $logFile = "$env:USERPROFILE\$ProjectName-log.txt"
 
     try {
-        Add-Content -Path "$env:USERPROFILE\$ProjectName-log.txt" -Value $logEntry -ErrorAction Stop
+        # Under -WhatIf the entry is still echoed, only the file is left alone.
+        if ($PSCmdlet.ShouldProcess($logFile, 'Append log entry')) {
+            Add-Content -Path $logFile -Value $logEntry -ErrorAction Stop
+        }
         Write-Host $logEntry
     }
     catch {

@@ -53,6 +53,7 @@ function Get-RDSActiveSession {
         - For scheduled execution, consider using the non-QuickMode to maintain logs
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [string]$LogPath = "C:\Logs\rdsUserMonitor.csv",
         [string]$TranscriptPath = "C:\Logs\RdsMonitorTranscript.txt",
@@ -69,19 +70,24 @@ function Get-RDSActiveSession {
     }
 
     # Start transcript logging
-    $transcriptDir = Split-Path -Path $TranscriptPath -Parent
-    if (-not (Test-Path -Path $transcriptDir)) {
-        New-Item -Path $transcriptDir -ItemType Directory -Force | Out-Null
+    $transcriptStarted = $false
+    if ($PSCmdlet.ShouldProcess($TranscriptPath, 'Start transcript')) {
+        $transcriptDir = Split-Path -Path $TranscriptPath -Parent
+        if (-not (Test-Path -Path $transcriptDir)) {
+            New-Item -Path $transcriptDir -ItemType Directory -Force | Out-Null
+        }
+        Start-Transcript -Path $TranscriptPath -Append
+        $transcriptStarted = $true
     }
-    Start-Transcript -Path $TranscriptPath -Append
 
     # Create log directory if it doesn't exist
     $logDir = Split-Path -Path $LogPath -Parent
-    if (-not (Test-Path -Path $logDir)) {
+    if (-not (Test-Path -Path $logDir) -and $PSCmdlet.ShouldProcess($logDir, 'Create log directory')) {
         New-Item -Path $logDir -ItemType Directory -Force | Out-Null
     }
 
     function Set-Log {
+        [CmdletBinding(SupportsShouldProcess)]
         param (
             [string]$Message
         )
@@ -90,7 +96,9 @@ function Get-RDSActiveSession {
         $logEntry = "$timestamp : $Message"
 
         try {
-            Add-Content -Path $LogPath -Value $logEntry -ErrorAction Stop
+            if ($PSCmdlet.ShouldProcess($LogPath, 'Append log entry')) {
+                Add-Content -Path $LogPath -Value $logEntry -ErrorAction Stop
+            }
         }
         catch {
             Write-Host "An error occurred while adding the log entry: $_"
@@ -121,6 +129,8 @@ function Get-RDSActiveSession {
         Set-Log "No active user sessions found that haven't been idle for more than $IdleThresholdMinutes minutes"
     }
 
-    Stop-Transcript
+    if ($transcriptStarted) {
+        Stop-Transcript
+    }
     return $activeSessions
 }

@@ -43,6 +43,12 @@ Describe 'Set-FirewallRule' {
             }
         }
 
+        It 'changes nothing under -WhatIf' {
+            Set-FirewallRule -Port 6040 -WhatIf
+
+            Should -Invoke -ModuleName PDS New-NetFirewallRule -Times 0 -Exactly
+        }
+
         It 'reports an error when a rule cannot be created' {
             Mock -ModuleName PDS New-NetFirewallRule { throw 'access denied' }
 

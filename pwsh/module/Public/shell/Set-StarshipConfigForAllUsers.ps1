@@ -40,7 +40,7 @@
 
     # TODO: add a step that checks if starship is already installed installed, if not install it with choco
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         # Define a string parameter for the starship configuration content
         [Parameter(Mandatory = $true, HelpMessage = "Provide the content for the starship.toml configuration.")]
@@ -54,13 +54,17 @@
         $starshipFile = Join-Path $userConfigDir "starship.toml"
         # Check if .config directory exists, create it if not
         if (-not (Test-Path $userConfigDir)) {
-            Write-Host "Creating .config directory for user: $($uprofile.LocalPath)"
-            New-Item -Path $userConfigDir -ItemType Directory -Force
+            if ($PSCmdlet.ShouldProcess($userConfigDir, 'Create directory')) {
+                Write-Host "Creating .config directory for user: $($uprofile.LocalPath)"
+                New-Item -Path $userConfigDir -ItemType Directory -Force
+            }
         }
         # Write the starship.toml configuration file
         if (-not (Test-Path $starshipFile)) {
-            Write-Host "Creating starship.toml for user: $($uprofile.LocalPath)"
-            $configContent | Out-File -FilePath $starshipFile -Encoding utf8
+            if ($PSCmdlet.ShouldProcess($starshipFile, 'Write Starship configuration')) {
+                Write-Host "Creating starship.toml for user: $($uprofile.LocalPath)"
+                $configContent | Out-File -FilePath $starshipFile -Encoding utf8
+            }
         }
         else {
             Write-Host "starship.toml already exists for user: $($uprofile.LocalPath)"

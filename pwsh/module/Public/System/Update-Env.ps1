@@ -40,23 +40,30 @@ function Update-Env {
     .LINK
         https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/setx
     #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
+
     Write-Host "Refreshing environment variables from registry..." -ForegroundColor Cyan
 
     # Load System-wide environment variables
     $systemEnvPath = "HKLM:\System\CurrentControlSet\Control\Session Manager\Environment"
     $systemEnv = Get-ItemProperty -Path $systemEnvPath
-    foreach ($key in $systemEnv.PSObject.Properties.Name) {
-        if ($key -ne "Path") {
-            [System.Environment]::SetEnvironmentVariable($key, $systemEnv.$key, [System.EnvironmentVariableTarget]::Process)
+    if ($PSCmdlet.ShouldProcess($systemEnvPath, 'Load variables into the current session')) {
+        foreach ($key in $systemEnv.PSObject.Properties.Name) {
+            if ($key -ne "Path") {
+                [System.Environment]::SetEnvironmentVariable($key, $systemEnv.$key, [System.EnvironmentVariableTarget]::Process)
+            }
         }
     }
 
     # Load User-specific environment variables
     $userEnvPath = "HKCU:\Environment"
     $userEnv = Get-ItemProperty -Path $userEnvPath
-    foreach ($key in $userEnv.PSObject.Properties.Name) {
-        if ($key -ne "Path") {
-            [System.Environment]::SetEnvironmentVariable($key, $userEnv.$key, [System.EnvironmentVariableTarget]::Process)
+    if ($PSCmdlet.ShouldProcess($userEnvPath, 'Load variables into the current session')) {
+        foreach ($key in $userEnv.PSObject.Properties.Name) {
+            if ($key -ne "Path") {
+                [System.Environment]::SetEnvironmentVariable($key, $userEnv.$key, [System.EnvironmentVariableTarget]::Process)
+            }
         }
     }
 
@@ -65,13 +72,18 @@ function Update-Env {
     $userPath = $userEnv.Path -split ";" | Where-Object { $_ -ne "" }
     $combinedPath = ($systemPath + $userPath) -join ";"
 
-    [System.Environment]::SetEnvironmentVariable("Path", $combinedPath, [System.EnvironmentVariableTarget]::Process)
+    if ($PSCmdlet.ShouldProcess('Path', 'Set merged system and user Path in the current session')) {
+        [System.Environment]::SetEnvironmentVariable("Path", $combinedPath, [System.EnvironmentVariableTarget]::Process)
+    }
 
     Write-Host "Environment variables refreshed successfully!" -ForegroundColor Green
 }
 
 # Debug Version
 function Update-EnvDebug {
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
+
     Write-Host "Refreshing environment variables from registry..." -ForegroundColor Cyan
 
     # Load System-wide environment variables
@@ -79,10 +91,12 @@ function Update-EnvDebug {
     $systemEnv = Get-ItemProperty -Path $systemEnvPath
 
     Write-Host "`n[System Environment Variables]:" -ForegroundColor Yellow
-    foreach ($key in $systemEnv.PSObject.Properties.Name) {
-        if ($key -ne "Path") {
-            [System.Environment]::SetEnvironmentVariable($key, $systemEnv.$key, [System.EnvironmentVariableTarget]::Process)
-            Write-Host "Updated: $key = $($systemEnv.$key)" -ForegroundColor Green
+    if ($PSCmdlet.ShouldProcess($systemEnvPath, 'Load variables into the current session')) {
+        foreach ($key in $systemEnv.PSObject.Properties.Name) {
+            if ($key -ne "Path") {
+                [System.Environment]::SetEnvironmentVariable($key, $systemEnv.$key, [System.EnvironmentVariableTarget]::Process)
+                Write-Host "Updated: $key = $($systemEnv.$key)" -ForegroundColor Green
+            }
         }
     }
 
@@ -91,10 +105,12 @@ function Update-EnvDebug {
     $userEnv = Get-ItemProperty -Path $userEnvPath
 
     Write-Host "`n[User Environment Variables]:" -ForegroundColor Yellow
-    foreach ($key in $userEnv.PSObject.Properties.Name) {
-        if ($key -ne "Path") {
-            [System.Environment]::SetEnvironmentVariable($key, $userEnv.$key, [System.EnvironmentVariableTarget]::Process)
-            Write-Host "Updated: $key = $($userEnv.$key)" -ForegroundColor Green
+    if ($PSCmdlet.ShouldProcess($userEnvPath, 'Load variables into the current session')) {
+        foreach ($key in $userEnv.PSObject.Properties.Name) {
+            if ($key -ne "Path") {
+                [System.Environment]::SetEnvironmentVariable($key, $userEnv.$key, [System.EnvironmentVariableTarget]::Process)
+                Write-Host "Updated: $key = $($userEnv.$key)" -ForegroundColor Green
+            }
         }
     }
 
@@ -103,7 +119,9 @@ function Update-EnvDebug {
     $userPath = $userEnv.Path -split ";" | Where-Object { $_ -ne "" }
     $combinedPath = ($systemPath + $userPath) -join ";"
 
-    [System.Environment]::SetEnvironmentVariable("Path", $combinedPath, [System.EnvironmentVariableTarget]::Process)
+    if ($PSCmdlet.ShouldProcess('Path', 'Set merged system and user Path in the current session')) {
+        [System.Environment]::SetEnvironmentVariable("Path", $combinedPath, [System.EnvironmentVariableTarget]::Process)
+    }
 
     Write-Host "`n[Path Variable Merged]:" -ForegroundColor Yellow
     Write-Host "System PATH: $([System.Environment]::GetEnvironmentVariable('Path', 'Machine'))" -ForegroundColor Blue

@@ -41,7 +41,7 @@ function Start-ISEAsAdmin {
         https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/ise/introducing-the-windows-powershell-ise
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Position = 0)]
         [string]$FilePath,
@@ -87,14 +87,16 @@ function Start-ISEAsAdmin {
     }
 
     try {
-        Write-Verbose "Starting PowerShell ISE with administrative privileges..."
-        $process = Start-Process @processArgs
-        Write-Verbose "PowerShell ISE started successfully."
+        if ($PSCmdlet.ShouldProcess('powershell_ise.exe', 'Start as administrator')) {
+            Write-Verbose "Starting PowerShell ISE with administrative privileges..."
+            $process = Start-Process @processArgs
+            Write-Verbose "PowerShell ISE started successfully."
 
-        if (-not $Wait) {
-            # If we specified -Wait, Start-Process handles waiting
-            # Otherwise, return the process object
-            return $process
+            if (-not $Wait) {
+                # If we specified -Wait, Start-Process handles waiting
+                # Otherwise, return the process object
+                return $process
+            }
         }
     }
     catch {

@@ -64,6 +64,15 @@ Describe 'Start-RemoteADSyncCycle' {
         "$errors" | Should -Match 'Failed to run commands on sync01'
     }
 
+    It 'changes nothing under -WhatIf' {
+        $servers = 'sync01', 'sync02'
+
+        $result = Start-RemoteADSyncCycle -ComputerName $servers -WhatIf
+
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Invoke-Command -ModuleName PDS -Times 0 -Exactly
+    }
+
     It 'errors when no server is given' {
         Start-RemoteADSyncCycle -ErrorVariable errors -ErrorAction SilentlyContinue
 

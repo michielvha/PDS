@@ -19,6 +19,7 @@ function New-AdminLegacy {
     .LINK
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
 
         [Parameter(Mandatory = $true)]
@@ -41,13 +42,15 @@ function New-AdminLegacy {
     if (!$FullName) { $FullName = $Credential.Username }
     if (!$Description) { $Description = "Local user account for $($Credential.Username)" }
 
-    try {
-        # Create the user
-        New-LocalUser -Name $Credential.Username -Password $Credential.Password -FullName $FullName -Description $Description -AccountNeverExpires
-        Add-LocalGroupMember -Group "Administrators" -Member $Credential.Username
-        Write-Host "User $($Credential.Username) created and added to the Administrators group successfully."
-    }
-    catch {
-        Write-Error "Failed to create user $($Credential.Username) : $($_.Exception.Message)"
+    if ($PSCmdlet.ShouldProcess($Credential.Username, 'Create local user and add to Administrators')) {
+        try {
+            # Create the user
+            New-LocalUser -Name $Credential.Username -Password $Credential.Password -FullName $FullName -Description $Description -AccountNeverExpires
+            Add-LocalGroupMember -Group "Administrators" -Member $Credential.Username
+            Write-Host "User $($Credential.Username) created and added to the Administrators group successfully."
+        }
+        catch {
+            Write-Error "Failed to create user $($Credential.Username) : $($_.Exception.Message)"
+        }
     }
 }

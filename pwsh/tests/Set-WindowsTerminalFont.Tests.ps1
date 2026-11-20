@@ -76,10 +76,23 @@ Describe 'Set-WindowsTerminalFont' {
     It 'reports an error when settings.json does not exist' {
         Remove-Item -Path $script:settingsFile -Force
 
-        # Set-WindowsTerminalFont is not an advanced function, so it takes no -ErrorVariable.
         $errors = Set-WindowsTerminalFont 2>&1 | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
 
         $errors[0].ToString() | Should -BeLike 'Windows Terminal settings.json not found at:*'
         $script:settingsFile | Should -Not -Exist
+    }
+
+    It 'changes nothing under -WhatIf' {
+        $before = Get-Content -Path $script:settingsFile -Raw
+        Mock -ModuleName PDS Set-Content { }
+
+        Set-WindowsTerminalFont -FontName 'JetBrainsMono Nerd Font Mono' -WhatIf
+        Mock -ModuleName PDS Get-Command { } -ParameterFilter { $Name -eq 'oh-my-posh' }
+        Set-WindowsTerminalFont -WhatIf 3>$null
+
+        Should -Invoke -ModuleName PDS winget -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS oh-my-posh -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Set-Content -Times 0 -Exactly
+        Get-Content -Path $script:settingsFile -Raw | Should -Be $before
     }
 }

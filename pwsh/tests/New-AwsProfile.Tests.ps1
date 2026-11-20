@@ -39,4 +39,15 @@ Describe 'New-AwsProfile' {
         $content | Should -Match '\[profile dev\]\r?\nsso_session = corp\r?\nsso_account_id = 111111111111'
         $content | Should -Match '\[profile prod\]\r?\nsso_session = corp\r?\nsso_account_id = 222222222222\r?\nsso_role_name = ReadOnly'
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS New-Item { }
+        Mock -ModuleName PDS Out-File { }
+
+        $null = New-AwsProfile -sso_profile 'dev' -sso_session 'corp' -sso_account_id '123456789012' -sso_role_name 'Admin' -WhatIf 6>$null
+
+        Should -Invoke -ModuleName PDS New-Item -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Out-File -Times 0 -Exactly
+        Join-Path $script:testHome '.aws' | Should -Not -Exist
+    }
 }

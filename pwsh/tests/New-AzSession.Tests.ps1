@@ -30,4 +30,12 @@ Describe 'New-AzSession' {
         { New-AzSession 6>$null } | Should -Throw '*No match was found*'
         Should -Invoke Connect-AzAccount -ModuleName PDS -Times 0 -Exactly
     }
+
+    It 'changes nothing under -WhatIf' {
+        New-AzSession -WhatIf 6>$null
+
+        Should -Invoke Set-ExecutionPolicy -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Install-Module -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Connect-AzAccount -ModuleName PDS -Times 0 -Exactly
+    }
 }

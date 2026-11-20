@@ -43,4 +43,12 @@ Describe 'Start-ScrollLockToggle' {
         Should -Invoke -ModuleName PDS Write-Host -Times 1 -Exactly -ParameterFilter { $Object -like 'ScrollLock toggle interrupted:*stop toggling*' }
         Should -Invoke -ModuleName PDS Write-Host -Times 1 -Exactly -ParameterFilter { $Object -eq 'ScrollLock toggle stopped.' }
     }
+
+    It 'changes nothing under -WhatIf' {
+        Start-ScrollLockToggle -WhatIf
+
+        $script:sentKeys | Should -BeNullOrEmpty
+        Should -Invoke -ModuleName PDS New-Object -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Start-Sleep -Times 0 -Exactly
+    }
 }

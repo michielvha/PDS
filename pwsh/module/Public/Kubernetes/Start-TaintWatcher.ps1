@@ -27,9 +27,14 @@ function Start-TaintWatcher {
         File: taint_watch.log will be created in the current directory
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param()
 
     $logFile = "taint_watch.log"
+    if (-not $PSCmdlet.ShouldProcess($logFile, 'Append node taints every 2 seconds')) {
+        return
+    }
+
     while ($true) {
         Add-Content $logFile "`n===== $(Get-Date) ====="
 

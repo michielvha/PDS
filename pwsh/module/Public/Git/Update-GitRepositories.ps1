@@ -27,7 +27,7 @@ function Update-GitRepositories {
         https://git-scm.com/docs/git-pull
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $false, Position = 0)]
         [string]$RootDirectory = (Get-Location)
@@ -85,6 +85,10 @@ function Update-GitRepositories {
 
             Write-Host "`nUpdating repository: $repoName [$currentRepo/$totalRepos]" -ForegroundColor Yellow
             Write-Host "Repository path: $repoPath" -ForegroundColor Gray
+
+            if (-not $PSCmdlet.ShouldProcess($repoPath, 'Git pull')) {
+                continue
+            }
 
             # Navigate to the repository
             Set-Location -Path $repoPath

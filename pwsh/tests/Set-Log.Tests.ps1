@@ -48,4 +48,15 @@ Describe 'Set-Log' {
         Get-Content -LiteralPath (Join-Path $env:USERPROFILE 'WebApp-log.txt') | Should -Match ($script:entryPattern + 'after switching$')
         Join-Path $env:USERPROFILE "$env:COMPUTERNAME-log.txt" | Should -Not -Exist
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS Add-Content { }
+
+        Set-Log -Message 'not written' -ProjectName 'Proj' -WhatIf
+        InModuleScope PDS { Set-LogProject -ProjectName 'WebApp' -WhatIf }
+
+        Should -Invoke -ModuleName PDS Add-Content -Times 0 -Exactly
+        Join-Path $env:USERPROFILE 'Proj-log.txt' | Should -Not -Exist
+        InModuleScope PDS { $script:LogProjectName } | Should -Be $env:COMPUTERNAME
+    }
 }

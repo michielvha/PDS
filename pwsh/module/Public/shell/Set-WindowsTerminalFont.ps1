@@ -41,6 +41,7 @@ function Set-WindowsTerminalFont {
         https://learn.microsoft.com/en-us/windows/terminal/customize-settings/profile-general
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $false)]
         [string]$FontName = "MesloLGM Nerd Font"
@@ -48,23 +49,27 @@ function Set-WindowsTerminalFont {
 
     # Install Oh My Posh if not already installed
     if (-not (Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
-        Write-Host "Installing Oh My Posh..."
-        Write-Verbose "Using winget to install Oh My Posh.`nThis will fetch the exe and latest themes from the official repository.`nThe installation is user scoped"
-        winget install JanDeDobbeleer.OhMyPosh -s winget
+        if ($PSCmdlet.ShouldProcess('JanDeDobbeleer.OhMyPosh', 'Install package with winget')) {
+            Write-Host "Installing Oh My Posh..."
+            Write-Verbose "Using winget to install Oh My Posh.`nThis will fetch the exe and latest themes from the official repository.`nThe installation is user scoped"
+            winget install JanDeDobbeleer.OhMyPosh -s winget
 
-        # Refresh the environment to make oh-my-posh available
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+            # Refresh the environment to make oh-my-posh available
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        }
     }
 
     # install the fonts
     if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
-        Write-Host "Installing Nerd fonts"
-        try {
-            oh-my-posh font install meslo
-            oh-my-posh font install JetBrainsMono
-        }
-        catch {
-            Write-Warning "Failed to install fonts via oh-my-posh. You may need to restart your terminal and try again, or install fonts manually."
+        if ($PSCmdlet.ShouldProcess('meslo, JetBrainsMono', 'Install Nerd Fonts with oh-my-posh')) {
+            Write-Host "Installing Nerd fonts"
+            try {
+                oh-my-posh font install meslo
+                oh-my-posh font install JetBrainsMono
+            }
+            catch {
+                Write-Warning "Failed to install fonts via oh-my-posh. You may need to restart your terminal and try again, or install fonts manually."
+            }
         }
     }
     else {
@@ -98,11 +103,13 @@ function Set-WindowsTerminalFont {
         $json.profiles.defaults.font | Add-Member -MemberType NoteProperty -Name "face" -Value $FontName -Force
 
         # Write back the modified config
-        Write-Host "Saving updated settings..." -ForegroundColor Cyan
-        $json | ConvertTo-Json -Depth 10 | Set-Content -Path $settingsPath -Encoding utf8
+        if ($PSCmdlet.ShouldProcess($settingsPath, "Set default font face to '$FontName'")) {
+            Write-Host "Saving updated settings..." -ForegroundColor Cyan
+            $json | ConvertTo-Json -Depth 10 | Set-Content -Path $settingsPath -Encoding utf8
 
-        Write-Host "Font successfully set to '$FontName' in Windows Terminal settings." -ForegroundColor Green
-        Write-Host "Please restart any existing Windows Terminal sessions to see the changes." -ForegroundColor Yellow
+            Write-Host "Font successfully set to '$FontName' in Windows Terminal settings." -ForegroundColor Green
+            Write-Host "Please restart any existing Windows Terminal sessions to see the changes." -ForegroundColor Yellow
+        }
     }
     catch {
         Write-Error "Failed to update Windows Terminal settings: $($_.Exception.Message)"

@@ -4,6 +4,7 @@
 
 ### Maintenance
 
+- Give the 43 PowerShell functions that change the system real `-WhatIf` and `-Confirm` support: each change now runs only after `ShouldProcess` agrees, with a target and action that say what would happen. A test per function shows `-WhatIf` changes nothing. `Remove-StaleADComputer` uses the common `-WhatIf` instead of its own switch, with the same output. `Set-Kubectl` and `Set-UserProfile` no longer fail when the profile does not exist yet.
 - Format every PowerShell file to the analyzer settings and strip trailing whitespace. The seven files that contain non-ASCII text, such as the Starship prompt symbol and the menu icons, get a UTF-8 byte-order mark so Windows PowerShell 5.1 reads them correctly.
 - Add a Pester test file for every public PowerShell function in `pwsh/tests/`, with every install, download, registry, service, firewall, cloud and directory call mocked so the suite never changes the machine it runs on. Tests for the twelve functions a later change renames already call the new names and check that the old name still works as an alias. The commented-out `Update-Env.Tests.ps1` is replaced by a real test.
 - Export every PowerShell function file as its command: `Remove-StaleADComputer` and `Install-AzureKubeCLI` live in files named after them, the function template moves out of `Public` to `pwsh/templates/`, and the module loader skips Pester test files. Add the PSScriptAnalyzer settings the new CI checks use.

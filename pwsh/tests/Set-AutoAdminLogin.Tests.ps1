@@ -57,4 +57,12 @@ Describe 'Set-AutoAdminLogin' {
         $result | Should -Contain 'An error occured while trying to set the `DefaultUserName`: access denied'
         Should -Invoke Set-ItemProperty -ModuleName PDS -Times 1 -Exactly -ParameterFilter { $Name -eq 'AutoAdminLogon' }
     }
+
+    It 'changes nothing under -WhatIf' {
+        $password = [System.Net.NetworkCredential]::new('', 'test-only-password').SecurePassword
+
+        $null = Set-AutoAdminLogin -Username 'devUser' -Password $password -WhatIf
+
+        Should -Invoke Set-ItemProperty -ModuleName PDS -Times 0 -Exactly
+    }
 }

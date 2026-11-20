@@ -21,10 +21,15 @@ function Remove-ArgoCLI {
         https://argoproj.github.io/argo-cd/
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
     # function definiton
     $Argo = "$env:USERPROFILE\AppData\Local\bin\argocd.exe"
     if (Test-Path $Argo) {
-        Remove-Item -Path $Argo -Recurse -Force
+        if ($PSCmdlet.ShouldProcess($Argo, 'Remove ArgoCD CLI')) {
+            Remove-Item -Path $Argo -Recurse -Force
+        }
     }
     else {
         Write-Output "$Argo directory doesn't exist. ArgoCD CLI was not installed via PDS Module."

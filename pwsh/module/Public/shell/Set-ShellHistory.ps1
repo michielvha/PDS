@@ -10,5 +10,11 @@ function Set-ShellHistory {
         Author: Michiel VH
     #>
 
-    notepad.exe $env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
+    $historyPath = "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt"
+    if ($PSCmdlet.ShouldProcess($historyPath, 'Open in notepad')) {
+        notepad.exe $historyPath
+    }
 }

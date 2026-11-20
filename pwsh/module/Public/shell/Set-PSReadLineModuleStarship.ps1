@@ -36,6 +36,8 @@ function Set-PSReadLineModuleStarship {
 
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
 
     $commands = @"
 
@@ -62,12 +64,14 @@ Import-Module "`$ChocolateyProfile"
         Start-Sleep 10
         exit
     }
-    else {
+    elseif ($PSCmdlet.ShouldProcess('PSReadLine', 'Install module')) {
         Write-Output "PSReadLine Module will be installed"
         Install-Module -Name PSReadLine -Force -SkipPublisherCheck
     }
 
     # Append the commands to the global profile using tee
-    $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
+    if ($PSCmdlet.ShouldProcess($PROFILE.AllUsersAllHosts, 'Append PSReadLine and Starship configuration')) {
+        $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
+    }
 
 }

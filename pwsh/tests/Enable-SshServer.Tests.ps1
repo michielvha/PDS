@@ -51,6 +51,19 @@ Describe 'Set-SshdConfigOption' {
 
         $result | Should -Be "PasswordAuthentication no`r`nSubsystem sftp sftp-server.exe`r`n"
     }
+
+    It 'changes nothing under -WhatIf' {
+        # The helper only returns text, so there is no command to count: the text must come back as given.
+        $config = "#Port 22`r`nSubsystem sftp sftp-server.exe`r`n"
+
+        $result = InModuleScope PDS -Parameters @{ Config = $config } {
+            param($Config)
+            $option = @{ Config = $Config; Name = 'Port'; Value = 2222 }
+            Set-SshdConfigOption @option -WhatIf
+        }
+
+        $result | Should -Be $config
+    }
 }
 
 Describe 'Enable-SshServer' {

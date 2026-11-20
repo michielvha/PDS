@@ -74,4 +74,12 @@ Describe 'New-VSCodeShortcut' {
         { New-VSCodeShortcut -FilePath 'TestDrive:\missing.js' } | Should -Throw
         Should -Invoke New-Object -ModuleName PDS -Times 0 -Exactly
     }
+
+    It 'changes nothing under -WhatIf' {
+        $result = New-VSCodeShortcut -FilePath $script:file -WhatIf
+
+        $result | Should -BeNullOrEmpty
+        Should -Invoke New-Object -ModuleName PDS -Times 0 -Exactly
+        $script:fakeShell.Shortcut.Saved | Should -BeFalse
+    }
 }

@@ -44,6 +44,7 @@ function Set-UserProfile {
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [string[]]$Lines = @(
             'Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1',
@@ -53,13 +54,18 @@ function Set-UserProfile {
     )
 
     if (-not (Test-Path $ProfilePath)) {
-        New-Item -ItemType File -Path $ProfilePath -Force | Out-Null
+        if ($PSCmdlet.ShouldProcess($ProfilePath, 'Create profile')) {
+            New-Item -ItemType File -Path $ProfilePath -Force | Out-Null
+        }
     }
 
     foreach ($line in $Lines) {
         $escapedPattern = [regex]::Escape($line)
-        if (-not (Select-String -Path $ProfilePath -Pattern $escapedPattern -Quiet)) {
-            Add-Content -Path $ProfilePath -Value $line
+        # Under -WhatIf the profile may not exist yet, and Select-String fails on a missing file.
+        if (-not (Test-Path $ProfilePath) -or -not (Select-String -Path $ProfilePath -Pattern $escapedPattern -Quiet)) {
+            if ($PSCmdlet.ShouldProcess($ProfilePath, "Add line '$line'")) {
+                Add-Content -Path $ProfilePath -Value $line
+            }
         }
     }
 }

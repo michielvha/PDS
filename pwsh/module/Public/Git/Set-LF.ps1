@@ -34,6 +34,7 @@ function Set-LF {
         Set-LF -Path "script.sh"
         Converts line endings for a specific shell script file.
     #>
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [string[]]$Path = @("."),                                           # Default to current directory
         [ValidateSet("Git", "Direct")]
@@ -49,8 +50,10 @@ function Set-LF {
     try {
         if ($Method -eq "Git") {
             # Git method: Disable autocrlf and use Git's normalization
-            Write-Host "Disabling Git autocrlf..." -ForegroundColor Yellow
-            git config core.autocrlf false
+            if ($PSCmdlet.ShouldProcess('core.autocrlf', 'Set Git config to false')) {
+                Write-Host "Disabling Git autocrlf..." -ForegroundColor Yellow
+                git config core.autocrlf false
+            }
 
             Write-Host "Using Git normalization method..." -ForegroundColor Yellow
             foreach ($currentPath in $Path) {
@@ -63,9 +66,11 @@ function Set-LF {
                     Where-Object { $_.Extension -in $FileTypes -or ($FileTypes -contains "" -and $_.Extension -eq "") }
 
                 foreach ($file in $files) {
-                    Write-Host "Processing: $($file.FullName)" -ForegroundColor Gray
-                    git add $file.FullName
-                    git reset $file.FullName
+                    if ($PSCmdlet.ShouldProcess($file.FullName, 'Re-stage with Git normalization')) {
+                        Write-Host "Processing: $($file.FullName)" -ForegroundColor Gray
+                        git add $file.FullName
+                        git reset $file.FullName
+                    }
                 }
             }
         }
@@ -96,8 +101,10 @@ function Set-LF {
                             $content = $content -replace "`r", "`n"
 
                             # Write back with UTF8 encoding and LF line endings
-                            [System.IO.File]::WriteAllText($file.FullName, $content, [System.Text.Encoding]::UTF8)
-                            $fileCount++
+                            if ($PSCmdlet.ShouldProcess($file.FullName, 'Convert line endings to LF')) {
+                                [System.IO.File]::WriteAllText($file.FullName, $content, [System.Text.Encoding]::UTF8)
+                                $fileCount++
+                            }
                         }
                     }
                     catch {

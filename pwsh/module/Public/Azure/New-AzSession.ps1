@@ -30,15 +30,22 @@ function New-AzSession {
         https://docs.microsoft.com/en-us/powershell/module/az.accounts/connect-azaccount
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param()
 
 
     Write-Host "Setting up Azure session..."
-    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+    if ($PSCmdlet.ShouldProcess('CurrentUser', 'Set execution policy to RemoteSigned')) {
+        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+    }
 
-    Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force
+    if ($PSCmdlet.ShouldProcess('Az', 'Install module for the current user')) {
+        Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force
+    }
 
-    Connect-AzAccount
+    if ($PSCmdlet.ShouldProcess('Azure account', 'Connect')) {
+        Connect-AzAccount
+    }
 
     # Dont forget to add any CA cert (zscaler) if needed
 }

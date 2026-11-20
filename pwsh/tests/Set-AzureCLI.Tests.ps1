@@ -24,4 +24,10 @@ Describe 'Set-AzureCLI' {
             ($args -join ' ') -eq 'extension add --name ssh'
         }
     }
+
+    It 'changes nothing under -WhatIf' {
+        Set-AzureCLI -WhatIf 6>$null
+
+        Should -Invoke az -ModuleName PDS -Times 0 -Exactly
+    }
 }

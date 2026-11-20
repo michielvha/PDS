@@ -30,6 +30,9 @@
     .LINK
         GitHub: https://github.com/michielvha/PDS
     #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
+
     # --- Disable services safely ---
     $servicesToDisable = @(
         "SysMain",                  # Superfetch - useless on SSDs, hogs disk/CPU
@@ -51,7 +54,9 @@
     # Disable each one safely
     foreach ($svc in $servicesToDisable) {
         Get-Service -Name $svc -ErrorAction SilentlyContinue | ForEach-Object {
-            Disable-ServiceSafe $_.Name
+            if ($PSCmdlet.ShouldProcess($_.Name, 'Stop and disable service')) {
+                Disable-ServiceSafe $_.Name
+            }
         }
     }
 

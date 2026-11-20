@@ -37,4 +37,14 @@ Describe 'Remove-ArgoCLI' {
 
         $output | Should -BeLike '*argocd.exe directory doesn''t exist. ArgoCD CLI was not installed via PDS Module.'
     }
+
+    It 'changes nothing under -WhatIf' {
+        Set-Content -LiteralPath $script:argo -Value 'binary'
+        Mock -ModuleName PDS Remove-Item { }
+
+        Remove-ArgoCLI -WhatIf
+
+        Should -Invoke -ModuleName PDS Remove-Item -Times 0 -Exactly
+        $script:argo | Should -Exist
+    }
 }

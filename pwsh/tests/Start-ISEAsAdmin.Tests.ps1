@@ -54,4 +54,11 @@ Describe 'Start-ISEAsAdmin' {
 
         $iseError[-1].Exception.Message | Should -BeLike 'Failed to start PowerShell ISE: *canceled by the user*'
     }
+
+    It 'changes nothing under -WhatIf' {
+        $result = Start-ISEAsAdmin -WhatIf
+
+        $result | Should -BeNullOrEmpty
+        Should -Invoke Start-Process -ModuleName PDS -Times 0 -Exactly
+    }
 }

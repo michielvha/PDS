@@ -43,7 +43,7 @@ function Start-RemoteADSyncCycle {
         Requirements: PowerShell Remoting must be enabled on local and remote machines
         The account running this function must have appropriate permissions on the remote servers
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 0)]
         [string[]]$ComputerName,
@@ -114,6 +114,10 @@ function Start-RemoteADSyncCycle {
             # Check if we can contact the remote computer
             if (-not (Test-Connection -ComputerName $server -Quiet -Count 1)) {
                 Write-Error "Can't contact $server. Check your network connection."
+                continue
+            }
+
+            if (-not $PSCmdlet.ShouldProcess($server, "Start $SyncType AD sync cycle")) {
                 continue
             }
 

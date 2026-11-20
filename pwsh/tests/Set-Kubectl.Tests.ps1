@@ -58,4 +58,15 @@ Describe 'Set-Kubectl' {
         Should -Invoke -ModuleName PDS Write-Host -Times 1 -Exactly -ParameterFilter { $Object -eq 'Alias already set in profile' }
         Get-Content -LiteralPath $script:profilePath | Where-Object { $_ -eq 'Set-Alias -Name k -Value kubectl' } | Should -HaveCount 1
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS Add-Content { }
+
+        Set-Kubectl -WhatIf
+
+        Should -Invoke -ModuleName PDS choco -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS kubectl -Times 0 -Exactly -ParameterFilter { $args -contains 'install' -or $args -contains 'completion' }
+        Should -Invoke -ModuleName PDS Add-Content -Times 0 -Exactly
+        $script:profilePath | Should -Not -Exist
+    }
 }

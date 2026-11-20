@@ -44,10 +44,22 @@ Describe 'Set-PSReadLineModule' {
         Mock -ModuleName PDS Get-Module { } -ParameterFilter { $ListAvailable -and $Name -eq 'PSReadLine' }
         Mock -ModuleName PDS Install-Module { throw 'module in use' }
 
-        # Set-PSReadLineModule is not an advanced function, so it takes no -WarningVariable.
         $warnings = Set-PSReadLineModule 3>&1
 
         $warnings | Should -BeLike '*Failed to install PSReadLine module*'
+        $script:allUsersProfile | Should -Not -Exist
+    }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS Get-Module { } -ParameterFilter { $ListAvailable -and $Name -eq 'PSReadLine' }
+        Mock -ModuleName PDS New-Item { }
+        Mock -ModuleName PDS Out-File { }
+
+        Set-PSReadLineModule -WhatIf
+
+        Should -Invoke -ModuleName PDS Install-Module -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS New-Item -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Out-File -Times 0 -Exactly
         $script:allUsersProfile | Should -Not -Exist
     }
 }

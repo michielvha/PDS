@@ -51,4 +51,14 @@ Describe 'Set-DockerAlias' {
         @(Get-Content -Path $script:profilePath).Count | Should -Be 3
         @($output | Where-Object { $_ -like '*is already defined in the profile.' }).Count | Should -Be 3
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock Add-Content -ModuleName PDS
+
+        $output = Set-DockerAlias -WhatIf
+
+        Should -Invoke Add-Content -ModuleName PDS -Times 0 -Exactly
+        Test-Path -Path $script:profilePath | Should -BeFalse
+        $output | Should -Not -Contain 'Function d added to profile successfully.'
+    }
 }

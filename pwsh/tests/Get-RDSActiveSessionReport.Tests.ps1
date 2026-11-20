@@ -84,6 +84,21 @@ Describe 'Get-RDSActiveSessionReport' {
         Should -Invoke Start-Transcript -ModuleName PDS -Times 1 -Exactly
     }
 
+    It 'changes nothing under -WhatIf' {
+        Mock New-Item -ModuleName PDS
+        Mock Add-Content -ModuleName PDS
+        Mock Export-Csv -ModuleName PDS
+        $transcript = Join-Path $TestDrive 'transcript.txt'
+
+        Get-RDSActiveSessionReport -LogPath $logPath -ExportPath $exportPath -TranscriptPath $transcript -WhatIf
+
+        Should -Invoke Start-Transcript -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Stop-Transcript -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke New-Item -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Add-Content -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Export-Csv -ModuleName PDS -Times 0 -Exactly
+    }
+
     It 'still runs under its old name' {
         $old = Get-Command 'Get-RDSActiveSessions' -Module PDS
         $old.CommandType | Should -Be 'Alias'

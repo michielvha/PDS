@@ -30,4 +30,13 @@ Describe 'Set-LangReg' {
 
         $result | Should -Be @('ui-language', 'system-locale', 'user-language-list', 'home-location')
     }
+
+    It 'changes nothing under -WhatIf' {
+        $null = Set-LangReg -WhatIf
+
+        Should -Invoke Set-WinUILanguageOverride -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Set-WinSystemLocale -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Set-WinUserLanguageList -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Set-WinHomeLocation -ModuleName PDS -Times 0 -Exactly
+    }
 }

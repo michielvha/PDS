@@ -259,11 +259,18 @@ function Enable-SshServer {
 
 function Set-SshdConfigOption {
     # Sets a global sshd_config option, replacing an existing (or commented) entry before any Match block.
+    # It only returns the changed text; under -WhatIf it returns the text unchanged.
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([string])]
     param(
         [string]$Config,
         [string]$Name,
         [string]$Value
     )
+
+    if (-not $PSCmdlet.ShouldProcess("sshd_config option $Name", "Set to '$Value'")) {
+        return $Config
+    }
 
     $matchIndex = [regex]::Match($Config, '(?mi)^\s*Match\s').Index
     $globalPart = if ($matchIndex -gt 0) { $Config.Substring(0, $matchIndex) } else { $Config }

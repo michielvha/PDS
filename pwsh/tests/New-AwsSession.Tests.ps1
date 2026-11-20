@@ -39,4 +39,15 @@ Describe 'New-AwsSession' {
         $content | Should -BeLike "[[]profile dev]`nsso_session = corp`n*"
         $content | Should -Match '\[sso-session corp\]'
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS New-Item { }
+        Mock -ModuleName PDS Out-File { }
+
+        $null = New-AwsSession -sso_session 'corp' -sso_start_url 'https://corp.awsapps.com/start' -sso_region 'eu-west-1' -WhatIf 6>$null
+
+        Should -Invoke -ModuleName PDS New-Item -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Out-File -Times 0 -Exactly
+        Join-Path $script:testHome '.aws' | Should -Not -Exist
+    }
 }

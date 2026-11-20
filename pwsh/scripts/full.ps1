@@ -64,6 +64,9 @@ Install-ChocoPackagesFromFile -packagesToInstall $packagesToInstall
 # 3. Configure psreadline module for all users
 # https://www.powershellgallery.com/packages/PSReadLine/2.2.6
 function Set-PSReadLineModule {
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
+
     $commands = @"
 Install-Module -Name PSReadLine -Force -SkipPublisherCheck
 Import-Module -Name PSReadLine
@@ -72,7 +75,9 @@ Set-PSReadLineOption -PredictionViewStyle ListView
 "@
 
     # Append the commands to the global profile using tee
-    $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
+    if ($PSCmdlet.ShouldProcess($PROFILE.AllUsersAllHosts, 'Write PSReadLine and starship commands to profile')) {
+        $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
+    }
 
 }
 Set-PSReadLineModule
@@ -130,6 +135,9 @@ format = '[🏎💨 $workspace]($style) '
 
 # Function to create the .config directory and add the starship.toml file
 function Set-StarshipConfigForAllUsers {
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
+
     # Get all user profile directories
     $userProfiles = Get-WmiObject Win32_UserProfile | Where-Object { $_.Special -eq $false }
     # loop through all users
@@ -137,14 +145,16 @@ function Set-StarshipConfigForAllUsers {
         $userConfigDir = Join-Path $profile.LocalPath ".config"
         $starshipFile = Join-Path $userConfigDir "starship.toml"
         # Check if .config directory exists, create it if not
-        if (-not (Test-Path $userConfigDir)) {
+        if (-not (Test-Path $userConfigDir) -and $PSCmdlet.ShouldProcess($userConfigDir, 'Create directory')) {
             Write-Host "Creating .config directory for user: $($profile.LocalPath)"
             New-Item -Path $userConfigDir -ItemType Directory -Force
         }
         # Write the starship.toml configuration file
         if (-not (Test-Path $starshipFile)) {
-            Write-Host "Creating starship.toml for user: $($profile.LocalPath)"
-            $configContent | Out-File -FilePath $starshipFile -Encoding utf8
+            if ($PSCmdlet.ShouldProcess($starshipFile, 'Create starship configuration')) {
+                Write-Host "Creating starship.toml for user: $($profile.LocalPath)"
+                $configContent | Out-File -FilePath $starshipFile -Encoding utf8
+            }
         }
         else {
             Write-Host "starship.toml already exists for user: $($profile.LocalPath)"

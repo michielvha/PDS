@@ -17,6 +17,8 @@ function Set-DockerAlias {
     .NOTES
         Author: Michiel VH
     #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
 
     $profilePath = $PROFILE
 
@@ -34,8 +36,10 @@ function Set-DockerAlias {
         if (!(Get-Content $profilePath -ErrorAction SilentlyContinue | Select-String -Pattern "function $aliasName")) {
             # Add the function to the profile
             $functionDefinition = "function $aliasName { $aliasCommand }"
-            Add-Content -Path $profilePath -Value $functionDefinition
-            Write-Output "Function $aliasName added to profile successfully."
+            if ($PSCmdlet.ShouldProcess($profilePath, "Add function $aliasName")) {
+                Add-Content -Path $profilePath -Value $functionDefinition
+                Write-Output "Function $aliasName added to profile successfully."
+            }
         }
         else {
             Write-Output "Function $aliasName is already defined in the profile."

@@ -18,4 +18,10 @@ Describe 'Set-AzCli' {
             (($args | ForEach-Object { $_ }) -join ' ') -eq 'extension add --name ssh aks-preview mesh terraform storage'
         }
     }
+
+    It 'changes nothing under -WhatIf' {
+        Set-AzCli -WhatIf
+
+        Should -Invoke az -ModuleName PDS -Times 0 -Exactly
+    }
 }

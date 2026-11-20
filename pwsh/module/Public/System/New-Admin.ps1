@@ -23,6 +23,7 @@ function New-Admin {
     .LINK
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
         [PSCredential]$Credential,
@@ -55,20 +56,22 @@ function New-Admin {
             return
         }
 
-        # Create a new user
-        $user = New-Object System.DirectoryServices.AccountManagement.UserPrincipal($context)
-        $user.SamAccountName = $Username
-        $user.SetPassword($Credential.GetNetworkCredential().Password)
-        $user.DisplayName = $FullName
-        $user.Description = $Description
-        $user.Save()
+        if ($PSCmdlet.ShouldProcess($Username, 'Create local user and add to Administrators')) {
+            # Create a new user
+            $user = New-Object System.DirectoryServices.AccountManagement.UserPrincipal($context)
+            $user.SamAccountName = $Username
+            $user.SetPassword($Credential.GetNetworkCredential().Password)
+            $user.DisplayName = $FullName
+            $user.Description = $Description
+            $user.Save()
 
-        # Add user to Administrators group
-        $group = [System.DirectoryServices.AccountManagement.GroupPrincipal]::FindByIdentity($context, "Administrators")
-        $group.Members.Add($user)
-        $group.Save()
+            # Add user to Administrators group
+            $group = [System.DirectoryServices.AccountManagement.GroupPrincipal]::FindByIdentity($context, "Administrators")
+            $group.Members.Add($user)
+            $group.Save()
 
-        Write-Host "User $Username created and added to Administrators group."
+            Write-Host "User $Username created and added to Administrators group."
+        }
     }
     catch {
         Write-Error "Failed to create user $Username : $($_.Exception.Message)"

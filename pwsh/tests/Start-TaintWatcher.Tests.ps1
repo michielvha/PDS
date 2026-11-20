@@ -62,4 +62,14 @@ Describe 'Start-TaintWatcher' {
         Should -Invoke -ModuleName PDS kubectl -Times 3 -Exactly
         Should -Invoke -ModuleName PDS Start-Sleep -Times 3 -Exactly -ParameterFilter { $Seconds -eq 2 }
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS Add-Content { }
+
+        Start-TaintWatcher -WhatIf
+
+        Should -Invoke -ModuleName PDS Add-Content -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Start-Sleep -Times 0 -Exactly
+        Join-Path $script:workDir 'taint_watch.log' | Should -Not -Exist
+    }
 }

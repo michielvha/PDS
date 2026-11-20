@@ -45,4 +45,14 @@ Describe 'Set-PSReadLineModuleStarship' -Skip:(-not $script:isAdmin) {
         $hits = Select-String -Path $script:allUsersProfile -Pattern 'starship init powershell' -SimpleMatch
         $hits | Should -HaveCount 2
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS Out-File { }
+
+        Set-PSReadLineModuleStarship -WhatIf | Out-Null
+
+        Should -Invoke -ModuleName PDS Install-Module -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Out-File -Times 0 -Exactly
+        $script:allUsersProfile | Should -Not -Exist
+    }
 }

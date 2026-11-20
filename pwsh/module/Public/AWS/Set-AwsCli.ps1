@@ -13,6 +13,9 @@ function Set-AwsCli {
     This will set the AWS CLI environment variables in the current PowerShell session.
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
     # Check if AWS CLI is installed
     if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
         Write-Error "AWS CLI is not installed. Please install it first."
@@ -23,7 +26,9 @@ function Set-AwsCli {
     if (-not (Select-String -Path $PROFILE -Pattern '^\s*\$env:AWS_CA_BUNDLE=' -Quiet -ErrorAction SilentlyContinue)) {
         $PATH = $env:USERPROFILE
 
-        "`$env:AWS_CA_BUNDLE=`"$PATH\.aws\cacert.pem`"" | Add-Content $PROFILE
+        if ($PSCmdlet.ShouldProcess($PROFILE, 'Add AWS_CA_BUNDLE')) {
+            "`$env:AWS_CA_BUNDLE=`"$PATH\.aws\cacert.pem`"" | Add-Content $PROFILE
+        }
     }
     else {
         Write-Host "AWS_CA_BUNDLE already set in profile"

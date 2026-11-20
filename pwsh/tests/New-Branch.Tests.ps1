@@ -54,4 +54,10 @@ Describe 'New-Branch' {
         Should -Invoke Set-Location -ModuleName PDS -Times 0 -Exactly
         Should -Invoke git -ModuleName PDS -Times 0 -Exactly
     }
+
+    It 'changes nothing under -WhatIf' {
+        New-Branch -RepoPath $TestDrive -WhatIf 6>$null
+
+        Should -Invoke git -ModuleName PDS -Times 0 -Exactly -ParameterFilter { $args[0] -in 'checkout', 'pull' }
+    }
 }

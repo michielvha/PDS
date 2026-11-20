@@ -55,4 +55,13 @@ Describe 'Set-DefaultAwsProfile' {
         $content | Should -Match 'sso_region = us-east-1'
         $content | Should -Match 'sso_start_url= https://corp\.awsapps\.com/start'
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS New-Item { }
+
+        $null = Set-DefaultAwsProfile -region 'eu-west-1' -profile 'dev' -WhatIf 6>$null
+
+        Should -Invoke -ModuleName PDS New-Item -Times 0 -Exactly
+        Join-Path $script:testHome '.aws' | Should -Not -Exist
+    }
 }

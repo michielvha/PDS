@@ -39,11 +39,14 @@ function Set-DefaultProfile {
         Learn more about PowerShell profiles and their usage.
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Commands
     )
 
     # Append the specified commands to the global profile
-    $Commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
+    if ($PSCmdlet.ShouldProcess($PROFILE.AllUsersAllHosts, 'Append commands to profile')) {
+        $Commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
+    }
 }

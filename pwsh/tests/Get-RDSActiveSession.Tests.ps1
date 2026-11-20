@@ -77,4 +77,17 @@ Describe 'Get-RDSActiveSession' {
         $result | Should -BeNullOrEmpty
         Get-Content -Path $logPath | Should -Match 'No active user sessions found'
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock New-Item -ModuleName PDS
+        Mock Add-Content -ModuleName PDS
+
+        $result = Get-RDSActiveSession -LogPath $logPath -TranscriptPath $transcriptPath -WhatIf
+
+        $result.UserName | Should -Be 'alice'
+        Should -Invoke Start-Transcript -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Stop-Transcript -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke New-Item -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Add-Content -ModuleName PDS -Times 0 -Exactly
+    }
 }

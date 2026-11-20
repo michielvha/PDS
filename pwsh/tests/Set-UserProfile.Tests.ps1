@@ -39,4 +39,15 @@ Describe 'Set-UserProfile' {
 
         Get-Content -Path $script:profilePath | Should -Contain 'Import-Module (PDS)'
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS New-Item { }
+        Mock -ModuleName PDS Add-Content { }
+
+        Set-UserProfile -ProfilePath $script:profilePath -WhatIf
+
+        Should -Invoke -ModuleName PDS New-Item -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Add-Content -Times 0 -Exactly
+        $script:profilePath | Should -Not -Exist
+    }
 }

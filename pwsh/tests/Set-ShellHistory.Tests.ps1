@@ -21,4 +21,12 @@ Describe 'Set-ShellHistory' {
         $expected = "$TestDrive\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt"
         Should -Invoke -ModuleName PDS notepad.exe -Times 1 -Exactly -ParameterFilter { $args[0] -eq $expected }
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS notepad.exe { }
+
+        Set-ShellHistory -WhatIf
+
+        Should -Invoke -ModuleName PDS notepad.exe -Times 0 -Exactly
+    }
 }

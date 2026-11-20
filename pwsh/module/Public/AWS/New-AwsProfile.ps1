@@ -29,6 +29,7 @@ function New-AwsProfile {
         https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
         [string]$sso_profile,
@@ -53,11 +54,15 @@ sso_role_name = $sso_role_name
 
     # Ensure the .aws directory exists
     if (-not (Test-Path -Path "$HOME\.aws")) {
-        New-Item -ItemType Directory -Path "$HOME\.aws"
+        if ($PSCmdlet.ShouldProcess("$HOME\.aws", 'Create directory')) {
+            New-Item -ItemType Directory -Path "$HOME\.aws"
+        }
     }
 
     # Write the config content to the file
-    $configContent | Out-File -FilePath $awsConfigPath -Append -Encoding utf8
+    if ($PSCmdlet.ShouldProcess($awsConfigPath, "Add profile '$sso_profile'")) {
+        $configContent | Out-File -FilePath $awsConfigPath -Append -Encoding utf8
 
-    Write-Host "New profile '$sso_profile' has been added to the aws config file: $configContent" -ForegroundColor Green
+        Write-Host "New profile '$sso_profile' has been added to the aws config file: $configContent" -ForegroundColor Green
+    }
 }

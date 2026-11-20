@@ -50,6 +50,13 @@ Describe 'Remove-StaleADComputer' {
         Should -Invoke Set-Log -ModuleName PDS -Times 2 -Exactly -ParameterFilter { $Message -like '* - Would be removed - *' }
     }
 
+    It 'changes nothing under -WhatIf' {
+        Remove-StaleADComputer -Years 1 -WhatIf
+
+        Should -Invoke Remove-ADComputer -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Set-Log -ModuleName PDS -Times 0 -Exactly -ParameterFilter { $Message -like '* - Removed - *' }
+    }
+
     It 'logs a failed removal and carries on' {
         Mock Remove-ADComputer -ModuleName PDS -ParameterFilter { $Identity -like 'CN=PC-STALE*' } { throw 'insufficient rights' }
 

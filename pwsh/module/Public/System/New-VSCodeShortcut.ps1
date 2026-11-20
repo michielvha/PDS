@@ -27,6 +27,7 @@ function New-VSCodeShortcut {
     #>
 
     # Parameters
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
         [ValidateScript({ Test-Path $_ })]
@@ -42,12 +43,6 @@ function New-VSCodeShortcut {
     # Define shortcut path on user's desktop
     $desktopPath = [Environment]::GetFolderPath('Desktop')
     $shortcutPath = Join-Path -Path $desktopPath -ChildPath "$fileName - VS Code.lnk"
-
-    # Create WScript.Shell COM Object
-    $WScriptShell = New-Object -ComObject WScript.Shell
-
-    # Create the shortcut
-    $Shortcut = $WScriptShell.CreateShortcut($shortcutPath)
 
     # Find VS Code executable path
     $vscodePath = "C:\Program Files\Microsoft VS Code\Code.exe"
@@ -74,15 +69,23 @@ function New-VSCodeShortcut {
         }
     }
 
-    # Set VS Code as the target and use its icon
-    $Shortcut.TargetPath = $vscodePath
-    $Shortcut.Arguments = "`"$FilePath`""
-    $Shortcut.IconLocation = $vscodePath
-    $Shortcut.Description = "Open $fileName in Visual Studio Code"
+    if ($PSCmdlet.ShouldProcess($shortcutPath, 'Create shortcut')) {
+        # Create WScript.Shell COM Object
+        $WScriptShell = New-Object -ComObject WScript.Shell
 
-    # Save the shortcut
-    $Shortcut.Save()
+        # Create the shortcut
+        $Shortcut = $WScriptShell.CreateShortcut($shortcutPath)
 
-    # Output success message with shortcut path
-    Write-Output "VS Code shortcut created at: $shortcutPath"
+        # Set VS Code as the target and use its icon
+        $Shortcut.TargetPath = $vscodePath
+        $Shortcut.Arguments = "`"$FilePath`""
+        $Shortcut.IconLocation = $vscodePath
+        $Shortcut.Description = "Open $fileName in Visual Studio Code"
+
+        # Save the shortcut
+        $Shortcut.Save()
+
+        # Output success message with shortcut path
+        Write-Output "VS Code shortcut created at: $shortcutPath"
+    }
 }

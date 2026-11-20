@@ -45,4 +45,12 @@ Describe 'Set-DefaultProfile' {
             )
         }
     }
+
+    It 'changes nothing under -WhatIf' {
+        Mock Out-File -ModuleName PDS
+
+        Set-DefaultProfile -Commands 'Set-Alias ll Get-ChildItem' -WhatIf
+
+        Should -Invoke Out-File -ModuleName PDS -Times 0 -Exactly
+    }
 }
