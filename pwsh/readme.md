@@ -48,6 +48,7 @@ Below is a list of software and tools supported by the custom PowerShell functio
 7. **longpath support**: `Enable-LongPaths` allows support for longerfile paths.  
 8. **SSH server**: `Enable-SshServer` installs/enables OpenSSH server, opens the firewall and optionally authorizes public keys.  
 9. **WinRM server**: `Enable-WinRmServer` enables WinRM over HTTP with NTLM authentication, opens TCP 5985 on every network profile and optionally creates a local user for Ansible or other WinRM clients. `Disable-WinRmServer` reverses it.  
+10. **Swift toolchain**: `Install-SwiftToolchain` installs Git, the Visual Studio 2022 Build Tools (MSVC and the Windows 11 SDK) and the latest Swift toolchain with winget, enables Developer Mode, and checks `swift --version`.  
 **TODO: expand with all functions**
 
 ### Additional Notes
