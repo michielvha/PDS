@@ -118,6 +118,8 @@ _pds_consumer_measure() {
     fi
 }
 
+# The audit runs in a subshell and returns consumer_status as its exit code.
+# shellcheck disable=SC2030
 _pds_consumer_user_audit() (
     local listing path code="$storage_home/code" result=0
     _pds_consumer_podman_audit || consumer_status=2
@@ -233,11 +235,17 @@ _pds_consumer_cleanup_user() {
 }
 
 _pds_consumer_npm_confined() (
-    local path="$1" listing mounts
+    local path="$1" cacache="$1/_cacache" listing mounts
     listing=$(mktemp) || return 2
     trap 'rm -f -- "$listing"' EXIT
+    # npm cache verify works only on _cacache. Elsewhere, such as the
+    # node_modules/.bin links npx installs under _npx, symlinks are normal.
+    if [[ -L "$cacache" ]]; then
+        printf 'ERROR npm cache contains an alias; no verification ran\n' >&2
+        return 2
+    fi
     # Nested Btrfs subvolume roots (inode 256) need not appear in mountinfo.
-    if ! find "$path" -mindepth 1 -xdev \
+    if [[ -d "$cacache" ]] && ! find "$cacache" -xdev \
         \( -type l -o \( -type d -inum 256 \) \) -print0 >"$listing"; then return 2; fi
     if [[ -s "$listing" ]]; then
         printf 'ERROR npm cache contains an alias; no verification ran\n' >&2
@@ -250,6 +258,19 @@ _pds_consumer_npm_confined() (
             (.target != $path and (.target|startswith($path+"/")|not)))
     ' >/dev/null
 )
+
+_pds_consumer_audit_result() {
+    local mode="$1" result="$2"
+    # The user audit only reports; retention does not depend on it. An
+    # incomplete scan stays an error for audit-user but only warns in cleanup.
+    if [[ "$mode" == cleanup-user && "$result" == 2 ]]; then
+        printf 'WARN user storage audit was incomplete; retention is unaffected\n'
+        result=1
+    fi
+    # The audit subshell returns its status as the exit code, not via the variable.
+    # shellcheck disable=SC2031
+    if (( result > consumer_status )); then consumer_status="$result"; fi
+}
 
 storage_consumers() (
     set -euo pipefail
@@ -277,9 +298,13 @@ storage_consumers() (
             _pds_consumer_docker_audit || consumer_status=2
             if [[ "$consumer_mode" == cleanup-docker && "$consumer_status" != 2 ]] &&
                 command -v docker >/dev/null; then
+                _pds_consumer_docker buildx prune --builder default --filter until=72h --force ||
+                    _pds_consumer_error 'Native Docker build-cache age retention failed.'
                 _pds_consumer_docker buildx prune --builder default --max-used-space 20000000000 \
                     --reserved-space 10000000000 --force ||
                     _pds_consumer_error 'Native Docker build-cache retention failed.'
+                _pds_consumer_docker image prune --filter dangling=true --filter until=24h --force ||
+                    _pds_consumer_error 'Native Docker dangling-image retention failed.'
                 _pds_consumer_docker image prune --all --filter until=168h --force ||
                     _pds_consumer_error 'Native Docker image retention failed.'
                 _pds_consumer_docker_audit || consumer_status=2
@@ -289,18 +314,21 @@ storage_consumers() (
             [[ "$(id -u)" == "$storage_uid" ]] || { _pds_storage_error 'Run user maintenance as the selected non-root account.'; return 2; }
             if _pds_consumer_user_audit; then :; else
                 result=$?
-                if (( result > consumer_status )); then consumer_status="$result"; fi
+                _pds_consumer_audit_result "$consumer_mode" "$result"
             fi
             if [[ "$consumer_mode" == cleanup-user ]]; then
                 _pds_consumer_cleanup_user
                 if _pds_consumer_user_audit; then :; else
                     result=$?
-                    if (( result > consumer_status )); then consumer_status="$result"; fi
+                    _pds_consumer_audit_result "$consumer_mode" "$result"
                 fi
             fi
             ;;
     esac
     printf 'INFO consumer operation complete: mode=%s status=%s (0 healthy, 1 warning, 2 incomplete/error)\n' "$consumer_mode" "$consumer_status"
+    # Cleanup did what it safely could; its warnings stay in the journal and
+    # the hourly headroom check is the alarm, so only errors fail the job.
+    if [[ "$consumer_mode" == cleanup-* && "$consumer_status" == 1 ]]; then return 0; fi
     return "$consumer_status"
 )
 

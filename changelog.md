@@ -4,6 +4,8 @@
 
 ### Features
 
+- Keep Btrfs allocation headroom from the Fedora storage maintenance: a new `balance` mode and hourly `pds-btrfs-balance` timer check per-device unallocated space against what the metadata profile needs (two devices for RAID1), aiming for 16 GiB at night and 8 GiB by day. When a device is short it balances data chunks off it in bounded, load-guarded batches. `--dry-run` previews it.
+- Docker retention also prunes build cache unused for 72 hours and dangling images older than a day. Volumes and containers stay untouched.
 - Add `Enable-WinRmServer` and `Disable-WinRmServer`, which prepare a Windows test host for Ansible over WinRM with NTLM authentication, also on networks classed Public, and undo it.
 
 ### Documentation
@@ -15,6 +17,8 @@
 
 ### Fixed
 
+- The scheduled Go cache cleanup now trims entries unused for 48 hours, then 24, 12 and 6 hours while the cache is over budget, and runs while Go builds are active. It used to wait for a moment with no Go build at all, which never came on a host with several build sessions, and failed for good when Go removed an entry mid-scan. Unknown entries are reported and skipped. `--dry-run` previews the trim.
+- Storage cleanup jobs no longer stay failed because of a capacity warning or a desktop notification that times out. They log both and fail only on errors; the hourly check remains the alarm. An incomplete read-only scan in the daily user audit, such as a root-owned directory, is a warning there rather than a failure. The npm verification checks for aliases only in `_cacache`, the tree it verifies, so the `node_modules/.bin` links npx creates no longer make it refuse.
 - `Enable-SshServer` now always creates or corrects its own firewall rule for every network profile. It used to accept any existing rule for the SSH port, including the one Windows creates for the Private profile only, which left SSH blocked on networks Windows classes as Public.
 
 ### Added

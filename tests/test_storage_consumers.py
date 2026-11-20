@@ -107,6 +107,12 @@ class ConsumerTests(unittest.TestCase):
         self.assertIn(['buildx', 'prune', '--builder', 'default', '--max-used-space',
                        '20000000000', '--reserved-space', '10000000000', '--force'], calls)
         self.assertIn(['image', 'prune', '--all', '--filter', 'until=168h', '--force'], calls)
+        self.assertIn(['buildx', 'prune', '--builder', 'default', '--filter', 'until=72h',
+                       '--force'], calls)
+        self.assertIn(['image', 'prune', '--filter', 'dangling=true', '--filter', 'until=24h',
+                       '--force'], calls)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('WARN Docker Build Cache exceeds 30 GB', result.stdout)
         for args in calls:
             self.assertNotEqual(args[:2], ['volume', 'prune'])
             self.assertNotEqual(args[:2], ['system', 'prune'])
@@ -192,6 +198,15 @@ class ConsumerTests(unittest.TestCase):
         self.assertIn('Incomplete', result.stderr)
         self.assertFalse(any('prune' in call['args'] for call in self.commands('uv')))
 
+    def test_ac11_incomplete_audit_does_not_fail_user_retention(self):
+        result = self.run_consumer('cleanup-user', du_error=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Incomplete', result.stderr)
+        self.assertIn('WARN user storage audit was incomplete', result.stdout)
+        self.assertTrue(any('prune' in call['args'] for call in self.commands('podman')))
+        result = self.run_consumer('cleanup-user', du_error=False, consumer_failure='podman')
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+
     def test_ac10_unknown_uv_layout_version_and_active_process_are_skipped(self):
         for state in ({'uv_version': 'uv 99.0.0'}, {'busy': True}):
             with self.subTest(state=state):
@@ -218,6 +233,23 @@ class ConsumerTests(unittest.TestCase):
         self.assertFalse(self.commands('npm'))
         self.assertEqual((outside / 'keep').read_text(), 'project source')
 
+
+    def test_ac10_npx_bin_links_outside_cacache_do_not_block_verification(self):
+        bin_dir = self.home / '.npm/_npx/0123456789abcdef/node_modules/.bin'
+        bin_dir.mkdir(parents=True)
+        (bin_dir / 'playwright').symlink_to('../playwright/cli.js')
+        (self.home / '.npm/_cacache').mkdir()
+        result = self.run_consumer('cleanup-user')
+        self.assertIn(result.returncode, (0, 1), result.stdout + result.stderr)
+        self.assertTrue(any('verify' in call['args'] for call in self.commands('npm')))
+
+    def test_ac10_alias_inside_cacache_still_refuses_verification(self):
+        cacache = self.home / '.npm/_cacache/content-v2'
+        cacache.mkdir(parents=True)
+        (cacache / 'link').symlink_to(self.home / 'code')
+        result = self.run_consumer('cleanup-user')
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertFalse(self.commands('npm'))
 
 @unittest.skipUnless(os.environ.get('PDS_STORAGE_INTEGRATION') == '1',
                      'set PDS_STORAGE_INTEGRATION=1 for disposable native consumers')
