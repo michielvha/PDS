@@ -1,0 +1,7 @@
+# GitHub accepts concurrency.queue, which keeps every waiting release run
+# instead of cancelling all but the newest. actionlint 1.7.12 does not know
+# the key yet, so this ignores exactly that message in release.yml until it does.
+paths:
+  .github/workflows/release.yml:
+    ignore:
+      - 'unexpected key "queue" for "concurrency" section'
