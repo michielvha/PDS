@@ -5,10 +5,10 @@ function Get-LogonEvents {
 
     .DESCRIPTION
         The Get-LogonEvents function retrieves logon events (EventID 4624) from the Security log
-        for a specified time period. It filters out system accounts and displays the results in 
+        for a specified time period. It filters out system accounts and displays the results in
         a grid view with detailed information including timestamp, account name, logon type (with
         description), and source IP/computer.
-        
+
         This function is useful for security auditing and monitoring user access to systems.
 
     .PARAMETER Days
@@ -25,17 +25,17 @@ function Get-LogonEvents {
 
     .EXAMPLE
         Get-LogonEvents
-        
+
         Retrieves all user logon events from the past day and displays them in a grid view.
 
     .EXAMPLE
         Get-LogonEvents -Days 7 -ShowGridView $false
-        
+
         Retrieves logon events from the past week and returns them as objects without displaying the grid view.
 
     .EXAMPLE
         Get-LogonEvents -Days 3 | Where-Object {$_.LogonTypeDescription -eq "Remote Desktop"}
-        
+
         Retrieves logon events from the past 3 days and filters for just Remote Desktop connections.
 
     .NOTES
@@ -50,7 +50,7 @@ function Get-LogonEvents {
         10 = RemoteInteractive (Terminal Services, Remote Desktop or Remote Assistance)
         11 = CachedInteractive (Logon using cached domain credentials when a DC is not available)
     #>
-    
+
     param (
         [int]$Days = 1,
         [bool]$ShowGridView = $true,
@@ -64,11 +64,11 @@ function Get-LogonEvents {
     Write-Host "Retrieving logon events from $after to $before..." -ForegroundColor Cyan
 
     # Build the filter for system accounts
-    $filter = {$true}
+    $filter = { $true }
     if (-not $IncludeSystemAccounts) {
         $filter = {
-            ($_.ReplacementStrings[5] -notmatch '\$') -and 
-            ($_.ReplacementStrings[5] -notmatch 'ANONYMOUS LOGON') -and 
+            ($_.ReplacementStrings[5] -notmatch '\$') -and
+            ($_.ReplacementStrings[5] -notmatch 'ANONYMOUS LOGON') -and
             ($_.ReplacementStrings[5] -notmatch 'SYSTEM')
         }
     }
@@ -89,7 +89,7 @@ function Get-LogonEvents {
         $domain = $event.ReplacementStrings[6]
         $logonTypeCode = $event.ReplacementStrings[8]
         $sourceIP = $event.ReplacementStrings[18]
-        
+
         # Translate logon type code to a description
         $logonTypeDescription = switch ($logonTypeCode) {
             2 { "Interactive (Local logon)" }
@@ -103,16 +103,16 @@ function Get-LogonEvents {
             11 { "Cached Domain Logon" }
             default { "Type $logonTypeCode (Unknown)" }
         }
-        
+
         # Create and add the result object
         $obj = [PSCustomObject]@{
-            Time = $time
-            Account = "$domain\$account"
-            LogonType = $logonTypeCode
+            Time                 = $time
+            Account              = "$domain\$account"
+            LogonType            = $logonTypeCode
             LogonTypeDescription = $logonTypeDescription
-            SourceIP = if ($sourceIP -and $sourceIP -ne "-") { $sourceIP } else { "Local" }
+            SourceIP             = if ($sourceIP -and $sourceIP -ne "-") { $sourceIP } else { "Local" }
         }
-        
+
         $result += $obj
     }
 
@@ -120,6 +120,6 @@ function Get-LogonEvents {
     if ($ShowGridView) {
         $result | Sort-Object -Property Time -Descending | Out-GridView -Title "Logon Events: Past $Days Day(s)"
     }
-    
+
     return $result
 }

@@ -79,11 +79,12 @@ Import-Module $moduleFilePath -Force -Verbose
 # Get all public functions in the module
 $publicFunctionsPath = Join-Path $moduleRootPath "Public"
 if (Test-Path $publicFunctionsPath) {
-    $publicFunctions = Get-ChildItem -Path $publicFunctionsPath -Recurse -Filter "*.ps1" | 
+    $publicFunctions = Get-ChildItem -Path $publicFunctionsPath -Recurse -Filter "*.ps1" |
         Where-Object { $_.Name -notlike "*.Tests.ps1" } |
         ForEach-Object { $_.BaseName }
     Write-Host "Found $($publicFunctions.Count) public functions."
-} else {
+}
+else {
     Write-Warning "Public functions directory not found at: $publicFunctionsPath"
     $publicFunctions = @()
     Write-Host "No public functions found."
@@ -94,19 +95,19 @@ function New-DirectoryStructure {
     param (
         [Parameter(Mandatory = $true)]
         [string]$SourcePath,
-        
+
         [Parameter(Mandatory = $true)]
         [string]$TargetPath
     )
-    
+
     # Get all subdirectories from the Public folder
     $directories = Get-ChildItem -Path $SourcePath -Directory -Recurse
-    
+
     # Create matching structure in docs folder
     foreach ($dir in $directories) {
         $relativePath = $dir.FullName.Substring($SourcePath.Length)
         $newPath = Join-Path $TargetPath $relativePath
-        
+
         if (-not (Test-Path -Path $newPath)) {
             New-Item -ItemType Directory -Path $newPath | Out-Null
             Write-Host "Created directory: $newPath"
@@ -123,7 +124,7 @@ if (Test-Path $publicFunctionsPath) {
 if ($ForceRegenerate -or -not (Test-Path -Path (Join-Path $DocsPath "*.md"))) {
     # Generate new documentation
     Write-Host "Generating new documentation..."
-    
+
     # Generate documentation for all functions, preserving directory structure
     foreach ($function in $publicFunctions) {
         # Skip the template file since it's not a real function
@@ -131,28 +132,29 @@ if ($ForceRegenerate -or -not (Test-Path -Path (Join-Path $DocsPath "*.md"))) {
             Write-Host "Skipping template file as it's not a function."
             continue
         }
-        
+
         # Find the original script file to get its location
-        $scriptFile = Get-ChildItem -Path $publicFunctionsPath -Recurse -Filter "$function.ps1" | 
-            Where-Object { $_.Name -notlike "*.Tests.ps1" } | 
+        $scriptFile = Get-ChildItem -Path $publicFunctionsPath -Recurse -Filter "$function.ps1" |
+            Where-Object { $_.Name -notlike "*.Tests.ps1" } |
             Select-Object -First 1
-        
+
         if ($scriptFile) {
             # Calculate the relative path from Public root
             $relativePath = Split-Path $scriptFile.FullName.Substring($publicFunctionsPath.Length + 1) -Parent
-            
+
             # Create target folder for the docs
-            $targetFolder = if ($relativePath) { 
-                Join-Path $DocsPath $relativePath 
-            } else { 
-                $DocsPath 
+            $targetFolder = if ($relativePath) {
+                Join-Path $DocsPath $relativePath
             }
-            
+            else {
+                $DocsPath
+            }
+
             # Ensure target folder exists
             if (-not (Test-Path -Path $targetFolder)) {
                 New-Item -ItemType Directory -Path $targetFolder | Out-Null
             }
-            
+
             try {
                 Write-Host "Generating documentation for $function in $targetFolder"
                 New-MarkdownHelp -Command $function -OutputFolder $targetFolder -Force -ErrorAction SilentlyContinue
@@ -182,7 +184,7 @@ else {
 Write-Host "Generating module index page..."
 
 # Get all markdown files in subdirectories (excluding the root directory)
-$markdownFiles = Get-ChildItem -Path $DocsPath -Filter "*.md" -Recurse | 
+$markdownFiles = Get-ChildItem -Path $DocsPath -Filter "*.md" -Recurse |
     Where-Object { $_.DirectoryName -ne $DocsPath }
 
 # Create a hashtable to store the sorted functions
@@ -194,7 +196,7 @@ foreach ($file in $markdownFiles) {
     if (-not $functionSections.ContainsKey($relativePath)) {
         $functionSections[$relativePath] = @()
     }
-    
+
     $functionSections[$relativePath] += $file
 }
 
@@ -217,7 +219,7 @@ Locale: en-US
 # Add each section to the module page content
 foreach ($section in $functionSections.Keys | Sort-Object) {
     $modulePageContent += "## $section Cmdlets`n"
-    
+
     # Add each function in this section
     foreach ($file in $functionSections[$section] | Sort-Object -Property Name) {
         $relativePath = "$section/$($file.Name)"
@@ -231,7 +233,7 @@ $modulePagePath = Join-Path -Path $DocsPath -ChildPath "readme.md"
 Set-Content -Path $modulePagePath -Value $modulePageContent
 
 # Cleanup any leftover files in the root docs directory
-$rootFiles = Get-ChildItem -Path $DocsPath -Filter "*.md" | 
+$rootFiles = Get-ChildItem -Path $DocsPath -Filter "*.md" |
     Where-Object { $_.Directory.FullName -eq $DocsPath -and $_.Name -ne "readme.md" }
 if ($rootFiles) {
     Write-Host "Cleaning up duplicate documentation files in root directory..."

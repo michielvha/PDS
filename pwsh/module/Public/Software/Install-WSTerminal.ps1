@@ -1,5 +1,5 @@
 function Install-WSTerminal {
-<#
+    <#
 .SYNOPSIS
     Installs Windows Terminal if it is not already installed on the system.
 
@@ -37,10 +37,10 @@ function Install-WSTerminal {
         # Check and install Microsoft.UI.Xaml.2.8 framework (required dependency)
         Write-Output "Checking for Microsoft.UI.Xaml.2.8 framework..."
         $xamlFramework = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.UI.Xaml.2.8*" } | Select-Object -First 1
-        
+
         if (-not $xamlFramework) {
             Write-Output "Microsoft.UI.Xaml.2.8 framework not found. Installing Windows App Runtime 1.8 via winget..."
-            
+
             # Use winget to install Windows App Runtime 1.8 (includes Microsoft.UI.Xaml.2.8)
             $wingetAvailable = Get-Command -Name "winget" -ErrorAction SilentlyContinue
             if (-not $wingetAvailable) {
@@ -50,16 +50,16 @@ function Install-WSTerminal {
             Write-Output "Installing Windows App Runtime 1.8 via winget..."
             $wingetOutput = winget install --id Microsoft.WindowsAppRuntime.1.8 --exact --accept-source-agreements --accept-package-agreements 2>&1
             Write-Output $wingetOutput
-            
+
             # Wait for installation to complete
             Start-Sleep -Seconds 5
-            
+
             # Verify installation
             $xamlFramework = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.UI.Xaml.2.8*" } | Select-Object -First 1
             if (-not $xamlFramework) {
                 throw "Windows App Runtime 1.8 installation failed or Microsoft.UI.Xaml.2.8 framework was not installed. Please install manually."
             }
-            
+
             Write-Output "Windows App Runtime 1.8 installed successfully."
         }
         else {
@@ -69,7 +69,7 @@ function Install-WSTerminal {
         # Download and install VCLibs (if needed)
         Write-Output "Checking for Visual C++ Runtime prerequisites..."
         $vclibs = Get-AppxPackage | Where-Object { $_.Name -like "*Microsoft.VCLibs*" } | Select-Object -First 1
-        
+
         if (-not $vclibs) {
             Write-Output "Installing Visual C++ Runtime prerequisites..."
             $vclibsPath = Join-Path -Path $env:TEMP -ChildPath "Microsoft.VCLibs.x64.14.00.Desktop.appx"
@@ -96,8 +96,8 @@ function Install-WSTerminal {
         $release = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/terminal/releases/latest" -ErrorAction Stop
 
         # Find the MSIX bundle asset
-        $msixAsset = $release.assets | Where-Object { 
-            $_.name -like "*WindowsTerminal*" -and $_.name -like "*.msixbundle" 
+        $msixAsset = $release.assets | Where-Object {
+            $_.name -like "*WindowsTerminal*" -and $_.name -like "*.msixbundle"
         } | Select-Object -First 1
 
         if (-not $msixAsset) {

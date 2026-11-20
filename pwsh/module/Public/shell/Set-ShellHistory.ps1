@@ -1,5 +1,4 @@
-function Set-ShellHistory
-{
+function Set-ShellHistory {
     <#
     .SYNOPSIS
         This function sets allows you to modify the shell history file

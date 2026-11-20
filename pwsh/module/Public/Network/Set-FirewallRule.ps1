@@ -1,4 +1,4 @@
-Function Set-FirewallRule {
+function Set-FirewallRule {
     <#
     .SYNOPSIS
         Creates inbound and outbound firewall rules for a specified TCP port.
@@ -78,7 +78,8 @@ Function Set-FirewallRule {
     if ([string]::IsNullOrEmpty($DisplayName)) {
         $inboundName = "Allow $Port in"
         $outboundName = "Allow $Port out"
-    } else {
+    }
+    else {
         $inboundName = "$DisplayName - In"
         $outboundName = "$DisplayName - Out"
     }

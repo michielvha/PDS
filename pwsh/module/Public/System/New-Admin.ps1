@@ -1,12 +1,12 @@
-Function New-Admin {
+function New-Admin {
     <#
     .SYNOPSIS
         Create a new local user account with administrative privileges.
-    
+
     .DESCRIPTION
-    
+
     .PARAMETER Username
-    
+
     .PARAMETER Credential
 
     .EXAMPLE
@@ -24,13 +24,13 @@ Function New-Admin {
     #>
 
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [PSCredential]$Credential,
 
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$FullName,
 
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$Description
     )
 
@@ -69,7 +69,8 @@ Function New-Admin {
         $group.Save()
 
         Write-Host "User $Username created and added to Administrators group."
-    } catch {
+    }
+    catch {
         Write-Error "Failed to create user $Username : $($_.Exception.Message)"
     }
 }

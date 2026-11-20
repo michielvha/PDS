@@ -46,7 +46,7 @@ function Get-RDSActiveSessions {
     .NOTES
         Author: Michiel VH
         This function requires the RemoteDesktop PowerShell module.
-        
+
         The function creates log directories if they don't exist.
 
     .LINK
@@ -98,7 +98,7 @@ function Get-RDSActiveSessions {
 
     try {
         $hostname = $env:COMPUTERNAME
-        
+
         # Set default export path if not provided
         if (-not $ExportPath) {
             $ExportPath = ".\$hostname-signIns.csv"
@@ -130,31 +130,31 @@ function Get-RDSActiveSessions {
         $idleThreshold = $IdleThresholdMinutes * 60000
 
         Write-Verbose "Getting RDS user sessions with idle threshold of $IdleThresholdMinutes minutes"
-        
+
         # Get active sessions that haven't been idle for more than the threshold
         $activeSessions = Get-RDUserSession | Where-Object { $_.IdleTime -lt $idleThreshold }
 
         if ($activeSessions) {
             Write-Host "Found $($activeSessions.Count) active user session(s)"
-            
+
             foreach ($session in $activeSessions) {
                 $timestamp = Get-Date -Format "HH:mm:ss"
                 $signInData = New-Object PSObject -Property @{
-                    logTime = $timestamp
-                    userName = if($null -ne $session.UserName) { $session.UserName } else { "N/A" }
-                    createTime = if($null -ne $session.CreateTime) { $session.CreateTime } else { "N/A" }
-                    sessionState = if($null -ne $session.SessionState) { $session.SessionState } else { "N/A" }
-                    disconnectTime = if($null -ne $session.DisconnectTime) { $session.DisconnectTime } else { "N/A" }
-                    idleTimeMinutes = if($null -ne $session.IdleTime) { [math]::Round($session.IdleTime / 60000) } else { "N/A" }
-                    serverName = if($null -ne $session.ServerName) { $session.ServerName } else { "N/A" }
+                    logTime         = $timestamp
+                    userName        = if ($null -ne $session.UserName) { $session.UserName } else { "N/A" }
+                    createTime      = if ($null -ne $session.CreateTime) { $session.CreateTime } else { "N/A" }
+                    sessionState    = if ($null -ne $session.SessionState) { $session.SessionState } else { "N/A" }
+                    disconnectTime  = if ($null -ne $session.DisconnectTime) { $session.DisconnectTime } else { "N/A" }
+                    idleTimeMinutes = if ($null -ne $session.IdleTime) { [math]::Round($session.IdleTime / 60000) } else { "N/A" }
+                    serverName      = if ($null -ne $session.ServerName) { $session.ServerName } else { "N/A" }
                 }
 
                 # Log to main log file
                 Set-Log "$($signInData.userName),$($signInData.idleTimeMinutes),$($signInData.serverName),$($signInData.createTime),$($signInData.disconnectTime),$($signInData.sessionState)"
-                
+
                 # Export to CSV
                 $signInData | Export-Csv -Path $ExportPath -NoTypeInformation -Append
-                
+
                 Write-Host "Collected log entry for $($signInData.userName)" -ForegroundColor Green
             }
         }

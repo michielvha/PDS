@@ -1,4 +1,4 @@
-Function Start-ISEAsAdmin {
+function Start-ISEAsAdmin {
     <#
     .SYNOPSIS
         Opens PowerShell ISE with administrative privileges.
@@ -18,17 +18,17 @@ Function Start-ISEAsAdmin {
 
     .EXAMPLE
         Start-ISEAsAdmin
-        
+
         Opens PowerShell ISE with administrative privileges.
 
     .EXAMPLE
         Start-ISEAsAdmin -FilePath "C:\Scripts\MyAdminScript.ps1"
-        
+
         Opens PowerShell ISE with administrative privileges and loads the specified script file.
 
     .EXAMPLE
         Start-ISEAsAdmin -Wait
-        
+
         Opens PowerShell ISE with administrative privileges and waits for the ISE to be closed before returning.
 
     .NOTES
@@ -43,9 +43,9 @@ Function Start-ISEAsAdmin {
 
     [CmdletBinding()]
     param (
-        [Parameter(Position=0)]
+        [Parameter(Position = 0)]
         [string]$FilePath,
-        
+
         [Parameter()]
         [switch]$Wait
     )
@@ -58,8 +58,8 @@ Function Start-ISEAsAdmin {
 
     # Build process arguments
     $processArgs = @{
-        FilePath = "powershell_ise.exe"
-        Verb = "runas"  # Run as administrator
+        FilePath    = "powershell_ise.exe"
+        Verb        = "runas"  # Run as administrator
         ErrorAction = "Stop"
     }
 
@@ -67,12 +67,13 @@ Function Start-ISEAsAdmin {
     if ($FilePath) {
         if (Test-Path -Path $FilePath) {
             $processArgs.ArgumentList = "`"$FilePath`""
-        } else {
+        }
+        else {
             Write-Warning "File not found: $FilePath"
             $confirmResult = $Host.UI.PromptForChoice(
-                "File Not Found", 
-                "The specified file doesn't exist. Do you want to open ISE anyway?", 
-                @("&Yes", "&No"), 
+                "File Not Found",
+                "The specified file doesn't exist. Do you want to open ISE anyway?",
+                @("&Yes", "&No"),
                 1)
             if ($confirmResult -eq 1) {
                 return
@@ -89,7 +90,7 @@ Function Start-ISEAsAdmin {
         Write-Verbose "Starting PowerShell ISE with administrative privileges..."
         $process = Start-Process @processArgs
         Write-Verbose "PowerShell ISE started successfully."
-        
+
         if (-not $Wait) {
             # If we specified -Wait, Start-Process handles waiting
             # Otherwise, return the process object

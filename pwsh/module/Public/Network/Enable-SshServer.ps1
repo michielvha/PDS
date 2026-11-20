@@ -1,4 +1,4 @@
-Function Enable-SshServer {
+function Enable-SshServer {
     <#
     .SYNOPSIS
         Installs and enables the Windows OpenSSH server and optionally authorizes public keys.
@@ -239,8 +239,8 @@ Function Enable-SshServer {
         Restart-Service -Name sshd -Force
 
         $ips = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
-            Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
-            Select-Object -ExpandProperty IPAddress)
+                Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
+                Select-Object -ExpandProperty IPAddress)
         $portArg = if ($Port -ne 22) { " -p $Port" } else { "" }
         if ($withKeys) {
             Write-Host "`nOpenSSH server is running with key-based access for '$UserName'." -ForegroundColor Green

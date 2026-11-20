@@ -1,5 +1,5 @@
-function Set-StarshipConfigForAllUsers {
-<#
+﻿function Set-StarshipConfigForAllUsers {
+    <#
 .SYNOPSIS
     This function sets the Starship configuration for all users on the system.
 
@@ -43,7 +43,7 @@ function Set-StarshipConfigForAllUsers {
     [CmdletBinding()]
     param (
         # Define a string parameter for the starship configuration content
-        [Parameter(Mandatory=$true, HelpMessage="Provide the content for the starship.toml configuration.")]
+        [Parameter(Mandatory = $true, HelpMessage = "Provide the content for the starship.toml configuration.")]
         [string]$configContent
     )
     # Get all user profile directories
@@ -53,15 +53,16 @@ function Set-StarshipConfigForAllUsers {
         $userConfigDir = Join-Path $uprofile.LocalPath ".config"
         $starshipFile = Join-Path $userConfigDir "starship.toml"
         # Check if .config directory exists, create it if not
-        if (-Not (Test-Path $userConfigDir)) {
+        if (-not (Test-Path $userConfigDir)) {
             Write-Host "Creating .config directory for user: $($uprofile.LocalPath)"
             New-Item -Path $userConfigDir -ItemType Directory -Force
         }
         # Write the starship.toml configuration file
-        if (-Not (Test-Path $starshipFile)) {
+        if (-not (Test-Path $starshipFile)) {
             Write-Host "Creating starship.toml for user: $($uprofile.LocalPath)"
             $configContent | Out-File -FilePath $starshipFile -Encoding utf8
-        } else {
+        }
+        else {
             Write-Host "starship.toml already exists for user: $($uprofile.LocalPath)"
         }
     }

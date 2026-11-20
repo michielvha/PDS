@@ -1,4 +1,4 @@
-Function Set-DefaultAwsProfile {
+function Set-DefaultAwsProfile {
     <#
     .SYNOPSIS
     Generates or modifies a default entry in the AWS configuration file using the provided parameters.
@@ -30,9 +30,9 @@ Function Set-DefaultAwsProfile {
     #>
 
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$region,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$profile,
         [Parameter()]
         [string]$sso_region = "$region",
@@ -51,7 +51,8 @@ Function Set-DefaultAwsProfile {
     # Read existing content if file exists, else initialize as empty
     $configContent = if (Test-Path -Path $awsConfigPath) {
         Get-Content -Path $awsConfigPath -Raw
-    } else {
+    }
+    else {
         ""
     }
 
@@ -72,21 +73,20 @@ output = json
         # Replace only the `[default]` section, preserving everything else
         $configContent = $configContent -replace $regex, "$defaultConfig`n"
         Write-Output "Existing default profile found, replacing with new profile..."
-    } else {
+    }
+    else {
         # Append `[default]` section if not found
         $configContent = $configContent.Trim() + "`n`n" + $defaultConfig
         Write-Output "No existing default profile found, creating new profile..."
     }
 
-    try
-    {
+    try {
         # Write updated content back to the file
         $utf8NoBom = New-Object System.Text.UTF8Encoding($false)  # Disable BOM
         [System.IO.File]::WriteAllBytes($awsConfigPath, $utf8NoBom.GetBytes($configContent))
         Write-Host "the default AWS config has been set to: `n$defaultConfig" -ForegroundColor Green
     }
-    catch
-    {
+    catch {
         Write-Output "An error occurred while trying to write to the AWS config file: $_" -ForegroundColor Red
     }
 

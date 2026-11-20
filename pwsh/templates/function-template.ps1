@@ -1,4 +1,4 @@
-Function Template-Function {
+function Template-Function {
     <#
     .SYNOPSIS
         Provide a brief summary of what the function does. This should be a concise description, typically one or two sentences, that gives an overview of the function's purpose and functionality.
@@ -24,7 +24,7 @@ Function Template-Function {
 
     # Parameters if any
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$Example
     )
 

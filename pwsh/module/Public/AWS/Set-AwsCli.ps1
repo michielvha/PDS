@@ -20,12 +20,13 @@ function Set-AwsCli {
     }
 
 
-    if (-not (Select-String -Path $PROFILE -Pattern '^\s*\$env:AWS_CA_BUNDLE=' -Quiet -ErrorAction SilentlyContinue)) { 
+    if (-not (Select-String -Path $PROFILE -Pattern '^\s*\$env:AWS_CA_BUNDLE=' -Quiet -ErrorAction SilentlyContinue)) {
         $PATH = $env:USERPROFILE
-        
+
         "`$env:AWS_CA_BUNDLE=`"$PATH\.aws\cacert.pem`"" | Add-Content $PROFILE
-    } else {
-        write-host "AWS_CA_BUNDLE already set in profile"
+    }
+    else {
+        Write-Host "AWS_CA_BUNDLE already set in profile"
     }
 
 }

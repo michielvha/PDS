@@ -43,7 +43,8 @@ function Add-ToPath {
     # Check if path is already in PATH
     if ($CurrentPath -split ";" -contains $PathToAdd) {
         Write-Host "Path already exists in PATH variable." -ForegroundColor Yellow
-    } else {
+    }
+    else {
         # Append the new path
         $NewPath = "$CurrentPath;$PathToAdd"
 
@@ -51,7 +52,8 @@ function Add-ToPath {
         if ($SystemPath) {
             [System.Environment]::SetEnvironmentVariable("Path", $NewPath, "Machine")
             Write-Host "Added $PathToAdd to system PATH." -ForegroundColor Green
-        } else {
+        }
+        else {
             [System.Environment]::SetEnvironmentVariable("Path", $NewPath, "User")
             Write-Host "Added $PathToAdd to user PATH." -ForegroundColor Green
         }

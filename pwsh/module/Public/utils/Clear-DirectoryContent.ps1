@@ -49,7 +49,8 @@ function Clear-DirectoryContent {
         # Check robocopy exit code (0-7 are success codes for robocopy)
         if ($LASTEXITCODE -le 7) {
             Write-Host "Directory content cleared successfully." -ForegroundColor Green
-        } else {
+        }
+        else {
             Write-Warning "Robocopy returned exit code $LASTEXITCODE. Some files may not have been processed."
         }
 

@@ -1,4 +1,4 @@
-Function New-AwsSession {
+function New-AwsSession {
     <#
     .SYNOPSIS
     Generates an AWS configuration file using the provided parameters.
@@ -27,11 +27,11 @@ Function New-AwsSession {
     #>
 
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$sso_session,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$sso_start_url,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$sso_region
     )
 

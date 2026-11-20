@@ -9,7 +9,7 @@ function Set-LogProject {
         Sets the project name for logging operations.
 
     .DESCRIPTION
-        This function sets a module-level variable that determines the project name used in log file names. 
+        This function sets a module-level variable that determines the project name used in log file names.
         Once set, all subsequent calls to Set-Log will use this project name unless explicitly overridden.
 
     .PARAMETER ProjectName
@@ -45,7 +45,7 @@ function Set-Log {
         Writes a timestamped log entry to a project-specific log file.
 
     .DESCRIPTION
-        This function writes a log message with a timestamp to a log file. The log file is named based on the current project name 
+        This function writes a log message with a timestamp to a log file. The log file is named based on the current project name
         and is stored in the user's profile directory. The project name can be set using Set-LogProject or overridden per call.
 
         The message will also be written to stdout replacing the need to use Write-Host directly, allowing for easier redirection of output.
@@ -54,7 +54,7 @@ function Set-Log {
         The message to write to the log file.
 
     .PARAMETER ProjectName
-        Optional. The project name to use for this specific log entry. If not specified, uses the project name set by Set-LogProject 
+        Optional. The project name to use for this specific log entry. If not specified, uses the project name set by Set-LogProject
         or defaults to the computer name.
 
     .EXAMPLE
@@ -93,7 +93,8 @@ function Set-Log {
     try {
         Add-Content -Path "$env:USERPROFILE\$ProjectName-log.txt" -Value $logEntry -ErrorAction Stop
         Write-Host $logEntry
-    } catch {
+    }
+    catch {
         Set-Log "An error occurred while adding the log entry: $_"
         Write-Host "An error occurred while adding the log entry: $_"
     }

@@ -38,7 +38,7 @@ function Enable-RDSHosts {
     .NOTES
         Author: Michiel VH
         This function requires the RemoteDesktop PowerShell module.
-        
+
         The default server list can be customized by modifying this function.
 
     .LINK

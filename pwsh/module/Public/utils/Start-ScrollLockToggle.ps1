@@ -36,14 +36,14 @@ function Start-ScrollLockToggle {
     )
 
     Write-Host "Starting ScrollLock toggle every $Interval seconds..." -ForegroundColor Green
-    $WShell = New-Object -com "Wscript.Shell" 
-    
+    $WShell = New-Object -com "Wscript.Shell"
+
     try {
-        while ($true) { 
-            $WShell.sendkeys("{SCROLLLOCK}") 
-            Start-Sleep -Milliseconds $ToggleDuration   
-            $WShell.sendkeys("{SCROLLLOCK}") 
-            Start-Sleep -Seconds $Interval 
+        while ($true) {
+            $WShell.sendkeys("{SCROLLLOCK}")
+            Start-Sleep -Milliseconds $ToggleDuration
+            $WShell.sendkeys("{SCROLLLOCK}")
+            Start-Sleep -Seconds $Interval
         }
     }
     catch {

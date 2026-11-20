@@ -1,4 +1,4 @@
-Function Set-AutoAdminLogin {
+function Set-AutoAdminLogin {
     <#
     .SYNOPSIS
         Sets the system to automatically log in with a specified user account. This is especially useful in development environments where auto-login is needed for testing purposes.
@@ -42,29 +42,31 @@ Function Set-AutoAdminLogin {
         [SecureString]$Password
     )
 
-#    # Define the auto-login user and password
-#    $Username = "YourUsername"    # Replace with your username
-#    # TDO: Implement password encryption to securely store the password in the registry
-#    $Password = "YourPassword"    # Replace with your password
+    #    # Define the auto-login user and password
+    #    $Username = "YourUsername"    # Replace with your username
+    #    # TDO: Implement password encryption to securely store the password in the registry
+    #    $Password = "YourPassword"    # Replace with your password
 
     # Registry path for auto-login settings
     $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 
     # Set the DefaultUserName and password (creates the key if it doesn't exist)
-    if($Username){
+    if ($Username) {
         try {
-            write-output "setting ${Username} as DefaultUserName"
+            Write-Output "setting ${Username} as DefaultUserName"
             Set-ItemProperty -Path $registryPath -Name "DefaultUserName" -Value $Username
-        } catch {
-            write-output "An error occured while trying to set the ``DefaultUserName``: $_"
+        }
+        catch {
+            Write-Output "An error occured while trying to set the ``DefaultUserName``: $_"
         }
     }
-    if($Password){
+    if ($Password) {
         try {
-            write-output "setting DefaultPassword"
+            Write-Output "setting DefaultPassword"
             Set-ItemProperty -Path $registryPath -Name "DefaultPassword" -Value $Password
-        } catch {
-            write-output "An error occured while trying to set the ``DefaultPassword``: $_"
+        }
+        catch {
+            Write-Output "An error occured while trying to set the ``DefaultPassword``: $_"
         }
     }
 

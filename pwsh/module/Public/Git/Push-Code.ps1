@@ -1,10 +1,10 @@
 function Push-Code {
-<#
+    <#
 .SYNOPSIS
     Quickly stage, commit, and push code to a Git repository.
 
 .DESCRIPTION
-    This function allows you to stage all changes, commit them with a provided message, 
+    This function allows you to stage all changes, commit them with a provided message,
     and push to a specified branch of a Git repository (defaulting to 'main').
 
 .PARAMETER Message
@@ -46,17 +46,17 @@ function Push-Code {
         [string]
         $Branch = 'main'
     )
-    
+
     try {
         Write-Verbose "Staging all changes..."
         git add .
-        
+
         Write-Verbose "Committing with message: $Message"
         git commit -m $Message
-        
+
         Write-Verbose "Pushing to branch '$Branch'..."
         git push -u origin $Branch
-        
+
         Write-Host "Successfully pushed changes to '$Branch' branch."
     }
     catch {

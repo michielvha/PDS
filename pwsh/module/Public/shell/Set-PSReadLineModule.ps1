@@ -61,7 +61,8 @@ Set-PSReadLineOption -PredictionViewStyle ListView
             Write-Host "PSReadLine may already be in use. Please restart PowerShell and try again."
             return
         }
-    } else {
+    }
+    else {
         Write-Host "PSReadLine Module is already installed. Continuing with configuration."
     }
 

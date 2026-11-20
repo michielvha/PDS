@@ -29,13 +29,13 @@ function Update-GitRepositories {
 
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false, Position=0)]
+        [Parameter(Mandatory = $false, Position = 0)]
         [string]$RootDirectory = (Get-Location)
     )
 
     # Save the original location to return to it at the end
     $originalLocation = Get-Location
-    
+
     try {
         # Ensure the root directory exists
         if (-not (Test-Path -Path $RootDirectory)) {
@@ -50,7 +50,7 @@ function Update-GitRepositories {
         # Simple approach to just search one level down - include hidden items with -Hidden
         $dirs = Get-ChildItem -Path $RootDirectory -Directory
         $gitDirs = @()
-        
+
         foreach ($dir in $dirs) {
             # Look specifically for hidden .git directories
             $gitFolder = Get-ChildItem -Path $dir.FullName -Directory -Hidden -Filter ".git" -ErrorAction SilentlyContinue
@@ -60,24 +60,24 @@ function Update-GitRepositories {
         }
 
         Write-Host "Found $($gitDirs.Count) Git repositories to update." -ForegroundColor Cyan
-        
+
         # Initialize progress bar
         $progressParams = @{
-            Activity = "Updating Git Repositories"
-            Status = "Starting updates..."
+            Activity        = "Updating Git Repositories"
+            Status          = "Starting updates..."
             PercentComplete = 0
         }
         Write-Progress @progressParams
-        
+
         # Process each repository
         $currentRepo = 0
         $totalRepos = $gitDirs.Count
-        
+
         foreach ($gitDir in $gitDirs) {
             $currentRepo++
             $repoPath = $gitDir.Parent.FullName
             $repoName = $gitDir.Parent.Name
-            
+
             # Update progress bar
             $progressParams.Status = "Processing $currentRepo of $totalRepos - $repoName"
             $progressParams.PercentComplete = ($currentRepo / $totalRepos) * 100
@@ -92,23 +92,24 @@ function Update-GitRepositories {
             try {
                 # Simple git pull operation
                 Write-Host "Running git pull..." -ForegroundColor Gray
-                
+
                 # Perform git pull
                 $pullResult = git pull 2>&1
-                
+
                 # Show the result
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "Success" -ForegroundColor Green
-                    
+
                     # Format the output in a more structured way
                     if ($pullResult -match "Already up to date") {
                         Write-Host "  Status: Already up to date" -ForegroundColor Cyan
-                    } else {
+                    }
+                    else {
                         Write-Host "  Status: Changes pulled successfully" -ForegroundColor Cyan
-                        
+
                         # Parse and display changes in a structured format
                         $changes = $pullResult -split "`n" | Where-Object { $_ -match "\s+\d+\s+\w+\(\+\)" -or $_ -match "\s+\d+\s+files?\s+changed" -or $_ -match "^\s+(create mode|rename|delete mode)" }
-                        
+
                         if ($changes) {
                             Write-Host "  Changes:" -ForegroundColor Cyan
                             foreach ($change in $changes) {
@@ -116,19 +117,23 @@ function Update-GitRepositories {
                             }
                         }
                     }
-                } else {
+                }
+                else {
                     Write-Host "Failed: $pullResult" -ForegroundColor Red
                 }
-            } catch {
+            }
+            catch {
                 Write-Host "Error updating repository $repoName : $($_.Exception.Message)" -ForegroundColor Red
             }
         }
-    } catch {
+    }
+    catch {
         Write-Host "Error: $_" -ForegroundColor Red
-    } finally {
+    }
+    finally {
         # Complete the progress bar
         Write-Progress -Activity "Updating Git Repositories" -Completed
-        
+
         # Return to the original location
         Set-Location -Path $originalLocation
     }

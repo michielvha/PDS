@@ -7,7 +7,8 @@ function New-Branch {
     # Navigate to the repository
     if (Test-Path $RepoPath) {
         Set-Location -Path $RepoPath
-    } else {
+    }
+    else {
         Write-Host "The specified repository path does not exist: $RepoPath" -ForegroundColor Red
         return
     }

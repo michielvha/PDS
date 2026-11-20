@@ -1,4 +1,4 @@
-function Update-Env{
+function Update-Env {
     <#
     .SYNOPSIS
         Refreshes the current PowerShell session's environment variables from the Windows registry.
@@ -6,7 +6,7 @@ function Update-Env{
     .DESCRIPTION
         The Refresh-Env function reloads all environment variables from the Windows registry,
         including system-wide (`HKLM:\System\CurrentControlSet\Control\Session Manager\Environment`)
-        and user-specific (`HKCU:\Environment`) variables. 
+        and user-specific (`HKCU:\Environment`) variables.
 
         It also merges the `Path` environment variable from both system and user scopes to ensure
         newly added directories are available without requiring a new shell session.
@@ -16,7 +16,7 @@ function Update-Env{
 
     .EXAMPLE
         Refresh-Env
-        Refreshes the environment variables in the current PowerShell session, 
+        Refreshes the environment variables in the current PowerShell session,
         applying any recent changes made via registry modifications or external software installations.
 
     .EXAMPLE

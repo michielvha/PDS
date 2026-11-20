@@ -5,7 +5,7 @@ function Install-OhMyPosh {
 
     .DESCRIPTION
         The `Install-OhMyPosh` function installs and configures Oh My Posh along with complementary PowerShell modules to create a rich terminal experience. The function performs the following operations:
-        
+
         1. **Oh My Posh Installation**: Installs Oh My Posh via winget if not already present
         2. **Terminal-Icons Module**: Installs the Terminal-Icons module for enhanced file/folder icons in directory listings
         3. **Posh-Git Module**: Installs posh-git for Git repository status integration in the prompt
@@ -17,15 +17,15 @@ function Install-OhMyPosh {
            - PDS module auto-loading
            - Chocolatey profile integration for refreshenv functionality
         6. **Profile Creation**: Creates the PowerShell profile file if it doesn't exist
-        
+
         The function ensures all components are installed with CurrentUser scope and appends the necessary configuration to the PowerShell profile for immediate use. Window titles will display as "pwsh (Administrator)" for PowerShell 7+ running as admin, "pwsh" for regular PowerShell 7+, "PowerShell (Administrator)" for PowerShell 5.1 as admin, or "PowerShell" for regular PowerShell 5.1.
 
     .EXAMPLE
         Install-OhMyPosh
-        
-        Installs Oh My Posh with the powerlevel10k_rainbow theme, Terminal-Icons, and posh-git modules. 
-        Modifies the theme file to remove console title override and configures the PowerShell profile 
-        to load these components automatically with custom window title logic. Creates the profile file 
+
+        Installs Oh My Posh with the powerlevel10k_rainbow theme, Terminal-Icons, and posh-git modules.
+        Modifies the theme file to remove console title override and configures the PowerShell profile
+        to load these components automatically with custom window title logic. Creates the profile file
         if it doesn't exist and appends all necessary configurations.
 
     .NOTES
@@ -74,73 +74,76 @@ function Install-OhMyPosh {
                 Write-Host "Console title template removed successfully"
                 $themeModified = $true
             }
-            
+
             # Convert to JSON object for segment manipulation
             try {
                 $themeObject = $themeContent | ConvertFrom-Json
-                
+
                 # Check if Azure segment already exists
                 $hasAzureSegment = $themeObject.blocks[0].segments | Where-Object { $_.type -eq "az" }
                 if (-not $hasAzureSegment) {
                     Write-Host "Adding Azure segment to theme..."
                     $azureSegment = @{
-                        type = "az"
-                        style = "powerline"
+                        type             = "az"
+                        style            = "powerline"
                         powerline_symbol = "`u{e0b2}"
                         invert_powerline = $true
-                        foreground = "#ffffff"
-                        background = "#0072C6"
-                        template = " `u{ebd8} {{ .Name }} "
-                        properties = @{
+                        foreground       = "#ffffff"
+                        background       = "#0072C6"
+                        template         = " `u{ebd8} {{ .Name }} "
+                        properties       = @{
                             display_default = $true
                         }
                     }
                     $themeObject.blocks[0].segments += $azureSegment
                     $themeModified = $true
                 }
-                
+
                 # Check if Kubernetes segment already exists
                 $hasKubernetesSegment = $themeObject.blocks[0].segments | Where-Object { $_.type -eq "kubectl" }
                 if (-not $hasKubernetesSegment) {
                     Write-Host "Adding Kubernetes segment to theme..."
                     $kubernetesSegment = @{
-                        type = "kubectl"
-                        style = "powerline"
+                        type             = "kubectl"
+                        style            = "powerline"
                         powerline_symbol = "`u{e0b2}"
                         invert_powerline = $true
-                        foreground = "#ffffff"
-                        background = "#326ce5"
-                        template = " `u{e81d} {{ .Context }}{{ if .Namespace }}:{{ .Namespace }}{{ end }} "
-                        properties = @{
+                        foreground       = "#ffffff"
+                        background       = "#326ce5"
+                        template         = " `u{e81d} {{ .Context }}{{ if .Namespace }}:{{ .Namespace }}{{ end }} "
+                        properties       = @{
                             display_default = $true
                         }
                     }
                     $themeObject.blocks[0].segments += $kubernetesSegment
                     $themeModified = $true
                 }
-                
+
                 # Save modified theme if changes were made
                 if ($themeModified) {
                     $themeObject | ConvertTo-Json -Depth 10 | Set-Content $themeFile -Encoding UTF8
                     Write-Host "Theme modifications saved successfully"
-                } else {
+                }
+                else {
                     Write-Host "No theme modifications needed"
                 }
-                
-            } catch {
+
+            }
+            catch {
                 Write-Warning "Could not parse theme file as JSON: $_"
                 # If JSON parsing fails, just save the console title template removal
                 if ($themeModified) {
                     $themeContent | Set-Content $themeFile -Encoding UTF8
                 }
             }
-        } else {
+        }
+        else {
             Write-Host "Theme file not found at: $themeFile"
         }
     }
 
     # TODO: Check to enable quake mode for windows terminal
-    # https://youtu.be/4GASGO0go5I?si=C2jEFteGInNTOCoK&t=628   
+    # https://youtu.be/4GASGO0go5I?si=C2jEFteGInNTOCoK&t=628
 
     # TODO: check to implement this UnixCompleters, verify if usefull
     # # 3. Unix completions

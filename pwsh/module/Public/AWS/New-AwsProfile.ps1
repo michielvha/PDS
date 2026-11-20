@@ -1,4 +1,4 @@
-Function New-AwsProfile {
+function New-AwsProfile {
     <#
     .SYNOPSIS
         Generates an AWS configuration file using the provided parameters.
@@ -30,13 +30,13 @@ Function New-AwsProfile {
     #>
 
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$sso_profile,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$sso_session,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$sso_account_id,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$sso_role_name
     )
 

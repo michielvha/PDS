@@ -1,11 +1,11 @@
-Function Get-Ports {
+function Get-Ports {
     <#
     .SYNOPSIS
         Lists all listening TCP and UDP ports with associated process information.
 
     .DESCRIPTION
-        The Get-Ports function retrieves all currently listening TCP and UDP ports on the local system, similar to the 'netstat -tunlp' command on Linux. 
-        For each port, it displays the protocol, local address and port, process ID (PID), and the name of the owning process. 
+        The Get-Ports function retrieves all currently listening TCP and UDP ports on the local system, similar to the 'netstat -tunlp' command on Linux.
+        For each port, it displays the protocol, local address and port, process ID (PID), and the name of the owning process.
         This can be useful for troubleshooting, auditing, or monitoring network activity on a Windows machine.
 
     .EXAMPLE
@@ -29,7 +29,7 @@ Function Get-Ports {
             Process      = $proc.ProcessName
         }
     }
-    
+
 
     $udp = Get-NetUDPEndpoint | ForEach-Object {
         $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
@@ -41,8 +41,8 @@ Function Get-Ports {
         }
     }
 
-    $tcp + $udp | Sort-Object Protocol, LocalAddress | Format-Table -AutoSize 
-    # TODO: we might get better output from 
+    $tcp + $udp | Sort-Object Protocol, LocalAddress | Format-Table -AutoSize
+    # TODO: we might get better output from
     # Get-NetTCPConnection -State Listen | Where-Object { $_.OwningProcess -ne 4 } | Sort-Object LocalPort | Format-Table -AutoSize
 
 }

@@ -40,7 +40,7 @@ function Set-DefaultProfile {
     #>
 
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$Commands
     )
 

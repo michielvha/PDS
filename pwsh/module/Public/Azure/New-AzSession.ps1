@@ -21,7 +21,7 @@ function New-AzSession {
     .NOTES
         Author: Michiel VH
         This function requires an internet connection and valid Azure credentials.
-        
+
         If you're behind a corporate proxy or have Zscaler or similar security software,
         you may need to add a certificate authority (CA) certificate.
 

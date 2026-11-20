@@ -1,4 +1,4 @@
-Function Remove-ArgoCLI {
+function Remove-ArgoCLI {
     <#
     .SYNOPSIS
         Removes the ArgoCD CLI if it was installed via the PDS Module.

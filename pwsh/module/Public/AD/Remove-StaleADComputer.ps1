@@ -55,12 +55,14 @@ function Remove-StaleADComputer {
                 if ($WhatIf) {
                     Set-Log "$($computer.name) - Would be removed - Last Seen: $($computer.LastLogonDate)"
                     Write-Host "$($computer.name) - Would be removed - Last Seen: $($computer.LastLogonDate)"
-                } else {
+                }
+                else {
                     Remove-ADComputer -Identity $computer.DistinguishedName -Confirm:$false
                     Set-Log "$($computer.name) - Removed - Last Seen: $($computer.LastLogonDate)"
                     Write-Host "$($computer.name) - Removed - Last Seen: $($computer.LastLogonDate)"
                 }
-            } catch {
+            }
+            catch {
                 Set-Log "An error occurred while removing $($computer.name): $_"
                 Write-Host "An error occurred while removing $($computer.name): $_"
             }

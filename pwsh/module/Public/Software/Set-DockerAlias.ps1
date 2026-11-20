@@ -21,9 +21,9 @@ function Set-DockerAlias {
     $profilePath = $PROFILE
 
     $aliases = @(
-        @{Name="d"; Command="docker"}
-        @{Name="dcu"; Command="docker compose up -d"}
-        @{Name="dcd"; Command="docker compose down"}
+        @{Name = "d"; Command = "docker" }
+        @{Name = "dcu"; Command = "docker compose up -d" }
+        @{Name = "dcd"; Command = "docker compose down" }
     )
 
     foreach ($alias in $aliases) {
@@ -36,7 +36,8 @@ function Set-DockerAlias {
             $functionDefinition = "function $aliasName { $aliasCommand }"
             Add-Content -Path $profilePath -Value $functionDefinition
             Write-Output "Function $aliasName added to profile successfully."
-        } else {
+        }
+        else {
             Write-Output "Function $aliasName is already defined in the profile."
         }
     }

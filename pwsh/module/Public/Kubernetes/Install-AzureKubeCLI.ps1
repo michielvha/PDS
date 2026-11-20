@@ -1,4 +1,4 @@
-Function Install-AzureKubeCLI {
+function Install-AzureKubeCLI {
     <#
     .SYNOPSIS
         Installs `kubectl` and `kubelogin` if they are not already installed on the system.
@@ -24,7 +24,7 @@ Function Install-AzureKubeCLI {
         https://github.com/Azure/kubelogin
         Learn more about `kubelogin`, a tool for Azure Kubernetes Service (AKS) authentication.
     #>
-    
+
     # TODO: Auto install az cli if not installed
     # Check if az command is available without producing an error if not found
     if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
@@ -38,7 +38,8 @@ Function Install-AzureKubeCLI {
     if (-not $kubectlCmdExists -or -not $kubeloginCmdExists) {
         Write-Host "kubectl & kubelogin will be installed via az cli"
         az aks install-cli
-    } else {
+    }
+    else {
         Write-Host "Kubectl and kubelogin are already installed:"
         kubectl version 2>$null
         kubelogin --version 2>$null

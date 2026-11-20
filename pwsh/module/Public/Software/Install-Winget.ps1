@@ -1,5 +1,5 @@
 function Install-Winget {
-<#
+    <#
 .SYNOPSIS
     Installs winget (Windows Package Manager) if it is not already installed on the system.
 
@@ -24,7 +24,7 @@ function Install-Winget {
 
     # Check if winget is already installed and working
     $wingetCommand = Get-Command -Name winget -ErrorAction SilentlyContinue
-    
+
     if ($wingetCommand) {
         try {
             $wingetVersion = winget --version 2>&1
@@ -44,7 +44,7 @@ function Install-Winget {
         # Check Windows version (winget requires Windows 10 1809+ or Windows 11)
         $osInfo = Get-CimInstance -ClassName Win32_OperatingSystem
         $osVersion = [Version](($osInfo.Version -split '\.')[0..1] -join '.')
-        
+
         if ($osVersion -lt [Version]"10.0") {
             throw "winget requires Windows 10 version 1809 or later, or Windows 11. Current OS version: $($osInfo.Version)"
         }
@@ -54,7 +54,7 @@ function Install-Winget {
         try {
             Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe -ErrorAction Stop
             Start-Sleep -Seconds 2
-            
+
             # Verify registration worked
             $wingetCommand = Get-Command -Name winget -ErrorAction SilentlyContinue
             if ($wingetCommand) {
@@ -79,7 +79,7 @@ function Install-Winget {
         Write-Output "Downloading App Installer package from Microsoft..."
         $appInstallerPath = Join-Path -Path $env:TEMP -ChildPath "Microsoft.DesktopAppInstaller.msixbundle"
         $appInstallerUrl = "https://aka.ms/getwinget"
-        
+
         Invoke-WebRequest -Uri $appInstallerUrl -OutFile $appInstallerPath -ErrorAction Stop
 
         # Install App Installer package
@@ -87,7 +87,7 @@ function Install-Winget {
         Add-AppxPackage -Path $appInstallerPath -ErrorAction Stop
 
         Write-Output "winget has been successfully installed."
-        
+
         # Verify installation
         Start-Sleep -Seconds 3
         $wingetCommand = Get-Command -Name winget -ErrorAction SilentlyContinue

@@ -1,4 +1,4 @@
-# -- Environment --
+﻿# -- Environment --
 
 # Set $ScriptPath to current directory compatible with PS2EXE
 if ($MyInvocation.MyCommand.CommandType -eq "ExternalScript") {

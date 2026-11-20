@@ -5,7 +5,7 @@ function Set-WindowsTerminalFont {
 
     .DESCRIPTION
         The `Set-WindowsTerminalFont` function modifies the Windows Terminal settings.json file
-        to set the default font face for all profiles. It ensures that the profiles.defaults 
+        to set the default font face for all profiles. It ensures that the profiles.defaults
         structure exists and properly configures the font setting.
 
         The function automatically locates the Windows Terminal settings file and safely modifies
@@ -17,12 +17,12 @@ function Set-WindowsTerminalFont {
 
     .EXAMPLE
         Set-WindowsTerminalFont
-        
+
         Sets the Windows Terminal default font to "MesloLGM Nerd Font".
 
     .EXAMPLE
         Set-WindowsTerminalFont -FontName "JetBrainsMono Nerd Font Mono"
-        
+
         Sets the Windows Terminal default font to "JetBrains Mono".
 
     .OUTPUTS
@@ -42,7 +42,7 @@ function Set-WindowsTerminalFont {
     #>
 
     param (
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$FontName = "MesloLGM Nerd Font"
     )
 
@@ -51,7 +51,7 @@ function Set-WindowsTerminalFont {
         Write-Host "Installing Oh My Posh..."
         Write-Verbose "Using winget to install Oh My Posh.`nThis will fetch the exe and latest themes from the official repository.`nThe installation is user scoped"
         winget install JanDeDobbeleer.OhMyPosh -s winget
-        
+
         # Refresh the environment to make oh-my-posh available
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
     }
@@ -66,13 +66,14 @@ function Set-WindowsTerminalFont {
         catch {
             Write-Warning "Failed to install fonts via oh-my-posh. You may need to restart your terminal and try again, or install fonts manually."
         }
-    } else {
+    }
+    else {
         Write-Warning "oh-my-posh command not found after installation. You may need to restart your terminal session."
     }
 
     $settingsPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
 
-    if (-Not (Test-Path $settingsPath)) {
+    if (-not (Test-Path $settingsPath)) {
         Write-Error "Windows Terminal settings.json not found at: $settingsPath"
         Write-Error "Please ensure Windows Terminal is installed and has been run at least once."
         return
@@ -93,7 +94,7 @@ function Set-WindowsTerminalFont {
             Write-Host "Creating font configuration..." -ForegroundColor Yellow
             $json.profiles.defaults | Add-Member -MemberType NoteProperty -Name "font" -Value ([PSCustomObject]@{})
         }
-        
+
         $json.profiles.defaults.font | Add-Member -MemberType NoteProperty -Name "face" -Value $FontName -Force
 
         # Write back the modified config

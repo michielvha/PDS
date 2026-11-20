@@ -1,4 +1,4 @@
-Function Remove-WindowsBloat {
+﻿function Remove-WindowsBloat {
     <#
     .SYNOPSIS
         Disables non-essential and resource-heavy Windows services to improve system performance.
@@ -68,7 +68,8 @@ function Disable-ServiceSafe {
         Write-Output "Disabling service: $Name"
         Stop-Service -Name $Name -Force -ErrorAction SilentlyContinue
         Set-Service -Name $Name -StartupType Disabled
-    } else {
+    }
+    else {
         Write-Output "Service $Name not found. Skipping..."
     }
 }
