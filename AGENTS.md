@@ -28,7 +28,15 @@ bash -n bash/debian/deploy/bootstrap.sh
 bash -n packaging/bin/pds
 ```
 
-The packaging Makefile also has `lint`, `validate`, and `test` targets. They need ShellCheck, nFPM, and Docker as applicable. `test` builds a package and installs it in a container. The existing `lint` target does not reliably fail on library ShellCheck errors; do not report it as complete coverage. PowerShell checks are not yet wired into CI.
+The PowerShell checks run `ci.ps1` from [pwsh-ci-action](https://github.com/vhco-pro/pwsh-ci-action) on Windows, from a checkout of that action at the version `.github/workflows/checks.yml` pins:
+
+```pwsh
+pwsh -File <pwsh-ci-action>/ci.ps1 -Path . -ModuleManifest pwsh/module/PDS.psm1 -Tests pwsh/tests
+```
+
+It checks formatting and PSScriptAnalyzer against `PSScriptAnalyzerSettings.psd1`, imports the module in a fresh process and runs the Pester tests in `pwsh/tests/`. Pester mocks prove calls, not Windows behaviour: run a function that changed behaviour on a disposable Windows VM as well.
+
+The packaging Makefile also has `lint`, `validate`, and `test` targets. They need ShellCheck, nFPM, and Docker as applicable. `test` builds a package and installs it in a container. The existing `lint` target does not reliably fail on library ShellCheck errors; do not report it as complete coverage.
 
 These commands and limitations were inspected during onboarding preparation. Check execution results for the current change before claiming verification. Adding this entry point does not certify existing code against the shared conventions.
 

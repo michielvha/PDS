@@ -9,6 +9,12 @@ install-module PDS
 import-module PDS
 ```
 
+## Checks and releases
+
+Every branch push runs the PowerShell checks on Windows with [pwsh-ci-action](https://github.com/vhco-pro/pwsh-ci-action): formatting and PSScriptAnalyzer against `PSScriptAnalyzerSettings.psd1` at the repository root, a module import in a fresh process, and the Pester tests in `pwsh/tests/`, one file per exported function. A failure blocks the version.
+
+After the checks pass on `main`, a version-bumping commit (`feat:`, `fix:` and the other bumping types) gets an exact tag such as `v0.26.0`. That tag runs the checks again, then publishes the module to the PowerShell Gallery, the Debian package to the APT repository, and a GitHub Release with notes, the `.deb` and `PDS-<version>.exe`. The module and package versions have no `v` prefix. Commits typed `docs`, `style`, `test` or `ci` release nothing.
+
 ## Windows software packages included
 
 Below is a list of software and tools supported by the custom PowerShell functions and installed via Chocolatey:
