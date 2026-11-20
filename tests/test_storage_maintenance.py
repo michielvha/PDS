@@ -96,9 +96,34 @@ elif name == 'du':
     if state.get('du_error'):
         print('injected cache permission failure', file=sys.stderr)
         sys.exit(1)
+    if args[-1] == str(cache) and state.get('cache_sizes'):
+        state['cache_bytes'] = state['cache_sizes'].pop(0)
+        state_path.write_text(json.dumps(state))
     print(f"{state['cache_bytes'] if args[-1] == str(cache) else state.get('browser_bytes', 0)}\t{args[-1]}")
+elif name == 'date':
+    print(state.get('hour', '03'))
+elif name == 'nproc':
+    print(8)
+elif name == 'sleep':
+    pass
 elif name == 'btrfs':
-    if args[:2] == ['filesystem', 'usage']:
+    if args[:2] == ['filesystem', 'usage'] and '-T' in args:
+        tables = state['tables']
+        print(tables[0])
+        if len(tables) > 1:
+            state['tables'] = tables[1:]
+            state_path.write_text(json.dumps(state))
+    elif args[:2] == ['filesystem', 'df']:
+        print(state.get('df', 'Data, single: total=1, used=1\n'
+                              'Metadata, RAID1: total=1, used=1'))
+    elif args[:2] == ['balance', 'status']:
+        sys.exit(state.get('balance_status', 0))
+    elif args[:2] == ['balance', 'start']:
+        if state.get('balance_error'):
+            print('ERROR: error during balancing: No space left on device', file=sys.stderr)
+            sys.exit(1)
+        print(state.get('balance_output', 'Done, had to relocate 5 out of 120 chunks'))
+    elif args[:2] == ['filesystem', 'usage']:
         if state.get('usage_error'):
             print('injected Btrfs failure', file=sys.stderr)
             sys.exit(1)
@@ -168,7 +193,8 @@ class StorageUnitTests(unittest.TestCase):
         stub.write_text(FAKE_COMMAND)
         stub.chmod(0o755)
         for name in ('uname', 'id', 'getent', 'realpath', 'stat', 'findmnt',
-                     'pgrep', 'du', 'btrfs', 'go', 'runuser', 'notify-send'):
+                     'pgrep', 'du', 'btrfs', 'go', 'runuser', 'notify-send',
+                     'date', 'nproc', 'sleep'):
             (self.bin / name).symlink_to(stub.name)
         self.state_path = self.base / 'state.json'
         self.log = self.base / 'commands.jsonl'
@@ -176,19 +202,32 @@ class StorageUnitTests(unittest.TestCase):
             'user': 'pds-test', 'uid': 1000, 'current_uid': 1000,
             'home': str(self.home), 'cache_bytes': 8192, 'usage': USAGE,
         }
+        self.loadavg = self.base / 'loadavg'
+        self.loadavg.write_text('0.50 0.40 0.30 1/100 1000\n')
         self.environment = dict(os.environ, HOME=str(self.home), USER='pds-test',
                                 LOGNAME='pds-test', PDS_TEST_STATE=str(self.state_path),
+                                PDS_STORAGE_LOADAVG=str(self.loadavg),
                                 PDS_TEST_LOG=str(self.log),
                                 PATH=str(self.bin) + os.pathsep + os.environ['PATH'])
 
-    def run_script(self, mode, *, root=False, **state):
+    def run_script(self, mode, *, root=False, options=None, **state):
         self.state.update(state)
         self.state['current_uid'] = 0 if root else 1000
         self.state_path.write_text(json.dumps(self.state))
+        if options is None:
+            options = [] if mode == 'balance' else ['--go', str(self.bin / 'go')]
         return subprocess.run(
-            ['bash', str(SCRIPT), mode, '--user', 'pds-test',
-             '--go', str(self.bin / 'go')],
+            ['bash', str(SCRIPT), mode, '--user', 'pds-test', *options],
             env=self.environment, text=True, capture_output=True, timeout=20)
+
+    def cache_entry(self, shard, hours_old, kind='d'):
+        directory = self.cache / shard
+        directory.mkdir(exist_ok=True)
+        path = directory / (shard + 'b' * 62 + '-' + kind)
+        path.write_text('rebuildable')
+        moment = time.time() - hours_old * 3600
+        os.utime(path, (moment, moment))
+        return path
 
     def commands(self, name):
         if not self.log.exists():
@@ -225,10 +264,10 @@ class StorageUnitTests(unittest.TestCase):
                     result = subprocess.run(
                         ['bash', '-c', command], env=self.environment,
                         text=True, capture_output=True, timeout=20)
-                    self.assertEqual(result.returncode, 2 if failed else 0,
-                                     result.stdout + result.stderr)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                     if failed:
                         self.assertIn('injected desktop notification failure', result.stderr)
+                        self.assertIn('WARN desktop notification failed', result.stdout)
             attempts = self.commands('runuser')
             self.assertEqual(len(attempts), 2)
             self.assertTrue(all('pds-test' in attempt['args'] for attempt in attempts))
@@ -288,22 +327,36 @@ class StorageUnitTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertFalse(self.commands('go'))
 
-    def test_ac03_unknown_files_and_nested_mounts_are_preserved(self):
+    def test_ac03_unknown_files_are_reported_and_skipped_while_trim_continues(self):
         unknown = self.cache / 'manual-source.txt'
         unknown.write_text('preserve unknown data')
-        result = self.run_script('cleanup-go', cache_bytes=21 * GIB)
-        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        stray = self.cache / 'ab' / 'not-a-cache-name'
+        stray.parent.mkdir()
+        stray.write_text('preserve stray data')
+        old = time.time() - 100 * 3600
+        os.utime(unknown, (old, old))
+        os.utime(stray, (old, old))
+        expired = self.cache_entry('ab', 72)
+        result = self.run_script('cleanup-go', cache_sizes=[21 * GIB, 10 * GIB])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(unknown.read_text(), 'preserve unknown data')
+        self.assertEqual(stray.read_text(), 'preserve stray data')
+        self.assertIn('SKIP unknown Go cache entry is left alone: manual-source.txt', result.stdout)
+        self.assertIn('SKIP unknown Go cache entry is left alone: ab/not-a-cache-name', result.stdout)
+        self.assertFalse(expired.exists())
         self.assertFalse(self.commands('go'))
 
-    def test_ac03_nested_filesystem_is_not_traversed_by_native_cleanup(self):
+    def test_ac03_nested_filesystem_is_not_traversed_by_trim(self):
         nested = self.cache / 'aa'
         nested.mkdir()
         keep = nested / ('a' * 64 + '-d')
         keep.write_text('another filesystem')
+        old = time.time() - 100 * 3600
+        os.utime(keep, (old, old))
         result = self.run_script('cleanup-go', cache_bytes=21 * GIB, nested_mount=True)
-        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(keep.read_text(), 'another filesystem')
+        self.assertIn('nested filesystem', result.stdout)
         self.assertFalse(self.commands('go'))
 
     def test_ac05_sourcing_preserves_options_traps_and_does_not_run_tools(self):
@@ -330,38 +383,72 @@ class StorageUnitTests(unittest.TestCase):
         self.assertNotIn('\x1b', result.stdout + result.stderr)
         self.assertEqual(keep.read_text(), 'installed browser')
 
-    def test_ac08_budget_boundary_and_busy_build_skip(self):
+    def test_ac08_budget_boundary_skips_trim(self):
         for size in (0, 20 * GIB):
             with self.subTest(size=size):
+                expired = self.cache_entry('cd', 72)
                 result = self.run_script('cleanup-go', cache_bytes=size)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertIn('SKIP', result.stdout)
-        result = self.run_script('cleanup-go', cache_bytes=20 * GIB + 1, busy=True)
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn('busy', (result.stdout + result.stderr).lower())
+                self.assertTrue(expired.exists())
+
+    def test_ac08_trim_runs_while_builds_are_active_and_keeps_recent_entries(self):
+        expired = self.cache_entry('01', 50)
+        day_old = self.cache_entry('02', 30)
+        recent = self.cache_entry('03', 2, kind='a')
+        result = self.run_script('cleanup-go', busy=True,
+                                 cache_sizes=[30 * GIB, 25 * GIB, 15 * GIB])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(expired.exists())
+        self.assertFalse(day_old.exists())
+        self.assertTrue(recent.exists())
+        self.assertIn('unused for 48h', result.stdout)
+        self.assertIn('unused for 24h', result.stdout)
+        self.assertNotIn('unused for 12h', result.stdout)
+        self.assertFalse(self.commands('pgrep'))
         self.assertFalse(self.commands('go'))
 
-    def test_ac08_cleanup_uses_only_native_build_cache_and_preserves_other_data(self):
-        (self.cache / 'aa').mkdir()
-        (self.cache / 'aa' / ('a' * 64 + '-d')).write_text('rebuildable')
-        result = self.run_script('cleanup-go', cache_bytes=21 * GIB)
+    def test_ac08_trim_stops_at_budget_and_preserves_other_data(self):
+        expired = self.cache_entry('aa', 50)
+        day_old = self.cache_entry('bb', 30)
+        result = self.run_script('cleanup-go', cache_sizes=[30 * GIB, 10 * GIB])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        cleanup = [entry for entry in self.commands('go')
-                   if entry['args'] == ['clean', '-cache']]
-        self.assertEqual(len(cleanup), 1)
-        self.assertEqual(cleanup[0]['cache'], str(self.cache))
+        self.assertFalse(expired.exists())
+        self.assertTrue(day_old.exists())
         self.assertEqual(self.module.read_text(), 'module data must remain')
         self.assertEqual(self.profile.read_text(), 'profile data must remain')
 
-    def test_ac08_native_cleanup_failure_is_visible(self):
-        result = self.run_script('cleanup-go', cache_bytes=21 * GIB, go_error=True)
+    def test_ac08_trim_dry_run_reports_and_removes_nothing(self):
+        expired = self.cache_entry('aa', 50)
+        result = self.run_script('cleanup-go', cache_bytes=30 * GIB,
+                                 options=['--go', str(self.bin / 'go'), '--dry-run'])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('DRY-RUN would remove 1 entries (11 bytes) unused for 48h', result.stdout)
+        self.assertTrue(expired.exists())
+
+    def test_ac08_over_budget_after_trim_is_a_warning_not_a_failure(self):
+        recent = self.cache_entry('aa', 1)
+        result = self.run_script('cleanup-go', cache_bytes=30 * GIB)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('WARN Go cache stays over budget', result.stdout)
+        self.assertTrue(recent.exists())
+
+    def test_ac08_trim_failure_is_visible(self):
+        if os.geteuid() == 0:
+            self.skipTest('root ignores directory permissions')
+        expired = self.cache_entry('aa', 72)
+        expired.parent.chmod(0o500)
+        self.addCleanup(expired.parent.chmod, 0o755)
+        result = self.run_script('cleanup-go', cache_bytes=30 * GIB)
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-        self.assertIn('injected Go cleanup failure', result.stderr)
+        self.assertIn('Go cache trim failed', result.stderr)
+        self.assertTrue(expired.exists())
 
     def test_ac03_ambient_flags_cannot_add_module_cleanup(self):
         self.environment['GOFLAGS'] = '-modcache'
         result = self.run_script('cleanup-go', cache_bytes=21 * GIB)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(self.commands('go'))
         self.assertTrue(self.module.exists(), 'ambient GOFLAGS deleted the module cache')
         self.assertEqual(self.module.read_text(), 'module data must remain')
 
@@ -389,6 +476,140 @@ class StorageUnitTests(unittest.TestCase):
             env=environment, text=True, capture_output=True, timeout=20)
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn('getent', result.stderr)
+
+
+def device_table(sda, nvme, missing=0):
+    return f"""Overall:
+    Device size:\t\t      750016004096
+    Device missing:\t\t                 {missing}
+
+                  Data         Metadata    System
+Id Path           single       RAID1       RAID1    Unallocated  Total        Slack
+-- -------------- ------------ ----------- -------- ------------ ------------ -----
+ 1 /dev/sda3      148184760320 46166704128 33554432 {sda:>12} 237907214336     -
+ 2 /dev/nvme0n1p1 388694540288 46166704128 33554432 {nvme:>12} 512108789760     -
+-- -------------- ------------ ----------- -------- ------------ ------------ -----
+   Total          536879300608 46166704128 33554432 120736186368 750016004096     0
+   Used           518631727104 38883033088    98304
+"""
+
+
+class StorageBalanceTests(unittest.TestCase):
+    setUp = StorageUnitTests.setUp
+    run_script = StorageUnitTests.run_script
+    commands = StorageUnitTests.commands
+
+    def balances(self):
+        return [entry['args'] for entry in self.commands('btrfs')
+                if entry['args'][:2] == ['balance', 'start']]
+
+    def test_balance_night_target_frees_the_short_device_in_bounded_batches(self):
+        tables = [device_table(1048576, 100 * GIB), device_table(10 * GIB, 95 * GIB),
+                  device_table(17 * GIB, 90 * GIB)]
+        result = self.run_script('balance', root=True, hour='03', tables=tables)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.balances(), [
+            ['balance', 'start', '-ddevid=1,usage=20,limit=5', '/'],
+            ['balance', 'start', '-ddevid=1,usage=20,limit=5', '/']])
+        self.assertEqual(len(self.commands('sleep')), 2)
+        for entry in self.commands('btrfs'):
+            self.assertFalse(any(arg.startswith('-m') for arg in entry['args']), entry)
+
+    def test_balance_by_day_acts_only_on_an_urgent_shortfall(self):
+        result = self.run_script('balance', root=True, hour='14',
+                                 tables=[device_table(10 * GIB, 100 * GIB)])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(self.balances())
+        result = self.run_script('balance', root=True, hour='14',
+                                 tables=[device_table(1048576, 100 * GIB),
+                                         device_table(9 * GIB, 95 * GIB)])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(len(self.balances()), 1)
+
+    def test_balance_explicit_target_applies_at_any_hour(self):
+        result = self.run_script('balance', root=True, hour='14', options=['--target-gib', '12'],
+                                 tables=[device_table(10 * GIB, 100 * GIB),
+                                         device_table(13 * GIB, 95 * GIB)])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(len(self.balances()), 1)
+        self.assertIn(f'target_bytes={12 * GIB}', result.stdout)
+
+    def test_balance_targets_the_device_that_is_short(self):
+        result = self.run_script('balance', root=True, hour='03',
+                                 tables=[device_table(100 * GIB, 1048576),
+                                         device_table(100 * GIB, 20 * GIB)])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.balances(), [['balance', 'start', '-ddevid=2,usage=20,limit=5', '/']])
+
+    def test_balance_escalates_usage_and_stops_when_nothing_relocates(self):
+        result = self.run_script('balance', root=True, hour='03',
+                                 tables=[device_table(1048576, 100 * GIB)],
+                                 balance_output='Done, had to relocate 0 out of 120 chunks')
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual([args[2] for args in self.balances()], [
+            '-ddevid=1,usage=20,limit=5', '-ddevid=1,usage=50,limit=5',
+            '-ddevid=1,usage=90,limit=5'])
+        self.assertIn('WARN', result.stdout)
+
+    def test_balance_is_bounded_by_max_batches(self):
+        result = self.run_script('balance', root=True, hour='03',
+                                 options=['--max-batches', '2', '--pause', '0'],
+                                 tables=[device_table(1048576, 100 * GIB)])
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(len(self.balances()), 2)
+
+    def test_balance_never_overlaps_a_running_balance(self):
+        result = self.run_script('balance', root=True, hour='03', balance_status=1,
+                                 tables=[device_table(1048576, 100 * GIB)])
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('another balance is running', result.stdout)
+        self.assertFalse(self.balances())
+
+    def test_balance_waits_for_load_and_postpones_on_a_busy_host(self):
+        self.loadavg.write_text('50.00 40.00 30.00 1/100 1000\n')
+        result = self.run_script('balance', root=True, hour='03',
+                                 tables=[device_table(1048576, 100 * GIB)])
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('host stayed busy', result.stdout)
+        self.assertEqual(len(self.commands('sleep')), 10)
+        self.assertFalse(self.balances())
+
+    def test_balance_dry_run_changes_nothing(self):
+        result = self.run_script('balance', root=True, hour='03', options=['--dry-run'],
+                                 tables=[device_table(1048576, 100 * GIB)])
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('DRY-RUN would run: btrfs balance start -ddevid=1,usage=20,limit=5 /',
+                      result.stdout)
+        self.assertFalse(self.balances())
+
+    def test_balance_refuses_degraded_or_failed_measurements_and_non_root(self):
+        result = self.run_script('balance', root=True, hour='03',
+                                 tables=[device_table(1048576, 100 * GIB, missing=1)])
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        result = self.run_script('balance', root=True, hour='03', df='Metadata, RAID9: total=1',
+                                 tables=[device_table(1048576, 100 * GIB)])
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        result = self.run_script('balance', root=True, hour='03', balance_error=True,
+                                 df='Metadata, RAID1: total=1, used=1',
+                                 tables=[device_table(1048576, 100 * GIB)])
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn('No space left', result.stdout)
+        result = self.run_script('balance', root=False, hour='03',
+                                 tables=[device_table(1048576, 100 * GIB)])
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(len(self.balances()), 1)
+
+    def test_balance_single_metadata_needs_one_device_with_headroom(self):
+        result = self.run_script('balance', root=True, hour='03',
+                                 df='Metadata, single: total=1, used=1',
+                                 tables=[device_table(1048576, 100 * GIB)])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(self.balances())
+
+    def test_balance_rejects_invalid_numbers(self):
+        result = self.run_script('balance', root=True, options=['--max-batches', 'many'],
+                                 tables=[device_table(1048576, 100 * GIB)])
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
 
 
 @unittest.skipUnless(os.environ.get('PDS_STORAGE_INTEGRATION') == '1',
@@ -562,6 +783,8 @@ class StorageFedoraIntegration(unittest.TestCase):
         self.execute(
             'mkdir -p ~/.cache/go-build/aa; '
             'truncate -s 21G ~/.cache/go-build/aa/'
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d; '
+            'touch -d "3 days ago" ~/.cache/go-build/aa/'
             'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d',
             user='1000:1000')
         self.execute('btrfs filesystem sync /test-btrfs')
@@ -622,9 +845,15 @@ systemctl enable --now pds-storage-fixture-unrelated.timer
             'sha256sum /etc/systemd/system/pds-btrfs-headroom.service').stdout, installed)
         self.execute(
             'systemd-analyze verify /etc/systemd/system/pds-btrfs-headroom.service '
-            '/etc/systemd/system/pds-btrfs-headroom.timer')
+            '/etc/systemd/system/pds-btrfs-headroom.timer '
+            '/etc/systemd/system/pds-btrfs-balance.service '
+            '/etc/systemd/system/pds-btrfs-balance.timer')
         self.execute('systemctl start pds-btrfs-headroom.service; '
                      'test "$(systemctl show -p Result --value pds-btrfs-headroom.service)" = success')
+        self.execute('systemctl is-enabled pds-btrfs-balance.timer; '
+                     'systemctl cat pds-btrfs-balance.timer | grep -Fx Persistent=true; '
+                     'systemctl start pds-btrfs-balance.service; '
+                     'test "$(systemctl show -p Result --value pds-btrfs-balance.service)" = success')
         self.execute(
             'mkdir -p ~/.local/bin; '
             'printf \'#!/bin/bash\\nid -u >/test-btrfs/home/pds-test/root-docker-executed\\n\' >~/.local/bin/docker; '
@@ -651,6 +880,8 @@ systemctl enable --now pds-storage-fixture-unrelated.timer
             'touch -d "2 days ago" ~/.local/share/systemd/timers/stamp-pds-cache-user.timer; '
             'mkdir -p ~/.cache/go-build/aa; '
             'truncate -s 21G ~/.cache/go-build/aa/'
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d; '
+            'touch -d "3 days ago" ~/.cache/go-build/aa/'
             'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d',
             user='1000:1000')
         self.execute(
@@ -708,6 +939,8 @@ systemctl enable pds-test-loop.service
             f'test -d {cache}; test -f {home}/go/pkg/mod/pds-keep; '
             'test -f /etc/btrbk/btrbk.conf; '
             'test ! -e /etc/systemd/system/pds-btrfs-headroom.timer; '
+            'test ! -e /etc/systemd/system/pds-btrfs-balance.timer; '
+            'test ! -e /etc/systemd/system/pds-btrfs-balance.service; '
             'test ! -e /etc/systemd/system/pds-cache-docker.timer; '
             'test ! -e /usr/local/libexec/pds-storage-consumers; '
             f'test ! -e {home}/.config/systemd/user/pds-go-cache-clean.timer; '
@@ -720,6 +953,28 @@ systemctl enable pds-test-loop.service
         self.assertEqual(self.execute('sha256sum /etc/btrbk/btrbk.conf').stdout, before_backup)
         self.assertEqual(self.execute(f'sha256sum {home}/project/main.go').stdout, before_source)
         self.assertEqual(self.execute(self.cli_command).stdout, self.cli_before)
+
+    def test_balance_relocates_real_chunks_off_the_short_device(self):
+        script = '/work/bash/fedora/storage_maintenance.sh'
+        # Partly filled data chunks on a real two-device filesystem.
+        self.execute(
+            'mkdir -p /test-btrfs/balance-fixture; cd /test-btrfs/balance-fixture; '
+            'for i in $(seq 1 24); do head -c 64M /dev/urandom >file-$i; done; '
+            'sync; rm file-*[02468]; btrfs filesystem sync /test-btrfs', timeout=300)
+        dry = self.execute(f'bash {script} balance --user pds-test --mount /test-btrfs '
+                           '--target-gib 11 --dry-run', check=False)
+        self.assertEqual(dry.returncode, 1, dry.stdout + dry.stderr)
+        self.assertIn('DRY-RUN would run: btrfs balance start -ddevid=', dry.stdout)
+        real = self.execute(f'bash {script} balance --user pds-test --mount /test-btrfs '
+                            '--target-gib 11 --max-batches 2 --pause 0', check=False,
+                            timeout=600)
+        self.assertIn(real.returncode, (0, 1), real.stdout + real.stderr)
+        relocated = [int(n) for n in re.findall(r'relocate ([0-9]+) out of', real.stdout)]
+        self.assertTrue(relocated and sum(relocated) > 0, real.stdout + real.stderr)
+        self.assertLessEqual(len(relocated), 2)
+        self.execute('btrfs balance status /test-btrfs')
+        self.execute('test "$(ls /test-btrfs/balance-fixture | wc -l)" = 12; '
+                     'rm -r /test-btrfs/balance-fixture')
 
     def test_ac03_ac08_native_go_flags_preserve_modules(self):
         script = '/work/bash/fedora/storage_maintenance.sh'
@@ -748,6 +1003,8 @@ systemctl enable pds-test-loop.service
         as_user(
             'mkdir -p ~/.cache/go-build/aa; '
             'truncate -s 21G ~/.cache/go-build/aa/'
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d; '
+            'touch -d "3 days ago" ~/.cache/go-build/aa/'
             'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d')
         as_user(f'GOFLAGS=-modcache bash {script} cleanup-go --user flags-user --go /usr/bin/go')
         as_user(f'test "$(cat {marker})" = preserve-module')
@@ -757,6 +1014,8 @@ systemctl enable pds-test-loop.service
             'systemctl --user set-environment GOFLAGS=-modcache; '
             'mkdir -p ~/.cache/go-build/aa; '
             'truncate -s 21G ~/.cache/go-build/aa/'
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d; '
+            'touch -d "3 days ago" ~/.cache/go-build/aa/'
             'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d')
         self.execute(
             f'bash {script} install --user flags-user --mount /test-btrfs --go /usr/bin/go')

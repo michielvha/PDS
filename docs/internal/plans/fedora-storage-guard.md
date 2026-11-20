@@ -1,6 +1,6 @@
 ---
 status: complete
-status_description: "All twelve criteria independently verified; four jobs installed and exercised on Fedora with explicit safety warnings. PR delivery is next."
+status_description: "Revised 2026-11-20: age-based Go trim, bounded headroom balance and Docker age retention after the installed jobs stopped protecting the host."
 branch: feat/fedora-storage-guard
 issue: null
 goal: "Keep disposable build/package/container caches bounded and surface persistent developer-storage growth without deleting project or volume data."
@@ -365,6 +365,38 @@ earlier inventory. Do not treat already-cleared caches as currently occupied.
 | Bounded `du` under `/home/m/.npm` | Npm cache total 9.8 GiB: content cache 7.7 GiB and npx 2.2 GiB. |
 | Bounded cache/module scans | User-cache and Go-module traversals timed out. Some observed components include Go build 757 MiB, uv 2.9 GiB and Playwright MCP 4.5 GiB. Whole-tree totals are unknown. |
 | Native help and structured output | Docker supports `buildx prune --max-used-space --reserved-space`; image prune supports `until`; Podman supports local image prune; npm supports cache verify; uv supports non-forced cache prune. Docker emits JSON records and Podman a JSON array, with raw Podman byte fields. |
+
+### Revision on 2026-11-20
+
+The installed jobs stopped protecting the host. The Go cleanup postponed on
+every run because some Go build was always active, and failed permanently when
+Go's own trim removed an entry between the scan and its type test
+(`00/0046351579...-d`). The cache reached 96 GB. The hourly check failed because
+the desktop notifier timed out, and the Docker job failed on a post-cleanup
+capacity warning. On 2026-11-17 metadata reached 40.48 of 41 GiB with 1 MiB
+unallocated on `/dev/sda3`, so no RAID1 metadata chunk could be added and writes
+stalled host-wide. A manual bounded `-ddevid=1,usage=90,limit=5` balance
+recovered it.
+
+The owner's goal is that the host never stalls on disk again, through one
+maintenance system. This revision therefore reverses the "never balance" rule:
+
+- The Go job trims entries by age (48, 24, 12, then 6 hours) instead of
+  `go clean -cache`, runs during builds, and reports and skips unknown entries.
+- A `balance` mode and hourly timer keep per-device unallocated space for the
+  metadata profile's copies: 16 GiB at night, 8 GiB by day, data chunks only,
+  in load-guarded batches of at most five chunks.
+- Docker retention adds a 72-hour build-cache age prune and a one-day dangling
+  image prune. Volumes and containers stay untouched.
+- Capacity warnings and notification failures no longer fail the cleanup jobs.
+
+PR [michielvha/PDS#55](https://github.com/michielvha/PDS/pull/55) proposed a
+separate sourced library (`bash/common/maintenance/`) for the same incident.
+Its headroom check and balance are folded in here. Its Docker prune removed
+unattached volumes and its `/tmp` policy duplicated Fedora's `Q /tmp 10d`, so
+neither was kept. Its loop-device metadata rescue stays out of scheduled
+maintenance. btrbk retention and the pool's devices are unchanged; those are
+owner decisions.
 
 ## Scope
 

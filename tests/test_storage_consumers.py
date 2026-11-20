@@ -107,6 +107,12 @@ class ConsumerTests(unittest.TestCase):
         self.assertIn(['buildx', 'prune', '--builder', 'default', '--max-used-space',
                        '20000000000', '--reserved-space', '10000000000', '--force'], calls)
         self.assertIn(['image', 'prune', '--all', '--filter', 'until=168h', '--force'], calls)
+        self.assertIn(['buildx', 'prune', '--builder', 'default', '--filter', 'until=72h',
+                       '--force'], calls)
+        self.assertIn(['image', 'prune', '--filter', 'dangling=true', '--filter', 'until=24h',
+                       '--force'], calls)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('WARN Docker Build Cache exceeds 30 GB', result.stdout)
         for args in calls:
             self.assertNotEqual(args[:2], ['volume', 'prune'])
             self.assertNotEqual(args[:2], ['system', 'prune'])

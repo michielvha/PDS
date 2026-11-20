@@ -277,9 +277,13 @@ storage_consumers() (
             _pds_consumer_docker_audit || consumer_status=2
             if [[ "$consumer_mode" == cleanup-docker && "$consumer_status" != 2 ]] &&
                 command -v docker >/dev/null; then
+                _pds_consumer_docker buildx prune --builder default --filter until=72h --force ||
+                    _pds_consumer_error 'Native Docker build-cache age retention failed.'
                 _pds_consumer_docker buildx prune --builder default --max-used-space 20000000000 \
                     --reserved-space 10000000000 --force ||
                     _pds_consumer_error 'Native Docker build-cache retention failed.'
+                _pds_consumer_docker image prune --filter dangling=true --filter until=24h --force ||
+                    _pds_consumer_error 'Native Docker dangling-image retention failed.'
                 _pds_consumer_docker image prune --all --filter until=168h --force ||
                     _pds_consumer_error 'Native Docker image retention failed.'
                 _pds_consumer_docker_audit || consumer_status=2
@@ -301,6 +305,9 @@ storage_consumers() (
             ;;
     esac
     printf 'INFO consumer operation complete: mode=%s status=%s (0 healthy, 1 warning, 2 incomplete/error)\n' "$consumer_mode" "$consumer_status"
+    # Cleanup did what it safely could; its warnings stay in the journal and
+    # the hourly headroom check is the alarm, so only errors fail the job.
+    if [[ "$consumer_mode" == cleanup-* && "$consumer_status" == 1 ]]; then return 0; fi
     return "$consumer_status"
 )
 

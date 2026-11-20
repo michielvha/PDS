@@ -102,8 +102,8 @@ _pds_storage_notify() {
     if ! runuser -u "$user" -- env XDG_RUNTIME_DIR="$runtime" \
         DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
         notify-send --app-name=PDS 'Storage maintenance warning' "$message"; then
-        _pds_storage_error 'Desktop notification failed; the storage warning remains in the journal.'
-        return 2
+        printf 'WARN desktop notification failed; the storage warning remains in the journal\n'
+        return 0
     fi
     printf 'OK desktop notification submitted for %s\n' "$user"
 }
@@ -219,6 +219,145 @@ _pds_storage_check() {
     return "$status"
 }
 
+_pds_storage_devices() {
+    # Prints "ID PATH UNALLOCATED_BYTES" per device from the per-device table.
+    local usage
+    usage=$(btrfs filesystem usage -b -T "$storage_mount") || {
+        _pds_storage_error 'Btrfs per-device usage measurement failed.'
+        return 2
+    }
+    printf '%s\n' "$usage" | awk '
+        /^[[:space:]]*Device missing:/ {missing=$3}
+        $1=="Id" && $2=="Path" {
+            for (i=3; i<=NF; i++) if ($i=="Unallocated") column=i
+            next
+        }
+        column && $1 ~ /^[0-9]+$/ {
+            if ($2 !~ /^\// || $column !~ /^[0-9]+$/) invalid=1
+            else {print $1, $2, $column; count++}
+        }
+        END {if (invalid || missing!="0" || !column || !count) exit 2}' || {
+        _pds_storage_error 'Incomplete, degraded or malformed per-device Btrfs table.'
+        return 2
+    }
+}
+
+_pds_storage_metadata_copies() {
+    local profile
+    profile=$(btrfs filesystem df -b "$storage_mount" |
+        awk -F'[[:space:],:]+' '/^Metadata,/ {print $2; exit}') || {
+        _pds_storage_error 'Cannot read the metadata profile.'
+        return 2
+    }
+    # Devices that need free space at once to allocate one metadata chunk.
+    case "$profile" in
+        single|DUP) printf '1\n' ;;
+        RAID1|RAID10|RAID5) printf '2\n' ;;
+        RAID1C3|RAID6) printf '3\n' ;;
+        RAID1C4) printf '4\n' ;;
+        *) _pds_storage_error "Unknown metadata profile: ${profile:-none}"; return 2 ;;
+    esac
+}
+
+_pds_storage_wait_for_quiet_host() {
+    local cores load attempt
+    cores=$(nproc) || return 2
+    for attempt in 1 2 3 4 5 6 7 8 9 10; do
+        read -r load _ <"${PDS_STORAGE_LOADAVG:-/proc/loadavg}" || return 2
+        if awk -v current="$load" -v cores="$cores" 'BEGIN {exit !(current < cores)}'; then
+            return 0
+        fi
+        printf 'INFO host busy: load=%s cores=%s; waiting before the next balance batch (%s/10)\n' \
+            "$load" "$cores" "$attempt"
+        sleep "$storage_balance_pause"
+    done
+    printf 'WARN host stayed busy; balance postponed to the next run\n'
+    return 1
+}
+
+_pds_storage_balance() {
+    local copies hour target devices id path bytes ready short_id short_path short_bytes
+    local output relocated batches=0 step=0 result
+    local -a usages=(20 50 90)
+    [[ "$(id -u)" == 0 ]] || {
+        _pds_storage_error 'balance requires root.'
+        return 2
+    }
+    _pds_storage_require btrfs findmnt awk nproc sleep date || return 2
+    [[ "$(findmnt -rn -o FSTYPE -T "$storage_mount")" == btrfs ]] || {
+        _pds_storage_error "Not a readable Btrfs mount: $storage_mount"
+        return 2
+    }
+    copies=$(_pds_storage_metadata_copies) || return 2
+    hour=$(date +%H) || return 2
+    # A full target at night or when asked for; by day only an urgent shortfall.
+    if (( storage_balance_target_set || (10#$hour >= 1 && 10#$hour <= 5) )); then
+        target=$((storage_balance_target_gib * 1073741824))
+    else
+        target=8589934592
+    fi
+    while :; do
+        devices=$(_pds_storage_devices) || return 2
+        ready=0; short_id=''; short_bytes=''
+        while read -r id path bytes; do
+            printf 'INFO device %s %s unallocated_bytes=%s target_bytes=%s\n' "$id" "$path" "$bytes" "$target"
+            if (( bytes >= target )); then
+                ready=$((ready + 1))
+            elif [[ -z "$short_id" ]] || (( bytes < short_bytes )); then
+                short_id="$id"; short_path="$path"; short_bytes="$bytes"
+            fi
+        done <<<"$devices"
+        if (( ready >= copies )); then
+            printf 'OK %s of the devices have the unallocated space %s metadata copies need\n' "$ready" "$copies"
+            return 0
+        fi
+        if [[ -z "$short_id" ]]; then
+            _pds_storage_error "The filesystem has fewer devices than its $copies metadata copies."
+            return 2
+        fi
+        if (( batches >= storage_balance_batches )); then
+            printf 'WARN %s stays below the target after %s balance batches\n' "$short_path" "$batches"
+            return 1
+        fi
+        if (( storage_dry_run )); then
+            printf 'DRY-RUN would run: btrfs balance start -ddevid=%s,usage=%s,limit=5 %s\n' \
+                "$short_id" "${usages[step]}" "$storage_mount"
+            return 1
+        fi
+        if btrfs balance status "$storage_mount" >/dev/null; then :; else
+            result=$?
+            if [[ "$result" == 1 ]]; then
+                printf 'WARN another balance is running; this run stops\n'
+                return 1
+            fi
+            _pds_storage_error 'Cannot read the balance status.'
+            return 2
+        fi
+        _pds_storage_wait_for_quiet_host || return $?
+        printf 'INFO balancing data chunks off %s (devid %s): usage<=%s limit=5\n' \
+            "$short_path" "$short_id" "${usages[step]}"
+        output=$(btrfs balance start -ddevid="$short_id",usage="${usages[step]}",limit=5 \
+            "$storage_mount" 2>&1) || {
+            printf '%s\n' "$output"
+            _pds_storage_error 'Balance batch failed.'
+            return 2
+        }
+        printf '%s\n' "$output"
+        relocated=$(printf '%s\n' "$output" | sed -n 's/.*relocate \([0-9][0-9]*\) out of.*/\1/p')
+        _pds_storage_number "$relocated" || return 2
+        batches=$((batches + 1))
+        if (( relocated == 0 )); then
+            step=$((step + 1))
+            if (( step >= ${#usages[@]} )); then
+                printf 'WARN no data chunk on %s is below 90 percent use; balance cannot free more\n' "$short_path"
+                return 1
+            fi
+            continue
+        fi
+        sleep "$storage_balance_pause"
+    done
+}
+
 _pds_storage_go() {
     [[ "$(id -u)" == "$storage_uid" ]] || {
         _pds_storage_error "Run Go cache operations as $storage_user, not root or another account."
@@ -256,9 +395,51 @@ _pds_storage_native_clean() {
         GOTOOLCHAIN=local "$storage_go" clean -cache
 }
 
+_pds_storage_go_dirs() {
+    # Fills storage_go_dirs with the cache's own shard directories and reports,
+    # but never removes, anything else. Go's own trim can delete entries while
+    # this runs, so a vanished path is not an error.
+    local path relative device listing unknown=0
+    storage_go_dirs=()
+    device=$(stat -c %d -- "$storage_cache") || return 2
+    listing=$(find "$storage_cache" -mindepth 1 -maxdepth 2 -xdev -ignore_readdir_race -regextype posix-extended \
+        \( ! -path "$storage_cache/*/*" -o ! -regex '.*/[0-9a-f]{2}/[0-9a-f]{64}-[ad]' \) \
+        -print) || {
+        _pds_storage_error 'Cannot inspect the Go cache.'
+        return 2
+    }
+    while IFS= read -r path; do
+        [[ -n "$path" ]] || continue
+        relative="${path#"$storage_cache"/}"
+        case "$relative" in
+            README|trim.txt|testexpire.txt)
+                [[ -f "$path" && ! -L "$path" ]] && continue
+                ;;
+            [0-9a-f][0-9a-f])
+                if [[ -d "$path" && ! -L "$path" ]]; then
+                    if [[ "$(stat -c %d -- "$path")" == "$device" ]]; then
+                        storage_go_dirs+=("$path")
+                    else
+                        printf 'SKIP nested filesystem in the Go cache is left alone: %s\n' "$relative"
+                    fi
+                    continue
+                fi
+                ;;
+        esac
+        unknown=$((unknown + 1))
+        if (( unknown <= 20 )); then
+            printf 'SKIP unknown Go cache entry is left alone: %s\n' "$relative"
+        fi
+    done <<<"$listing"
+    if (( unknown > 20 )); then
+        printf 'SKIP %s more unknown Go cache entries are left alone\n' "$((unknown - 20))"
+    fi
+}
+
 _pds_storage_cleanup_go() {
-    local bytes remaining
-    _pds_storage_require findmnt du stat pgrep find || return 2
+    local bytes remaining hours
+    local -a storage_go_dirs
+    _pds_storage_require findmnt du stat find || return 2
     _pds_storage_go || return 2
     _pds_storage_prepared || return 2
     bytes=$(_pds_storage_size "$storage_cache") || return 2
@@ -266,18 +447,38 @@ _pds_storage_cleanup_go() {
         printf 'SKIP Go cache below budget: apparent_bytes=%s limit_bytes=21474836480\n' "$bytes"
         return 0
     fi
-    _pds_storage_busy || return $?
-    _pds_storage_cache_contents || return 2
-    if ! _pds_storage_native_clean; then
-        _pds_storage_error 'Native Go cache cleanup failed.'
-        return 2
-    fi
-    remaining=$(_pds_storage_size "$storage_cache") || return 2
+    _pds_storage_go_dirs || return 2
+    remaining="$bytes"
+    # Go refreshes an entry's mtime when it is used and the mtime is over an
+    # hour old, so entries untouched for hours are not part of a running build.
+    for hours in 48 24 12 6; do
+        if (( storage_dry_run )); then
+            if (( ${#storage_go_dirs[@]} )); then
+                find "${storage_go_dirs[@]}" -mindepth 1 -maxdepth 1 -xdev -ignore_readdir_race \
+                    -regextype posix-extended -type f -regex '.*/[0-9a-f]{2}/[0-9a-f]{64}-[ad]' \
+                    -mmin +"$((hours * 60))" -printf '%s\n' |
+                    awk -v hours="$hours" '{n++; b+=$1} END {
+                        printf "DRY-RUN would remove %d entries (%.0f bytes) unused for %sh\n", n, b, hours}'
+            fi
+            continue
+        fi
+        if (( ${#storage_go_dirs[@]} )); then
+            find "${storage_go_dirs[@]}" -mindepth 1 -maxdepth 1 -xdev -ignore_readdir_race -regextype posix-extended \
+                -type f -regex '.*/[0-9a-f]{2}/[0-9a-f]{64}-[ad]' \
+                -mmin +"$((hours * 60))" -delete || {
+                _pds_storage_error "Go cache trim failed for entries unused for ${hours}h."
+                return 2
+            }
+        fi
+        remaining=$(_pds_storage_size "$storage_cache") || return 2
+        printf 'INFO trimmed Go cache entries unused for %sh: apparent_bytes=%s\n' "$hours" "$remaining"
+        (( remaining > 21474836480 )) || break
+    done
+    if (( storage_dry_run )); then return 0; fi
     if (( remaining > 21474836480 )); then
-        _pds_storage_error "Native cleanup completed but the cache remains over budget: $remaining"
-        return 2
+        printf 'WARN Go cache stays over budget with entries used in the last 6h: apparent_bytes=%s\n' "$remaining"
     fi
-    printf 'OK native Go cleanup: before_bytes=%s after_bytes=%s\n' "$bytes" "$remaining"
+    printf 'OK Go cache trim: before_bytes=%s after_bytes=%s\n' "$bytes" "$remaining"
 }
 
 _pds_storage_cache_contents() (
@@ -434,7 +635,11 @@ _pds_storage_units() {
     storage_user_timer="$storage_user_dir/pds-go-cache-clean.timer"
     storage_wanted="$storage_user_dir/timers.target.wants/pds-go-cache-clean.timer"
     storage_consumer_program=/usr/local/libexec/pds-storage-consumers
+    storage_balance_service=/etc/systemd/system/pds-btrfs-balance.service
+    storage_balance_timer=/etc/systemd/system/pds-btrfs-balance.timer
     _pds_storage_owned "$storage_program" 0 || return 2
+    _pds_storage_owned "$storage_balance_service" 0 identity || return 2
+    _pds_storage_owned "$storage_balance_timer" 0 identity || return 2
     _pds_storage_owned "$storage_root_service" 0 identity || return 2
     _pds_storage_owned "$storage_root_timer" 0 identity || return 2
     _pds_storage_owned "$storage_user_service" "$storage_uid" identity || return 2
@@ -469,7 +674,8 @@ _pds_storage_units() {
 
 _pds_storage_work_cleanup() {
     local work="$1"
-    rm -f -- "$work/root.service" "$work/root.timer" "$work/user.service" "$work/user.timer" || return 2
+    rm -f -- "$work/root.service" "$work/root.timer" "$work/user.service" "$work/user.timer" \
+        "$work/balance.service" "$work/balance.timer" || return 2
     rm -f -- "$work/docker-daily.service" "$work/docker-daily.timer" \
         "$work/user-daily.service" "$work/user-daily.timer" || return 2
     rmdir -- "$work"
@@ -533,12 +739,42 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 EOF
+    cat >"$work/balance.service" <<EOF
+# Managed by PDS storage maintenance.
+# PDS user: $storage_user
+# PDS mount: $storage_mount
+[Unit]
+Description=PDS bounded Btrfs balance that keeps metadata allocation headroom
+RequiresMountsFor=$mount_arg
+[Service]
+Type=oneshot
+ExecStart=:/usr/bin/bash $storage_program balance --user $storage_user --mount $mount_arg
+Environment=PATH=/usr/sbin:/usr/bin:/sbin:/bin
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+Nice=19
+IOSchedulingClass=idle
+TimeoutStartSec=3h
+EOF
+    cat >"$work/balance.timer" <<EOF
+# Managed by PDS storage maintenance.
+# PDS user: $storage_user
+# PDS mount: $storage_mount
+[Unit]
+Description=Keep PDS Btrfs allocation headroom: full target at night, urgent shortfall by day
+[Timer]
+OnCalendar=*-*-* *:30:00
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOF
     cat >"$work/user.service" <<EOF
 # Managed by PDS storage maintenance.
 # PDS user: $storage_user
 # PDS mount: $storage_mount
 [Unit]
-Description=PDS native Go build-cache cleanup
+Description=PDS Go build-cache trim of long-unused entries
 [Service]
 Type=oneshot
 ExecStart=:/usr/bin/bash $storage_program cleanup-go --user $storage_user --go $go_arg
@@ -596,10 +832,10 @@ Persistent=true
 WantedBy=timers.target
 EOF
     done
-    chmod 0644 "$work/root.service" "$work/root.timer" \
+    chmod 0644 "$work/root.service" "$work/root.timer" "$work/balance.service" "$work/balance.timer" \
         "$work/user.service" "$work/user.timer" "$work/docker-daily.service" \
         "$work/docker-daily.timer" "$work/user-daily.service" "$work/user-daily.timer" || return 2
-    systemd-analyze verify "$work/root.service" "$work/root.timer" \
+    systemd-analyze verify "$work/root.service" "$work/root.timer" "$work/balance.service" "$work/balance.timer" \
         "$work/user.service" "$work/user.timer" "$work/docker-daily.service" \
         "$work/docker-daily.timer" "$work/user-daily.service" "$work/user-daily.timer" || return 2
     install -d -m 0755 /usr/local/libexec || return 2
@@ -611,6 +847,8 @@ EOF
     fi
     install -m 0644 -o root -g root -- "$work/root.service" "$storage_root_service" || return 2
     install -m 0644 -o root -g root -- "$work/root.timer" "$storage_root_timer" || return 2
+    install -m 0644 -o root -g root -- "$work/balance.service" "$storage_balance_service" || return 2
+    install -m 0644 -o root -g root -- "$work/balance.timer" "$storage_balance_timer" || return 2
     runuser -u "$storage_user" -- install -d -m 0755 "$storage_user_dir/timers.target.wants" || return 2
     runuser -u "$storage_user" -- install -m 0644 -- "$work/user.service" "$storage_user_service" || return 2
     runuser -u "$storage_user" -- install -m 0644 -- "$work/user.timer" "$storage_user_timer" || return 2
@@ -633,14 +871,14 @@ EOF
             "$storage_user_dir/timers.target.wants/pds-cache-user.timer" || return 2
     fi
     systemctl daemon-reload || return 2
-    systemctl enable --now pds-btrfs-headroom.timer pds-cache-docker.timer || return 2
+    systemctl enable --now pds-btrfs-headroom.timer pds-btrfs-balance.timer pds-cache-docker.timer || return 2
     if [[ -S "/run/user/$storage_uid/bus" ]]; then
         _pds_storage_userctl daemon-reload || return 2
         _pds_storage_userctl enable --now pds-go-cache-clean.timer pds-cache-user.timer || return 2
     else
         printf 'SKIP starting user timer: enabled for the next login; lingering was not changed\n'
     fi
-    printf 'OK installed hourly Btrfs checks, four-hour Go cleanup and daily native consumer retention/audits\n'
+    printf 'OK installed hourly Btrfs checks and headroom balance, four-hour Go trim and daily native consumer retention/audits\n'
 )
 
 _pds_storage_uninstall() {
@@ -655,6 +893,12 @@ _pds_storage_uninstall() {
     fi
     if [[ -f "$storage_root_service" ]]; then
         systemctl stop pds-btrfs-headroom.service || return 2
+    fi
+    if [[ -f "$storage_balance_timer" ]]; then
+        systemctl disable --now pds-btrfs-balance.timer || return 2
+    fi
+    if [[ -f "$storage_balance_service" ]]; then
+        systemctl stop pds-btrfs-balance.service || return 2
     fi
     if [[ -f /etc/systemd/system/pds-cache-docker.timer ]]; then
         systemctl disable --now pds-cache-docker.timer || return 2
@@ -680,6 +924,7 @@ _pds_storage_uninstall() {
         "$storage_user_dir/pds-cache-user.timer" "$storage_user_dir/pds-cache-user.service" || return 2
     rm -f -- /etc/systemd/system/pds-cache-docker.timer \
         /etc/systemd/system/pds-cache-docker.service "$storage_consumer_program" || return 2
+    rm -f -- "$storage_balance_timer" "$storage_balance_service" || return 2
     rm -f -- "$storage_root_timer" "$storage_root_service" "$storage_program" || return 2
     systemctl daemon-reload || return 2
     if [[ -S "/run/user/$storage_uid/bus" ]]; then
@@ -695,24 +940,41 @@ storage_maintenance() (
     local storage_go='' storage_account storage_uid storage_gid storage_home storage_cache
     local storage_program storage_root_service storage_root_timer storage_user_dir
     local storage_user_service storage_user_timer storage_wanted storage_consumer_program
+    local storage_balance_service storage_balance_timer
+    local storage_balance_target_gib=16 storage_balance_batches=12 storage_balance_pause=60
+    local storage_dry_run=0 storage_balance_target_set=0
     case "$mode" in
         --help|-h|help)
             printf '%s\n' \
-                'Usage: storage_maintenance.sh MODE --user USER [--mount PATH] [--go /absolute/go]' \
-                'Modes: check, cleanup-go, prepare-go-cache, install, uninstall' \
-                'check/install/uninstall require root; Go operations run as the selected user.' \
-                'Defaults: Go budget 20 GiB; device reserve 8 GiB; free-space warning 10%; browser budget 15 GiB.'
+                'Usage: storage_maintenance.sh MODE --user USER [--mount PATH] [--go /absolute/go] [--dry-run]' \
+                '       storage_maintenance.sh balance --user USER [--mount PATH] [--target-gib N]' \
+                '              [--max-batches N] [--pause SECONDS] [--dry-run]' \
+                'Modes: check, balance, cleanup-go, prepare-go-cache, install, uninstall' \
+                '--dry-run reports what balance or cleanup-go would do and changes nothing.' \
+                'check/balance/install/uninstall require root; Go operations run as the selected user.' \
+                'Defaults: Go budget 20 GiB, trimming entries unused for 48h down to 6h; device reserve 8 GiB;' \
+                'balance target 16 GiB from 01:00 to 05:59 or whenever --target-gib is given, 8 GiB otherwise;' \
+                'free-space warning 10%; browser budget 15 GiB.'
             return 0
             ;;
-        check|cleanup-go|prepare-go-cache|install|uninstall) shift ;;
-        *) _pds_storage_error 'Choose check, cleanup-go, prepare-go-cache, install or uninstall.'; return 2 ;;
+        check|balance|cleanup-go|prepare-go-cache|install|uninstall) shift ;;
+        *) _pds_storage_error 'Choose check, balance, cleanup-go, prepare-go-cache, install or uninstall.'; return 2 ;;
     esac
     while (( $# )); do
+        if [[ "$1" == --dry-run ]]; then storage_dry_run=1; shift; continue; fi
         [[ $# -ge 2 ]] || { _pds_storage_error "Missing value for $1"; return 2; }
         case "$1" in
             --user) storage_user="$2" ;;
             --mount) storage_mount="$2" ;;
             --go) storage_go="$2" ;;
+            --target-gib|--max-batches|--pause)
+                [[ "$2" =~ ^[0-9]{1,6}$ ]] || { _pds_storage_error "Invalid number for $1: $2"; return 2; }
+                case "$1" in
+                    --target-gib) storage_balance_target_gib=$((10#$2)); storage_balance_target_set=1 ;;
+                    --max-batches) storage_balance_batches=$((10#$2)) ;;
+                    --pause) storage_balance_pause=$((10#$2)) ;;
+                esac
+                ;;
             *) _pds_storage_error "Unknown option: $1"; return 2 ;;
         esac
         shift 2
@@ -722,6 +984,7 @@ storage_maintenance() (
     _pds_storage_context || return 2
     case "$mode" in
         check) _pds_storage_check ;;
+        balance) _pds_storage_balance ;;
         cleanup-go) _pds_storage_cleanup_go ;;
         prepare-go-cache) _pds_storage_prepare ;;
         install) _pds_storage_install ;;
