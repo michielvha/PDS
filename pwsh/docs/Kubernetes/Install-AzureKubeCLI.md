@@ -6,7 +6,7 @@ Learn more about `kubectl` and how it is used to manage Kubernetes clusters.
 schema: 2.0.0
 ---
 
-# Install-KubeCLI
+# Install-AzureKubeCLI
 
 ## SYNOPSIS
 Installs \`kubectl\` and \`kubelogin\` if they are not already installed on the system.
@@ -14,11 +14,11 @@ Installs \`kubectl\` and \`kubelogin\` if they are not already installed on the 
 ## SYNTAX
 
 ```
-Install-KubeCLI
+Install-AzureKubeCLI
 ```
 
 ## DESCRIPTION
-The \`Install-KubeCLI\` function checks if both \`kubectl\` and \`kubelogin\` are installed on the system by attempting to retrieve their version information.
+The \`Install-AzureKubeCLI\` function checks if both \`kubectl\` and \`kubelogin\` are installed on the system by attempting to retrieve their version information.
 If either tool is missing, the function uses the Azure CLI (\`az\`) to install both tools via \`az aks install-cli\`.
 If both tools are already installed, their version information is displayed.
 
@@ -26,7 +26,7 @@ If both tools are already installed, their version information is displayed.
 
 ### EXAMPLE 1
 ```
-Install-KubeCLI
+Install-AzureKubeCLI
 ```
 
 This command checks for the installation of both \`kubectl\` and \`kubelogin\`.

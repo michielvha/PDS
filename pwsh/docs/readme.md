@@ -54,7 +54,7 @@ Locale: en-US
 ### [Install-ArgoCLI](Kubernetes/Install-ArgoCLI.md)
 {{ Fill in the Description }}
 
-### [Install-KubeCLI](Kubernetes/Install-KubeCLI.md)
+### [Install-AzureKubeCLI](Kubernetes/Install-AzureKubeCLI.md)
 {{ Fill in the Description }}
 
 ### [Install-Minikube](Kubernetes/Install-Minikube.md)

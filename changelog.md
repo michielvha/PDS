@@ -4,6 +4,7 @@
 
 ### Maintenance
 
+- Export every PowerShell function file as its command: `Remove-StaleADComputer` and `Install-AzureKubeCLI` live in files named after them, the function template moves out of `Public` to `pwsh/templates/`, and the module loader skips Pester test files. Add the PSScriptAnalyzer settings the new CI checks use.
 - Pin the PowerShell module publish and script packaging actions by full commit SHA, so their upcoming release-only versions cannot change the current release path before PDS migrates to it.
 
 ### Features

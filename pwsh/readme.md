@@ -40,7 +40,7 @@ Below is a list of software and tools supported by the custom PowerShell functio
 1. **Install-Choco**: Installs Chocolatey if not already installed.
 2. **Install-ChocoPackages**: Installs a list of Chocolatey packages from an array.
 3. **Set-PSReadLineModule**: Configures the `PSReadLine` module for enhanced command-line experience.
-4. **Install-KubeCLI**: Installs and configures `kubectl` and `kubelogin`.
+4. **Install-AzureKubeCLI**: Installs and configures `kubectl` and `kubelogin`.
 5. **Shell Customizations**:
    - Configures `starship` prompt with a custom `starship.toml` file.
    - Includes settings for Azure, Git branches, and Git commits.
