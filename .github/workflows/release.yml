@@ -1,0 +1,166 @@
+name: Release
+
+# Publishes an exact stable tag, which version-workflow's App pushes after CI
+# passes on main. A dispatch runs with --ref v<version> to rebuild a tag after
+# GitHub's 30-day rerun limit. The guard refuses anything but an exact stable
+# tag on a main commit, then the checks run again at the tag's version before
+# anything publishes. Every publishing job is safe to rerun.
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+
+permissions: {}
+
+# One release at a time per repository; every waiting run is kept, so no tag
+# is skipped.
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+  queue: max
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  guard:
+    name: Check the tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.ref.outputs.tag }}
+      version: ${{ steps.ref.outputs.version }}
+      release-url: ${{ steps.ref.outputs.release-url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Refuse anything but an exact stable tag on main
+        id: ref
+        run: scripts/check-release-ref.sh
+
+  checks:
+    needs: [guard]
+    permissions:
+      contents: read
+    uses: ./.github/workflows/checks.yml
+    with:
+      version: ${{ needs.guard.outputs.version }}
+
+  exe:
+    name: Build the executable
+    needs: [guard]
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Package main.ps1
+        id: build
+        uses: michielvha/package-pwsh-script-action@a2bc1a43a5e7398c0de229d699594ffe98f1c61c # v2.0.0
+        with:
+          script-path: pwsh/scripts/main.ps1
+          name: PDS
+          tag: ${{ needs.guard.outputs.tag }}
+      - name: Upload the executable
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: pds-exe
+          path: ${{ steps.build.outputs.file }}
+          if-no-files-found: error
+          retention-days: 30
+
+  apt:
+    name: Deploy the APT repository
+    needs: [guard, checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download the tested package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: pds-deb
+          path: packages
+      - name: Install aptly
+        run: sudo apt-get update && sudo apt-get install -y aptly gpg
+      - name: Build the repository from the Releases
+        env:
+          TAG: ${{ needs.guard.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: scripts/build-apt-repo.sh packages pages
+      - name: Upload the Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+        with:
+          path: pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+
+  gallery:
+    name: Publish to the PowerShell Gallery
+    needs: [guard, checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Publish the module
+        uses: michielvha/publish-pwsh-module-action@1bf4e8db92c8eb2549a5a80d1fa13d829c142ec9 # v3.0.0
+        with:
+          module-path: pwsh/module
+          tag: ${{ needs.guard.outputs.tag }}
+          api-key: ${{ secrets.API_KEY }}
+          root-module: PDS
+          description: Personal Deploy Script
+          company-name: itmvha
+          author: itmvha
+          release-notes: ${{ needs.guard.outputs.release-url }}
+
+  release:
+    name: Create the GitHub Release
+    needs: [guard, checks, exe, apt, gallery]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - name: Download the package and the executable
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: pds-*
+          path: dist
+          merge-multiple: true
+      - name: Publish the Release
+        uses: vhco-pro/gh-release-action@7d87a95717a08e5ada8b7291ab06813cd36427ef # v0.2.0
+        with:
+          tag: ${{ needs.guard.outputs.tag }}
+          files: |
+            dist/pds_${{ needs.guard.outputs.version }}_all.deb
+            dist/PDS-${{ needs.guard.outputs.version }}.exe
