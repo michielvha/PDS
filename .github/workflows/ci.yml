@@ -1,0 +1,36 @@
+name: CI
+
+# Every branch push runs the checks, then version-workflow. Only main is
+# tagged, and only after the checks pass; the App's tag push starts
+# release.yml. Other branches, and a PR's head, only calculate the version.
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+# No concurrency group: version-workflow serializes tagging per ref itself, and
+# a group that cancels only branch runs would need a computed expression.
+
+jobs:
+  checks:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/checks.yml
+
+  version:
+    needs: [checks]
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: vhco-pro/version-workflow/.github/workflows/version.yml@46a1ac93fdbd3abaa3a7d17259c5565edd2053c0 # v0.1.2
+    with:
+      preview-label: ''
+      release-app-client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+    secrets:
+      release-app-private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
