@@ -182,8 +182,9 @@ cat readme.md
 ## Fedora storage maintenance
 
 Use [the storage-maintenance guide](../docs/fedora-storage-guard.md) to prepare
-the default Go build cache as a nested Btrfs subvolume, install budget-triggered
-native cleanup and enable read-only allocation checks. Backup retention,
+the default Go build cache as a nested Btrfs subvolume, install a budget-triggered
+trim of long-unused Go cache entries, hourly allocation checks and a bounded
+balance that keeps per-device headroom for RAID1 metadata. Backup retention,
 browser profiles, source trees and Go module caches stay unchanged.
 
 The companion also schedules native Docker/Podman image and build-cache
