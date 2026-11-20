@@ -38,7 +38,9 @@ per-device unallocated space does.
 The balance job reads `btrfs filesystem usage -b -T` and counts the devices
 with at least the target unallocated space. It needs as many as the metadata
 profile keeps copies: two for RAID1, RAID10 and RAID5, three for RAID1C3 and
-RAID6, four for RAID1C4 and one for single or DUP.
+RAID6, four for RAID1C4 and one for single or DUP. On a single-device pool
+with DUP metadata both copies go on that device, so it alone needs the target,
+and the balance compacts data chunks on it to free space.
 
 | When | Target per device |
 | --- | --- |

@@ -606,6 +606,58 @@ class StorageBalanceTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertFalse(self.balances())
 
+    def single_device_table(self, unallocated):
+        return f"""Overall:
+    Device size:\t\t      512108789760
+    Device missing:\t\t                 0
+
+                  Data         Metadata    System
+Id Path           single       DUP         DUP      Unallocated  Total        Slack
+-- -------------- ------------ ----------- -------- ------------ ------------ -----
+ 1 /dev/nvme0n1p1 388694540288 92333408256 67108864 {unallocated:>12} 512108789760     -
+-- -------------- ------------ ----------- -------- ------------ ------------ -----
+   Total          388694540288 46166704128 33554432 {unallocated:>12} 512108789760     0
+   Used           380000000000 38883033088    98304
+"""
+
+    def test_balance_single_device_dup_needs_the_reserve_on_that_device(self):
+        dup = 'Data, single: total=1, used=1\nMetadata, DUP: total=1, used=1'
+        result = self.run_script('balance', root=True, hour='03', df=dup,
+                                 tables=[self.single_device_table(20 * GIB)])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(self.balances())
+        result = self.run_script('balance', root=True, hour='03', df=dup,
+                                 tables=[self.single_device_table(2 * GIB),
+                                         self.single_device_table(9 * GIB),
+                                         self.single_device_table(17 * GIB)])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.balances(), [
+            ['balance', 'start', '-ddevid=1,usage=20,limit=5', '/'],
+            ['balance', 'start', '-ddevid=1,usage=20,limit=5', '/']])
+        self.assertIn('OK 1 of the devices', result.stdout)
+
+    def test_balance_single_device_dup_by_day_fixes_only_an_urgent_shortfall(self):
+        dup = 'Metadata, DUP: total=1, used=1'
+        result = self.run_script('balance', root=True, hour='14', df=dup,
+                                 tables=[self.single_device_table(10 * GIB)])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(self.balances())
+        result = self.run_script('balance', root=True, hour='14', df=dup, options=['--dry-run'],
+                                 tables=[self.single_device_table(1048576)])
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('-ddevid=1,usage=20,limit=5', result.stdout)
+
+    def test_check_warns_for_a_single_device_below_the_reserve(self):
+        usage = USAGE.replace('Metadata,RAID1', 'Metadata,DUP').replace(
+            '    /dev/sda3 1048576\n    /dev/nvme0n1p1 115881279488\n',
+            '    /dev/nvme0n1p1 1048576\n')
+        result = self.run_script('check', root=True, usage=usage)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('WARN /dev/nvme0n1p1 is below the 8 GiB allocation reserve', result.stdout)
+        healthy = usage.replace('/dev/nvme0n1p1 1048576', f'/dev/nvme0n1p1 {12 * GIB}')
+        result = self.run_script('check', root=True, usage=healthy)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_balance_rejects_invalid_numbers(self):
         result = self.run_script('balance', root=True, options=['--max-batches', 'many'],
                                  tables=[device_table(1048576, 100 * GIB)])
