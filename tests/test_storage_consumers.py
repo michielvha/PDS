@@ -198,6 +198,15 @@ class ConsumerTests(unittest.TestCase):
         self.assertIn('Incomplete', result.stderr)
         self.assertFalse(any('prune' in call['args'] for call in self.commands('uv')))
 
+    def test_ac11_incomplete_audit_does_not_fail_user_retention(self):
+        result = self.run_consumer('cleanup-user', du_error=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Incomplete', result.stderr)
+        self.assertIn('WARN user storage audit was incomplete', result.stdout)
+        self.assertTrue(any('prune' in call['args'] for call in self.commands('podman')))
+        result = self.run_consumer('cleanup-user', du_error=False, consumer_failure='podman')
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+
     def test_ac10_unknown_uv_layout_version_and_active_process_are_skipped(self):
         for state in ({'uv_version': 'uv 99.0.0'}, {'busy': True}):
             with self.subTest(state=state):

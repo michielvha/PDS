@@ -118,6 +118,8 @@ _pds_consumer_measure() {
     fi
 }
 
+# The audit runs in a subshell and returns consumer_status as its exit code.
+# shellcheck disable=SC2030
 _pds_consumer_user_audit() (
     local listing path code="$storage_home/code" result=0
     _pds_consumer_podman_audit || consumer_status=2
@@ -251,6 +253,19 @@ _pds_consumer_npm_confined() (
     ' >/dev/null
 )
 
+_pds_consumer_audit_result() {
+    local mode="$1" result="$2"
+    # The user audit only reports; retention does not depend on it. An
+    # incomplete scan stays an error for audit-user but only warns in cleanup.
+    if [[ "$mode" == cleanup-user && "$result" == 2 ]]; then
+        printf 'WARN user storage audit was incomplete; retention is unaffected\n'
+        result=1
+    fi
+    # The audit subshell returns its status as the exit code, not via the variable.
+    # shellcheck disable=SC2031
+    if (( result > consumer_status )); then consumer_status="$result"; fi
+}
+
 storage_consumers() (
     set -euo pipefail
     export LC_ALL=C
@@ -293,13 +308,13 @@ storage_consumers() (
             [[ "$(id -u)" == "$storage_uid" ]] || { _pds_storage_error 'Run user maintenance as the selected non-root account.'; return 2; }
             if _pds_consumer_user_audit; then :; else
                 result=$?
-                if (( result > consumer_status )); then consumer_status="$result"; fi
+                _pds_consumer_audit_result "$consumer_mode" "$result"
             fi
             if [[ "$consumer_mode" == cleanup-user ]]; then
                 _pds_consumer_cleanup_user
                 if _pds_consumer_user_audit; then :; else
                     result=$?
-                    if (( result > consumer_status )); then consumer_status="$result"; fi
+                    _pds_consumer_audit_result "$consumer_mode" "$result"
                 fi
             fi
             ;;

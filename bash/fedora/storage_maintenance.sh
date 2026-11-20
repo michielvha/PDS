@@ -336,8 +336,8 @@ _pds_storage_balance() {
         _pds_storage_wait_for_quiet_host || return $?
         printf 'INFO balancing data chunks off %s (devid %s): usage<=%s limit=1..5\n' \
             "$short_path" "$short_id" "${usages[step]}"
-        # The range form matters: with devid and usage, kernel 7.1 relocates
-        # nothing for a single-value limit=5 but honours limit=1..5.
+        # Range form: on two-device loopback test filesystems (kernel 7.1.8),
+        # devid+usage with limit=5 relocated nothing where limit=1..5 relocated.
         output=$(btrfs balance start -ddevid="$short_id",usage="${usages[step]}",limit=1..5 \
             "$storage_mount" 2>&1) || {
             printf '%s\n' "$output"

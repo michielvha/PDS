@@ -386,10 +386,13 @@ maintenance system. This revision therefore reverses the "never balance" rule:
 - A `balance` mode and hourly timer keep per-device unallocated space for the
   metadata profile's copies: 16 GiB at night, 8 GiB by day, data chunks only,
   in load-guarded batches of at most five chunks.
-- On kernel 7.1.8 with btrfs-progs 7.1, `-ddevid=N,usage=U,limit=5` relocates
-  nothing even when matching chunks exist, while the same filters without a
-  limit, without `devid`, or with the range form `limit=1..5` relocate them.
-  Reproduced on fresh two-device loopback filesystems; the job uses `limit=1..5`.
+- On fresh two-device 12 GiB loopback filesystems (kernel 7.1.8, btrfs-progs
+  7.1, data chunks about 6 to 12 percent used), `-ddevid=1,usage=20,limit=5`
+  relocated nothing, while the same filters without a limit, without `devid`,
+  or with `limit=1..5` relocated two chunks. This was not seen on the host: on
+  2026-11-17 `-ddevid=1,usage=90,limit=5 /` relocated five chunks per batch.
+  The cause is not established. The job uses `limit=1..5`, which relocated
+  chunks in the loopback case and is the same bound otherwise.
 - Docker retention adds a 72-hour build-cache age prune and a one-day dangling
   image prune. Volumes and containers stay untouched.
 - Capacity warnings and notification failures no longer fail the cleanup jobs.

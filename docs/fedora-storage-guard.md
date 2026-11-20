@@ -220,7 +220,7 @@ report-only data:
 | `cleanup-go` | Below-budget skip or completed trim, including a remaining over-budget warning | Not used | Unsafe cache path, missing prerequisite or failed deletion |
 | `prepare-go-cache` | Prepared or already prepared | Active build postponed preparation | Refused input or failed preparation |
 | Audit operations | Healthy or explicit optional-tool skip | Measured capacity warning | Failed native command, invalid accounting or incomplete scan |
-| Cleanup operations | Retention ran, with or without capacity warnings | Not used | Failed native command, invalid accounting or incomplete scan |
+| Cleanup operations | Retention ran, with or without capacity warnings or an incomplete user audit | Not used | Failed native command or invalid Docker accounting |
 
 Preparation can also end with a signal exit code when interrupted. Do not treat
 that as success. Preparation uses `go clean -cache`, never `go clean -modcache`;
