@@ -4,6 +4,7 @@
 
 ### Maintenance
 
+- Add a Pester test file for every public PowerShell function in `pwsh/tests/`, with every install, download, registry, service, firewall, cloud and directory call mocked so the suite never changes the machine it runs on. Tests for the twelve functions a later change renames already call the new names and check that the old name still works as an alias. The commented-out `Update-Env.Tests.ps1` is replaced by a real test.
 - Export every PowerShell function file as its command: `Remove-StaleADComputer` and `Install-AzureKubeCLI` live in files named after them, the function template moves out of `Public` to `pwsh/templates/`, and the module loader skips Pester test files. Add the PSScriptAnalyzer settings the new CI checks use.
 - Pin the PowerShell module publish and script packaging actions by full commit SHA, so their upcoming release-only versions cannot change the current release path before PDS migrates to it.
 
