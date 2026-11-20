@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Maintenance
+
+- Pin the PowerShell module publish and script packaging actions by full commit SHA, so their upcoming release-only versions cannot change the current release path before PDS migrates to it.
+
 ### Features
 
 - Add `Enable-WinRmServer` and `Disable-WinRmServer`, which prepare a Windows test host for Ansible over WinRM with NTLM authentication, also on networks classed Public, and undo it.
