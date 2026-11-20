@@ -89,8 +89,10 @@ download or build. BuildKit receives explicit byte limits `20000000000` and
 `10000000000`. These targets cannot force reclamation of in-use cache.
 
 Npm runs native verification, which may retain a large valid content/npx cache.
-Verification is refused if its cache subtree contains symlinks, nested mounts
-or an incomplete traversal. A top-level cache path alone does not establish
+Verification is refused if `_cacache`, the tree npm verifies, is or contains a
+symlink or nested subvolume, if anything is mounted inside the npm cache, or if
+the traversal is incomplete. Links that npx installs create elsewhere, such as
+`_npx/*/node_modules/.bin`, are expected. A top-level cache path alone does not establish
 confinement.
 Uv pruning is allowed only for a verified version (initially 0.10.9), a canonical
 recognized cache layout, no `environments-*` bucket and no active uv process.

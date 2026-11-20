@@ -234,6 +234,23 @@ class ConsumerTests(unittest.TestCase):
         self.assertEqual((outside / 'keep').read_text(), 'project source')
 
 
+    def test_ac10_npx_bin_links_outside_cacache_do_not_block_verification(self):
+        bin_dir = self.home / '.npm/_npx/0123456789abcdef/node_modules/.bin'
+        bin_dir.mkdir(parents=True)
+        (bin_dir / 'playwright').symlink_to('../playwright/cli.js')
+        (self.home / '.npm/_cacache').mkdir()
+        result = self.run_consumer('cleanup-user')
+        self.assertIn(result.returncode, (0, 1), result.stdout + result.stderr)
+        self.assertTrue(any('verify' in call['args'] for call in self.commands('npm')))
+
+    def test_ac10_alias_inside_cacache_still_refuses_verification(self):
+        cacache = self.home / '.npm/_cacache/content-v2'
+        cacache.mkdir(parents=True)
+        (cacache / 'link').symlink_to(self.home / 'code')
+        result = self.run_consumer('cleanup-user')
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertFalse(self.commands('npm'))
+
 @unittest.skipUnless(os.environ.get('PDS_STORAGE_INTEGRATION') == '1',
                      'set PDS_STORAGE_INTEGRATION=1 for disposable native consumers')
 class ConsumerNativeTests(go_tests.StorageFedoraIntegration):

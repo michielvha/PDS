@@ -235,11 +235,17 @@ _pds_consumer_cleanup_user() {
 }
 
 _pds_consumer_npm_confined() (
-    local path="$1" listing mounts
+    local path="$1" cacache="$1/_cacache" listing mounts
     listing=$(mktemp) || return 2
     trap 'rm -f -- "$listing"' EXIT
+    # npm cache verify works only on _cacache. Elsewhere, such as the
+    # node_modules/.bin links npx installs under _npx, symlinks are normal.
+    if [[ -L "$cacache" ]]; then
+        printf 'ERROR npm cache contains an alias; no verification ran\n' >&2
+        return 2
+    fi
     # Nested Btrfs subvolume roots (inode 256) need not appear in mountinfo.
-    if ! find "$path" -mindepth 1 -xdev \
+    if [[ -d "$cacache" ]] && ! find "$cacache" -xdev \
         \( -type l -o \( -type d -inum 256 \) \) -print0 >"$listing"; then return 2; fi
     if [[ -s "$listing" ]]; then
         printf 'ERROR npm cache contains an alias; no verification ran\n' >&2
