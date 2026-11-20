@@ -3,14 +3,32 @@ BeforeAll {
     # scoop is an external command the test machine may not have; Pester can only mock
     # a command that exists, so give the module a stub to mock.
     InModuleScope PDS { function script:scoop { } }
+
+    # The fake installer records the path it ran from here.
+    $script:marker = Join-Path $TestDrive 'installer-ran.txt'
 }
 
 Describe 'Install-Scoop' {
     BeforeEach {
-        # The installer path must never run for real, whichever branch a test takes.
+        # The installer is downloaded to the temp folder, so point it at TestDrive for this process.
+        $script:savedTmp = $env:TMP
+        $script:savedTemp = $env:TEMP
+        $env:TMP = $TestDrive
+        $env:TEMP = $TestDrive
+        Remove-Item -Path $script:marker -ErrorAction SilentlyContinue
+
+        # The installer path must never run for real, whichever branch a test takes: the download
+        # is mocked and writes a fake installer that only records that it ran.
         Mock Set-ExecutionPolicy -ModuleName PDS { }
-        Mock Invoke-RestMethod -ModuleName PDS { '# scoop installer' }
         Mock Invoke-Expression -ModuleName PDS { }
+        Mock Invoke-RestMethod -ModuleName PDS {
+            Set-Content -Path $OutFile -Value "Set-Content -LiteralPath '$script:marker' -Value `$PSCommandPath"
+        }
+    }
+
+    AfterEach {
+        $env:TMP = $script:savedTmp
+        $env:TEMP = $script:savedTemp
     }
 
     Context 'when Scoop is already installed' {
@@ -29,6 +47,7 @@ Describe 'Install-Scoop' {
             Should -Invoke Invoke-RestMethod -ModuleName PDS -Times 0 -Exactly
             Should -Invoke Invoke-Expression -ModuleName PDS -Times 0 -Exactly
             Should -Invoke Set-ExecutionPolicy -ModuleName PDS -Times 0 -Exactly
+            $script:marker | Should -Not -Exist
         }
     }
 
@@ -37,7 +56,7 @@ Describe 'Install-Scoop' {
             Mock Get-Command -ModuleName PDS -ParameterFilter { $Name -eq 'scoop' } { }
         }
 
-        It 'downloads get.scoop.sh and runs it under a RemoteSigned user policy' {
+        It 'downloads get.scoop.sh to a file and runs it under a RemoteSigned user policy' {
             $output = Install-Scoop
 
             $output | Should -Be 'Scoop will be installed'
@@ -45,11 +64,22 @@ Describe 'Install-Scoop' {
                 $ExecutionPolicy -eq 'RemoteSigned' -and $Scope -eq 'CurrentUser'
             }
             Should -Invoke Invoke-RestMethod -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
-                "$Uri".TrimEnd('/') -eq 'https://get.scoop.sh'
+                "$Uri".TrimEnd('/') -eq 'https://get.scoop.sh' -and
+                $OutFile -like (Join-Path $TestDrive 'scoop-install-*.ps1')
             }
-            Should -Invoke Invoke-Expression -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
-                $Command -eq '# scoop installer'
-            }
+            Should -Invoke Invoke-Expression -ModuleName PDS -Times 0 -Exactly
+
+            $ranFrom = Get-Content -Path $script:marker
+            $ranFrom | Should -BeLike (Join-Path $TestDrive 'scoop-install-*.ps1')
+            $ranFrom | Should -Not -Exist
+        }
+
+        It 'removes the downloaded installer when it fails' {
+            Mock Invoke-RestMethod -ModuleName PDS { Set-Content -Path $OutFile -Value "throw 'installer failed'" }
+
+            { Install-Scoop } | Should -Throw 'installer failed'
+
+            Get-ChildItem -Path $TestDrive -Filter 'scoop-install-*.ps1' | Should -BeNullOrEmpty
         }
     }
 }

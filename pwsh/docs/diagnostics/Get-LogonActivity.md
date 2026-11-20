@@ -5,7 +5,9 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-AllConnections
+# Get-LogonActivity
+
+Alias: `Get-AllConnections`
 
 ## SYNOPSIS
 Retrieves and displays system logon and logoff events from the past 24 hours.
@@ -13,11 +15,11 @@ Retrieves and displays system logon and logoff events from the past 24 hours.
 ## SYNTAX
 
 ```
-Get-AllConnections
+Get-LogonActivity
 ```
 
 ## DESCRIPTION
-The Get-AllConnections function retrieves all logon (Event ID 4624) and logoff (Event ID 4647) events 
+The Get-LogonActivity function retrieves all logon (Event ID 4624) and logoff (Event ID 4647) events 
 from the Windows Security event log for the past 24 hours.
 It provides detailed information about
 each event including user name, domain, logon type, IP address (for remote connections), and timestamp.
@@ -32,7 +34,7 @@ identify potential security concerns or unusual access patterns.
 
 ### EXAMPLE 1
 ```
-Get-AllConnections
+Get-LogonActivity
 ```
 
 Displays a summary of logon/logoff activity in the past 24 hours, followed by a detailed
@@ -40,7 +42,7 @@ chronological table of all events with user, type, and source information.
 
 ### EXAMPLE 2
 ```
-$events = Get-AllConnections
+$events = Get-LogonActivity
 $events | Where-Object {$_.LogonType -eq "RemoteInteractive"} | Format-Table
 ```
 

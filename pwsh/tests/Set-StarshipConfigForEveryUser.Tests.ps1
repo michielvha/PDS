@@ -1,15 +1,6 @@
 BeforeAll {
     Import-Module (Join-Path $PSScriptRoot '..' 'module' 'PDS.psm1') -Force
 
-    # Get-WmiObject is missing or a compatibility shim depending on the PowerShell version, so
-    # a stub with a known signature makes the mock behave the same everywhere.
-    InModuleScope PDS {
-        function script:Get-WmiObject {
-            param([string]$Class)
-            $null = $Class
-        }
-    }
-
     $script:usersDir = Join-Path $TestDrive 'Users'
     $script:config = "[character]`nsuccess_symbol = '>'"
 }
@@ -29,7 +20,7 @@ Describe 'Set-StarshipConfigForEveryUser' {
             [pscustomobject]@{ LocalPath = $script:bob; Special = $false }
             [pscustomobject]@{ LocalPath = $script:system; Special = $true }
         )
-        Mock -ModuleName PDS Get-WmiObject { $profiles }
+        Mock -ModuleName PDS Get-CimInstance { $profiles }
         Mock -ModuleName PDS Write-Host { }
     }
 
@@ -37,7 +28,7 @@ Describe 'Set-StarshipConfigForEveryUser' {
         Set-StarshipConfigForEveryUser -configContent $script:config | Out-Null
 
         Get-Content -Path (Join-Path $script:alice '.config' 'starship.toml') -Raw | Should -Be ($script:config + [Environment]::NewLine)
-        Should -Invoke -ModuleName PDS Get-WmiObject -Times 1 -Exactly -ParameterFilter { $Class -eq 'Win32_UserProfile' }
+        Should -Invoke -ModuleName PDS Get-CimInstance -Times 1 -Exactly -ParameterFilter { $ClassName -eq 'Win32_UserProfile' }
     }
 
     It 'keeps an existing starship.toml' {

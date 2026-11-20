@@ -1,4 +1,4 @@
-function Set-NodeExtraCACerts {
+function Set-NodeExtraCACert {
     <#
     .SYNOPSIS
         Sets the NODE_EXTRA_CA_CERTS environment variable to the Azure CLI bundled CA certificate.
@@ -14,12 +14,12 @@ function Set-NodeExtraCACerts {
         The path to the CA certificate file. Defaults to the Azure CLI bundled cacert.pem.
 
     .EXAMPLE
-        Set-NodeExtraCACerts
+        Set-NodeExtraCACert
 
         Sets the NODE_EXTRA_CA_CERTS system environment variable to the default Azure CLI cacert.pem path.
 
     .EXAMPLE
-        Set-NodeExtraCACerts -CertPath "D:\certs\custom-ca.pem"
+        Set-NodeExtraCACert -CertPath "D:\certs\custom-ca.pem"
 
         Sets the NODE_EXTRA_CA_CERTS system environment variable to a custom certificate path.
 
@@ -29,6 +29,7 @@ function Set-NodeExtraCACerts {
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
+    [Alias('Set-NodeExtraCACerts')]
     param (
         [string]$CertPath = "C:\Program Files\Microsoft SDKs\Azure\CLI2\Lib\site-packages\certifi\cacert.pem"
     )

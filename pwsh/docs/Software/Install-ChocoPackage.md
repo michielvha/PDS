@@ -6,7 +6,9 @@ Learn more about Chocolatey and package management.
 schema: 2.0.0
 ---
 
-# Install-ChocoPackages
+# Install-ChocoPackage
+
+Alias: `Install-ChocoPackages`
 
 ## SYNOPSIS
 Installs a list of Chocolatey packages from an array, if they are not already installed.
@@ -14,7 +16,7 @@ Installs a list of Chocolatey packages from an array, if they are not already in
 ## SYNTAX
 
 ```
-Install-ChocoPackages [[-packagesToInstall] <String[]>]
+Install-ChocoPackage [[-packagesToInstall] <String[]>]
 ```
 
 ## DESCRIPTION

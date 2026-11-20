@@ -1,4 +1,4 @@
-function Get-RDSActiveSessions {
+function Get-RDSActiveSessionReport {
     <#
     .SYNOPSIS
         Monitors and logs active Remote Desktop Services user sessions.
@@ -24,22 +24,22 @@ function Get-RDSActiveSessions {
         Switch to disable transcript logging.
 
     .EXAMPLE
-        Get-RDSActiveSessions
+        Get-RDSActiveSessionReport
 
         Monitors active RDS sessions using default settings (60-minute idle threshold).
 
     .EXAMPLE
-        Get-RDSActiveSessions -IdleThresholdMinutes 30
+        Get-RDSActiveSessionReport -IdleThresholdMinutes 30
 
         Monitors active RDS sessions with a 30-minute idle threshold.
 
     .EXAMPLE
-        Get-RDSActiveSessions -LogPath "D:\Logs\rds.csv" -ExportPath "D:\Reports\sessions.csv"
+        Get-RDSActiveSessionReport -LogPath "D:\Logs\rds.csv" -ExportPath "D:\Reports\sessions.csv"
 
         Monitors active RDS sessions with custom log and export paths.
 
     .EXAMPLE
-        Get-RDSActiveSessions -NoTranscript
+        Get-RDSActiveSessionReport -NoTranscript
 
         Monitors active RDS sessions without creating a transcript log.
 
@@ -54,6 +54,7 @@ function Get-RDSActiveSessions {
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
+    [Alias('Get-RDSActiveSessions')]
     param(
         [Parameter(Mandatory = $false)]
         [int]$IdleThresholdMinutes = 60,
@@ -106,12 +107,13 @@ function Get-RDSActiveSessions {
             $ExportPath = ".\$hostname-signIns.csv"
         }
 
-        # Helper function for logging
+        # Helper function for logging; every entry goes to the -LogPath file
         function Set-Log {
             [CmdletBinding(SupportsShouldProcess)]
             param (
                 [string]$Message,
-                [string]$Path = $LogPath
+                [Parameter(Mandatory = $true)]
+                [string]$Path
             )
 
             $timestamp = Get-Date -Format "yyyy-MM-dd | HH:mm:ss"
@@ -155,7 +157,7 @@ function Get-RDSActiveSessions {
                 }
 
                 # Log to main log file
-                Set-Log "$($signInData.userName),$($signInData.idleTimeMinutes),$($signInData.serverName),$($signInData.createTime),$($signInData.disconnectTime),$($signInData.sessionState)"
+                Set-Log -Message "$($signInData.userName),$($signInData.idleTimeMinutes),$($signInData.serverName),$($signInData.createTime),$($signInData.disconnectTime),$($signInData.sessionState)" -Path $LogPath
 
                 # Export to CSV
                 if ($PSCmdlet.ShouldProcess($ExportPath, 'Export session to CSV')) {
@@ -168,7 +170,7 @@ function Get-RDSActiveSessions {
         else {
             $message = "No active user sessions found that haven't been idle for more than $IdleThresholdMinutes minutes"
             Write-Host $message -ForegroundColor Yellow
-            Set-Log $message
+            Set-Log -Message $message -Path $LogPath
         }
     }
     catch {
@@ -182,6 +184,7 @@ function Get-RDSActiveSessions {
             }
             catch {
                 # Transcript might not have been started successfully
+                Write-Verbose "Stopping the transcript failed, it may not have started: $_"
             }
         }
     }

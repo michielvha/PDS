@@ -75,18 +75,9 @@ function Get-WindowsKey {
     process {
         foreach ($target in $Targets) {
             Write-Verbose "Processing computer: $target"
+            # CIM session for a remote target; stays $null for the local machine
+            $session = $null
             try {
-                # Create hashtable for WMI parameters
-                $wmiParams = @{
-                    ComputerName = $target
-                    ErrorAction  = 'Stop'
-                }
-
-                # Add credentials if specified
-                if ($Credential) {
-                    $wmiParams.Add('Credential', $Credential)
-                }
-
                 # Check if target is local machine or remote
                 if ($target -eq "." -or $target -eq "localhost" -or $target -eq $env:COMPUTERNAME) {
                     # Access registry directly on local machine for better performance
@@ -115,11 +106,33 @@ function Get-WindowsKey {
                     }
                 }
                 else {
-                    # Use WMI for remote registry access
-                    Write-Verbose "Accessing remote registry via WMI"
+                    # Use CIM for remote registry access
+                    Write-Verbose "Accessing remote registry via CIM"
                     try {
-                        $wmi = Get-WmiObject -Class "StdRegProv" -Namespace "root\default" @wmiParams
-                        $data = $wmi.GetBinaryValue($hklm, $regPath, $regValue)
+                        $sessionParams = @{
+                            ComputerName = $target
+                            ErrorAction  = 'Stop'
+                        }
+
+                        # Add credentials if specified
+                        if ($Credential) {
+                            $sessionParams.Add('Credential', $Credential)
+                        }
+
+                        $session = New-CimSession @sessionParams
+                        $methodParams = @{
+                            CimSession  = $session
+                            Namespace   = 'root\default'
+                            ClassName   = 'StdRegProv'
+                            MethodName  = 'GetBinaryValue'
+                            Arguments   = @{
+                                hDefKey     = [uint32]$hklm
+                                sSubKeyName = $regPath
+                                sValueName  = $regValue
+                            }
+                            ErrorAction = 'Stop'
+                        }
+                        $data = Invoke-CimMethod @methodParams
 
                         if (-not $data -or -not $data.uValue) {
                             Write-Warning "Failed to retrieve product key data from $target"
@@ -159,25 +172,26 @@ function Get-WindowsKey {
 
                 # Get OS Details
                 try {
-                    # Get OS info using CIM on newer systems or WMI as fallback
-                    $osInfoParams = $wmiParams.Clone()
-                    $win32os = Get-CimInstance -ClassName Win32_OperatingSystem @osInfoParams -ErrorAction Stop
+                    # Get OS info over the remote session, or locally when there is none
+                    $osInfoParams = @{
+                        ClassName   = 'Win32_OperatingSystem'
+                        ErrorAction = 'Stop'
+                    }
+                    if ($session) {
+                        $osInfoParams.Add('CimSession', $session)
+                    }
+                    $win32os = Get-CimInstance @osInfoParams
                 }
                 catch {
-                    try {
-                        $win32os = Get-WmiObject -Class Win32_OperatingSystem @wmiParams
-                    }
-                    catch {
-                        Write-Warning "Error retrieving OS information from $target`: $_"
-                        # Create minimal object if OS info collection fails
-                        $win32os = [PSCustomObject]@{
-                            Caption        = "Unknown"
-                            CSDVersion     = "Unknown"
-                            OSArchitecture = "Unknown"
-                            BuildNumber    = "Unknown"
-                            RegisteredUser = "Unknown"
-                            SerialNumber   = "Unknown"
-                        }
+                    Write-Warning "Error retrieving OS information from $target`: $_"
+                    # Create minimal object if OS info collection fails
+                    $win32os = [PSCustomObject]@{
+                        Caption        = "Unknown"
+                        CSDVersion     = "Unknown"
+                        OSArchitecture = "Unknown"
+                        BuildNumber    = "Unknown"
+                        RegisteredUser = "Unknown"
+                        SerialNumber   = "Unknown"
                     }
                 }
 
@@ -192,14 +206,20 @@ function Get-WindowsKey {
                     RegisteredTo   = $win32os.RegisteredUser
                     ProductID      = $win32os.SerialNumber
                     ProductKey     = $productKey
+                    # CIM already returns InstallDate as a DateTime
                     InstallDate    = if ($win32os.InstallDate) {
-                        [System.Management.ManagementDateTimeConverter]::ToDateTime($win32os.InstallDate)
+                        [datetime]$win32os.InstallDate
                     }
                     else { $null }
                 }
             }
             catch {
                 Write-Error "An unexpected error occurred while processing $target`: $_"
+            }
+            finally {
+                if ($session) {
+                    Remove-CimSession -CimSession $session -ErrorAction SilentlyContinue
+                }
             }
         }
     }

@@ -1,10 +1,10 @@
-function Get-DisabledADUsers {
+function Get-DisabledADUser {
     <#
     .SYNOPSIS
         Retrieves and displays disabled Active Directory user accounts.
 
     .DESCRIPTION
-        The Get-DisabledADUsers function retrieves all disabled user accounts from Active Directory
+        The Get-DisabledADUser function retrieves all disabled user accounts from Active Directory
         with detailed information about each account. Results can be displayed in various formats
         including a grid view, formatted table, or as raw objects for further processing.
 
@@ -28,27 +28,27 @@ function Get-DisabledADUsers {
         Default is 'Table'.
 
     .EXAMPLE
-        Get-DisabledADUsers
+        Get-DisabledADUser
 
         Retrieves all disabled AD users and displays them in a formatted table.
 
     .EXAMPLE
-        Get-DisabledADUsers -ShowGridView
+        Get-DisabledADUser -ShowGridView
 
         Retrieves all disabled AD users and displays them in a grid view.
 
     .EXAMPLE
-        Get-DisabledADUsers -Format List
+        Get-DisabledADUser -Format List
 
         Retrieves all disabled AD users and displays them in a list format.
 
     .EXAMPLE
-        Get-DisabledADUsers -SearchBase "OU=Users,OU=Company,DC=contoso,DC=com"
+        Get-DisabledADUser -SearchBase "OU=Users,OU=Company,DC=contoso,DC=com"
 
         Retrieves disabled AD users from the specified organizational unit.
 
     .EXAMPLE
-        $disabledUsers = Get-DisabledADUsers -Format None
+        $disabledUsers = Get-DisabledADUser -Format None
         $disabledUsers | Export-Csv -Path "C:\Reports\DisabledUsers.csv" -NoTypeInformation
 
         Retrieves disabled AD users as objects and exports them to a CSV file.
@@ -61,6 +61,7 @@ function Get-DisabledADUsers {
         Author: Michiel VH
     #>
 
+    [Alias('Get-DisabledADUsers')]
     param (
         [string]$SearchBase,
         [string[]]$Properties = @(
@@ -99,32 +100,37 @@ function Get-DisabledADUsers {
         $adParams.SearchBase = $SearchBase
     }
 
+    # One flat property list for Select-Object: the requested properties followed by the
+    # calculated columns. Passing $Properties and the hashtables as separate list items would
+    # nest an array inside the list, which Select-Object rejects.
+    $selectProperties = @($Properties) + @(
+        @{Name = "Manager Name"; Expression = {
+                if ($_.Manager) {
+                    try { (Get-ADUser -Identity $_.Manager -ErrorAction SilentlyContinue).Name }
+                    catch { "Unknown" }
+                }
+                else { "None" }
+            }
+        },
+        @{Name = "Account Age (Days)"; Expression = {
+                if ($_.whenCreated) {
+                    [math]::Round((New-TimeSpan -Start $_.whenCreated -End (Get-Date)).TotalDays)
+                }
+                else { "Unknown" }
+            }
+        },
+        @{Name = "Days Since Modified"; Expression = {
+                if ($_.whenChanged) {
+                    [math]::Round((New-TimeSpan -Start $_.whenChanged -End (Get-Date)).TotalDays)
+                }
+                else { "Unknown" }
+            }
+        }
+    )
+
     # Execute the AD query
     try {
-        $disabledUsers = Get-ADUser @adParams |
-            Select-Object -Property $Properties,
-            @{Name="Manager Name"; Expression= {
-                    if ($_.Manager) {
-                        try { (Get-ADUser -Identity $_.Manager -ErrorAction SilentlyContinue).Name }
-                        catch { "Unknown" }
-                    }
-                    else { "None" }
-                }
-            },
-            @{Name="Account Age (Days)"; Expression= {
-                    if ($_.whenCreated) {
-                        [math]::Round((New-TimeSpan -Start $_.whenCreated -End (Get-Date)).TotalDays)
-                    }
-                    else { "Unknown" }
-                }
-            },
-            @{Name="Days Since Modified"; Expression= {
-                    if ($_.whenChanged) {
-                        [math]::Round((New-TimeSpan -Start $_.whenChanged -End (Get-Date)).TotalDays)
-                    }
-                    else { "Unknown" }
-                }
-            }
+        $disabledUsers = Get-ADUser @adParams | Select-Object -Property $selectProperties
     }
     catch {
         Write-Error "Error retrieving disabled AD users: $_"

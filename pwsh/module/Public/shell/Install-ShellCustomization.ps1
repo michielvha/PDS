@@ -1,10 +1,10 @@
-function Install-ShellCustomizations {
+function Install-ShellCustomization {
     <#
     .SYNOPSIS
         Installs and configures a comprehensive shell customization stack for PowerShell and Windows Terminal.
 
     .DESCRIPTION
-        The `Install-ShellCustomizations` function sets up a complete shell environment by orchestrating the installation and configuration of multiple components:
+        The `Install-ShellCustomization` function sets up a complete shell environment by orchestrating the installation and configuration of multiple components:
 
         1. **Oh My Posh**: Installs Oh My Posh prompt engine with powerlevel10k_rainbow theme
         2. **PowerShell Modules**: Installs Terminal-Icons and posh-git modules for enhanced functionality
@@ -34,6 +34,9 @@ function Install-ShellCustomizations {
         - PowerShell profile ($PROFILE)
         - Windows Terminal settings.json
     #>
+    [Alias('Install-ShellCustomizations')]
+    param ()
+
 
 
     # TODO: Auto elevate to admin so we don't need the check below

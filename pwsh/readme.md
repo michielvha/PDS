@@ -38,14 +38,14 @@ Below is a list of software and tools supported by the custom PowerShell functio
 
 ### Custom PowerShell Functions
 1. **Install-Choco**: Installs Chocolatey if not already installed.
-2. **Install-ChocoPackages**: Installs a list of Chocolatey packages from an array.
+2. **Install-ChocoPackage**: Installs a list of Chocolatey packages from an array.
 3. **Set-PSReadLineModule**: Configures the `PSReadLine` module for enhanced command-line experience.
 4. **Install-AzureKubeCLI**: Installs and configures `kubectl` and `kubelogin`.
 5. **Shell Customizations**:
    - Configures `starship` prompt with a custom `starship.toml` file.
    - Includes settings for Azure, Git branches, and Git commits.
 6. **numlock on by default**: 
-7. **longpath support**: `Enable-LongPaths` allows support for longerfile paths.  
+7. **longpath support**: `Enable-LongPath` allows support for longerfile paths.  
 8. **SSH server**: `Enable-SshServer` installs/enables OpenSSH server, opens the firewall and optionally authorizes public keys.  
 9. **WinRM server**: `Enable-WinRmServer` enables WinRM over HTTP with NTLM authentication, opens TCP 5985 on every network profile and optionally creates a local user for Ansible or other WinRM clients. `Disable-WinRmServer` reverses it.  
 **TODO: expand with all functions**

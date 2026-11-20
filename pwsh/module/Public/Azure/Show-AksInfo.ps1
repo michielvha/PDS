@@ -83,7 +83,7 @@
             $subnetId = $aks.agentPoolProfiles[0].vnetSubnetId
 
             if ($subnetId) {
-                $vnetDetails = Get-VNetSubnetDetails -subnetId $subnetId
+                $vnetDetails = Get-VNetSubnetDetail -subnetId $subnetId
 
                 if ($vnetDetails) {
                     $subnetDetails = az network vnet subnet show --resource-group $vnetDetails.VNetResourceGroup --vnet-name $vnetDetails.VNetName --name $vnetDetails.SubnetName @subscriptionArg --query "{addressPrefix:addressPrefix}" --output json | ConvertFrom-Json
@@ -115,7 +115,7 @@
 }
 
 # Function to extract VNet and Subnet details from a subnet ID
-function Get-VNetSubnetDetails {
+function Get-VNetSubnetDetail {
     param (
         [string]$subnetId
     )

@@ -1,4 +1,7 @@
-function Enable-LongPaths {
+function Enable-LongPath {
+    [Alias('Enable-LongPaths')]
+    param ()
+
     $keyPath = "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem"
     $valueName = "LongPathsEnabled"
     $valueData = 1

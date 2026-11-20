@@ -5,7 +5,9 @@ online version:
 schema: 2.0.0
 ---
 
-# Enable-LongPaths
+# Enable-LongPath
+
+Alias: `Enable-LongPaths`
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
@@ -13,7 +15,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Enable-LongPaths
+Enable-LongPath
 ```
 
 ## DESCRIPTION

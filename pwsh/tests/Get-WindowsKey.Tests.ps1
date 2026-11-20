@@ -1,14 +1,5 @@
 BeforeAll {
     Import-Module (Join-Path $PSScriptRoot '..' 'module' 'PDS.psm1') -Force
-    if (-not (Get-Command -Name Get-WmiObject -ErrorAction SilentlyContinue)) {
-        InModuleScope PDS {
-            function script:Get-WmiObject {
-                [CmdletBinding()]
-                param ([string]$Class, [string]$Namespace, [string[]]$ComputerName, [pscredential]$Credential)
-                $null = $Class, $Namespace, $ComputerName, $Credential
-            }
-        }
-    }
 
     # Encodes a product key into a DigitalProductId byte array, the inverse of the decoder under
     # test: the 25 key characters are base-24 digits stored little-endian in bytes 52 to 66.
@@ -27,15 +18,6 @@ BeforeAll {
         Write-Output -InputObject $bytes -NoEnumerate
     }
 
-    function Get-FakeRegistryProvider {
-        param ($Data)
-        $provider = [pscustomobject]@{ Data = $Data }
-        $provider | Add-Member -MemberType ScriptMethod -Name GetBinaryValue -Value {
-            [pscustomobject]@{ uValue = $this.Data }
-        }
-        $provider
-    }
-
     $script:testKey = 'BCDFG-HJKMP-QRTVW-XY234-6789B'
     $script:osInfo = [pscustomobject]@{
         Caption        = 'Microsoft Windows 11 Pro'
@@ -51,15 +33,17 @@ BeforeAll {
 
 Describe 'Get-WindowsKey' {
     BeforeEach {
-        $provider = Get-FakeRegistryProvider -Data (ConvertTo-DigitalProductId -Key $script:testKey)
+        $data = ConvertTo-DigitalProductId -Key $script:testKey
         $os = $script:osInfo
-        Mock Get-WmiObject -ModuleName PDS -ParameterFilter { $Class -eq 'StdRegProv' } -MockWith ({ $provider }.GetNewClosure())
-        Mock Get-WmiObject -ModuleName PDS -ParameterFilter { $Class -eq 'Win32_OperatingSystem' } -MockWith ({ $os }.GetNewClosure())
-        Mock Get-CimInstance -ModuleName PDS -MockWith ({ $os }.GetNewClosure())
+        # The CimSession parameters are typed; removing the type lets the mocks take a stand-in session.
+        Mock New-CimSession -ModuleName PDS -MockWith { [pscustomobject]@{ ComputerName = "$ComputerName" } }
+        Mock Invoke-CimMethod -ModuleName PDS -RemoveParameterType CimSession -MockWith ({ [pscustomobject]@{ ReturnValue = 0; uValue = $data } }.GetNewClosure())
+        Mock Get-CimInstance -ModuleName PDS -RemoveParameterType CimSession -MockWith ({ $os }.GetNewClosure())
+        Mock Remove-CimSession -ModuleName PDS -RemoveParameterType CimSession
         Mock Write-Warning -ModuleName PDS
     }
 
-    It 'decodes the product key of a remote computer' {
+    It 'decodes the product key of a remote computer over a CIM session' {
         $result = Get-WindowsKey -Targets 'srv01'
 
         $result.Computer | Should -Be 'srv01'
@@ -68,9 +52,20 @@ Describe 'Get-WindowsKey' {
         $result.BuildNumber | Should -Be '26100'
         $result.RegisteredTo | Should -Be 'tester'
         $result.ProductID | Should -Be '00330-80000-00000-AA000'
-        Should -Invoke Get-WmiObject -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
-            $Class -eq 'StdRegProv' -and $Namespace -eq 'root\default' -and $ComputerName -eq 'srv01'
+        Should -Invoke New-CimSession -ModuleName PDS -Times 1 -Exactly -ParameterFilter { $ComputerName -eq 'srv01' }
+        Should -Invoke Invoke-CimMethod -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
+            $CimSession.ComputerName -eq 'srv01' -and
+            $Namespace -eq 'root\default' -and
+            $ClassName -eq 'StdRegProv' -and
+            $MethodName -eq 'GetBinaryValue' -and
+            $Arguments.hDefKey -eq [uint32]2147483650 -and
+            $Arguments.sSubKeyName -eq 'Software\Microsoft\Windows NT\CurrentVersion' -and
+            $Arguments.sValueName -eq 'DigitalProductId'
         }
+        Should -Invoke Get-CimInstance -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
+            $ClassName -eq 'Win32_OperatingSystem' -and $CimSession.ComputerName -eq 'srv01'
+        }
+        Should -Invoke Remove-CimSession -ModuleName PDS -Times 1 -Exactly -ParameterFilter { $CimSession.ComputerName -eq 'srv01' }
     }
 
     It 'accepts computer names from the pipeline' {
@@ -78,22 +73,24 @@ Describe 'Get-WindowsKey' {
 
         $result.Computer | Should -Be @('srv01', 'srv02')
         $result.ProductKey | Should -Be @($script:testKey, $script:testKey)
+        Should -Invoke Remove-CimSession -ModuleName PDS -Times 2 -Exactly
     }
 
-    It 'passes the credential to the remote registry query' {
+    It 'passes the credential to the CIM session' {
         $secure = [System.Net.NetworkCredential]::new('', 'test-only').SecurePassword
         $credential = [pscredential]::new('contoso\admin', $secure)
 
         $null = Get-WindowsKey -Targets 'srv01' -Credential $credential
 
-        Should -Invoke Get-WmiObject -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
-            $Class -eq 'StdRegProv' -and $Credential.UserName -eq 'contoso\admin'
+        Should -Invoke New-CimSession -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
+            $ComputerName -eq 'srv01' -and $Credential.UserName -eq 'contoso\admin'
         }
     }
 
     It 'warns and returns nothing when the registry value is missing' {
-        $empty = Get-FakeRegistryProvider -Data $null
-        Mock Get-WmiObject -ModuleName PDS -ParameterFilter { $Class -eq 'StdRegProv' } -MockWith ({ $empty }.GetNewClosure())
+        Mock Invoke-CimMethod -ModuleName PDS -RemoveParameterType CimSession -MockWith {
+            [pscustomobject]@{ ReturnValue = 1; uValue = $null }
+        }
 
         $result = Get-WindowsKey -Targets 'srv01'
 
@@ -101,10 +98,11 @@ Describe 'Get-WindowsKey' {
         Should -Invoke Write-Warning -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
             $Message -eq 'Failed to retrieve product key data from srv01'
         }
+        Should -Invoke Remove-CimSession -ModuleName PDS -Times 1 -Exactly
     }
 
     It 'warns and returns nothing when the computer cannot be reached' {
-        Mock Get-WmiObject -ModuleName PDS -ParameterFilter { $Class -eq 'StdRegProv' } -MockWith { throw 'RPC server unavailable' }
+        Mock New-CimSession -ModuleName PDS -MockWith { throw 'RPC server unavailable' }
 
         $result = Get-WindowsKey -Targets 'srv01'
 
@@ -112,5 +110,19 @@ Describe 'Get-WindowsKey' {
         Should -Invoke Write-Warning -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
             $Message -like 'Error connecting to srv01*RPC server unavailable*'
         }
+        Should -Invoke Invoke-CimMethod -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Remove-CimSession -ModuleName PDS -Times 0 -Exactly
+    }
+
+    It 'returns InstallDate as the DateTime CIM provides' {
+        $installed = [datetime]::new(2024, 3, 15, 10, 30, 0)
+        $osWithDate = $script:osInfo.PSObject.Copy()
+        $osWithDate.InstallDate = $installed
+        Mock Get-CimInstance -ModuleName PDS -RemoveParameterType CimSession -MockWith ({ $osWithDate }.GetNewClosure())
+
+        $result = Get-WindowsKey -Targets 'srv01'
+
+        $result.InstallDate | Should -BeOfType [datetime]
+        $result.InstallDate | Should -Be $installed
     }
 }

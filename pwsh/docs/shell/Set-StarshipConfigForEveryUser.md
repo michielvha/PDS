@@ -5,7 +5,9 @@ online version:
 schema: 2.0.0
 ---
 
-# Set-StarshipConfigForAllUsers
+# Set-StarshipConfigForEveryUser
+
+Alias: `Set-StarshipConfigForAllUsers`
 
 ## SYNOPSIS
 This function sets the Starship configuration for all users on the system.
@@ -13,12 +15,12 @@ This function sets the Starship configuration for all users on the system.
 ## SYNTAX
 
 ```
-Set-StarshipConfigForAllUsers [-configContent] <String> [-ProgressAction <ActionPreference>]
+Set-StarshipConfigForEveryUser [-configContent] <String> [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The \`Set-StarshipConfigForAllUsers\` function searches for the user profiles on the system,
+The \`Set-StarshipConfigForEveryUser\` function searches for the user profiles on the system,
 creates a \`.config\` directory in each profile (if it doesn't exist), and then writes the
 Starship configuration (\`starship.toml\`) to that directory.
 If the file already exists, the
@@ -35,13 +37,13 @@ color = "blue"
 "@
 ```
 
-Set-StarshipConfigForAllUsers
+Set-StarshipConfigForEveryUser
 
 This will set the Starship configuration for all users on the system using the specified content.
 
 ### EXAMPLE 2
 ```
-Set-StarshipConfigForAllUsers -configContent @"
+Set-StarshipConfigForEveryUser -configContent @"
 [character]
 symbol = "❯"
 color = "blue"

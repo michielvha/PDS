@@ -5,7 +5,9 @@ online version:
 schema: 2.0.0
 ---
 
-# Enable-RDSHosts
+# Enable-RDSHost
+
+Alias: `Enable-RDSHosts`
 
 ## SYNOPSIS
 Enables connections to specified Remote Desktop Session Hosts.
@@ -13,7 +15,7 @@ Enables connections to specified Remote Desktop Session Hosts.
 ## SYNTAX
 
 ```
-Enable-RDSHosts [[-ServerNames] <String[]>] [[-ConfigPath] <String>] [<CommonParameters>]
+Enable-RDSHost [[-ServerNames] <String[]>] [[-ConfigPath] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,21 +32,21 @@ automatically if needed.
 
 ### EXAMPLE 1
 ```
-Enable-RDSHosts
+Enable-RDSHost
 ```
 
 Enables new connections on the default set of RDS hosts.
 
 ### EXAMPLE 2
 ```
-Enable-RDSHosts -ServerNames "server1.domain.com", "server2.domain.com"
+Enable-RDSHost -ServerNames "server1.domain.com", "server2.domain.com"
 ```
 
 Enables new connections on the specified RDS servers.
 
 ### EXAMPLE 3
 ```
-Enable-RDSHosts -ConfigPath "C:\Config\rds-servers.txt"
+Enable-RDSHost -ConfigPath "C:\Config\rds-servers.txt"
 ```
 
 Enables new connections on RDS servers listed in the specified configuration file.

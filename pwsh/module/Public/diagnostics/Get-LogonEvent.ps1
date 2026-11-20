@@ -1,10 +1,10 @@
-function Get-LogonEvents {
+function Get-LogonEvent {
     <#
     .SYNOPSIS
         Retrieves and displays user logon events from the Windows Security log.
 
     .DESCRIPTION
-        The Get-LogonEvents function retrieves logon events (EventID 4624) from the Security log
+        The Get-LogonEvent function retrieves logon events (EventID 4624) from the Security log
         for a specified time period. It filters out system accounts and displays the results in
         a grid view with detailed information including timestamp, account name, logon type (with
         description), and source IP/computer.
@@ -24,17 +24,17 @@ function Get-LogonEvents {
         Default is $false.
 
     .EXAMPLE
-        Get-LogonEvents
+        Get-LogonEvent
 
         Retrieves all user logon events from the past day and displays them in a grid view.
 
     .EXAMPLE
-        Get-LogonEvents -Days 7 -ShowGridView $false
+        Get-LogonEvent -Days 7 -ShowGridView $false
 
         Retrieves logon events from the past week and returns them as objects without displaying the grid view.
 
     .EXAMPLE
-        Get-LogonEvents -Days 3 | Where-Object {$_.LogonTypeDescription -eq "Remote Desktop"}
+        Get-LogonEvent -Days 3 | Where-Object {$_.LogonTypeDescription -eq "Remote Desktop"}
 
         Retrieves logon events from the past 3 days and filters for just Remote Desktop connections.
 
@@ -51,6 +51,7 @@ function Get-LogonEvents {
         11 = CachedInteractive (Logon using cached domain credentials when a DC is not available)
     #>
 
+    [Alias('Get-LogonEvents')]
     param (
         [int]$Days = 1,
         [bool]$ShowGridView = $true,
@@ -67,14 +68,30 @@ function Get-LogonEvents {
     $filter = { $true }
     if (-not $IncludeSystemAccounts) {
         $filter = {
-            ($_.ReplacementStrings[5] -notmatch '\$') -and
-            ($_.ReplacementStrings[5] -notmatch 'ANONYMOUS LOGON') -and
-            ($_.ReplacementStrings[5] -notmatch 'SYSTEM')
+            ($_.Properties[5].Value -notmatch '\$') -and
+            ($_.Properties[5].Value -notmatch 'ANONYMOUS LOGON') -and
+            ($_.Properties[5].Value -notmatch 'SYSTEM')
         }
     }
 
-    # EventID 4624 = logon
-    $audit = Get-EventLog Security -InstanceId 4624 -Before $before -After $after | Where-Object $filter
+    # EventID 4624 = logon. Get-WinEvent reports an empty result as a NoMatchingEventsFound
+    # error, which means there are no events; any other error (such as access denied without
+    # elevation) is passed on.
+    $query = @{
+        LogName   = 'Security'
+        Id        = 4624
+        StartTime = $after
+        EndTime   = $before
+    }
+    try {
+        $audit = Get-WinEvent -FilterHashtable $query -ErrorAction Stop | Where-Object $filter
+    }
+    catch {
+        if ($_.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*') {
+            throw
+        }
+        $audit = $null
+    }
 
     if (-not $audit) {
         Write-Host "No logon events found for the specified period." -ForegroundColor Yellow
@@ -83,12 +100,12 @@ function Get-LogonEvents {
 
     Write-Host "Processing $($audit.Count) logon events..." -ForegroundColor Cyan
 
-    foreach ($event in $audit) {
-        $time = $event.TimeGenerated | Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $account = $event.ReplacementStrings[5]
-        $domain = $event.ReplacementStrings[6]
-        $logonTypeCode = $event.ReplacementStrings[8]
-        $sourceIP = $event.ReplacementStrings[18]
+    foreach ($logonEvent in $audit) {
+        $time = $logonEvent.TimeCreated | Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        $account = $logonEvent.Properties[5].Value
+        $domain = $logonEvent.Properties[6].Value
+        $logonTypeCode = [string]$logonEvent.Properties[8].Value
+        $sourceIP = $logonEvent.Properties[18].Value
 
         # Translate logon type code to a description
         $logonTypeDescription = switch ($logonTypeCode) {

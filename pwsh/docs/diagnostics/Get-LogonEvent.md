@@ -5,7 +5,9 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-LogonEvents
+# Get-LogonEvent
+
+Alias: `Get-LogonEvents`
 
 ## SYNOPSIS
 Retrieves and displays user logon events from the Windows Security log.
@@ -13,11 +15,11 @@ Retrieves and displays user logon events from the Windows Security log.
 ## SYNTAX
 
 ```
-Get-LogonEvents [[-Days] <Int32>] [[-ShowGridView] <Boolean>] [-IncludeSystemAccounts]
+Get-LogonEvent [[-Days] <Int32>] [[-ShowGridView] <Boolean>] [-IncludeSystemAccounts]
 ```
 
 ## DESCRIPTION
-The Get-LogonEvents function retrieves logon events (EventID 4624) from the Security log
+The Get-LogonEvent function retrieves logon events (EventID 4624) from the Security log
 for a specified time period.
 It filters out system accounts and displays the results in 
 a grid view with detailed information including timestamp, account name, logon type (with
@@ -29,21 +31,21 @@ This function is useful for security auditing and monitoring user access to syst
 
 ### EXAMPLE 1
 ```
-Get-LogonEvents
+Get-LogonEvent
 ```
 
 Retrieves all user logon events from the past day and displays them in a grid view.
 
 ### EXAMPLE 2
 ```
-Get-LogonEvents -Days 7 -ShowGridView $false
+Get-LogonEvent -Days 7 -ShowGridView $false
 ```
 
 Retrieves logon events from the past week and returns them as objects without displaying the grid view.
 
 ### EXAMPLE 3
 ```
-Get-LogonEvents -Days 3 | Where-Object {$_.LogonTypeDescription -eq "Remote Desktop"}
+Get-LogonEvent -Days 3 | Where-Object {$_.LogonTypeDescription -eq "Remote Desktop"}
 ```
 
 Retrieves logon events from the past 3 days and filters for just Remote Desktop connections.

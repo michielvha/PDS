@@ -23,7 +23,17 @@ function Install-Choco {
     $chocoCommand = Get-Command -Name choco -ErrorAction SilentlyContinue
     if (!$chocoCommand) {
         Write-Output "Chocolatey will be installed"
-        Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        # Download the installer to a file and run that file, rather than evaluating a downloaded string.
+        $installer = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "choco-install-$([guid]::NewGuid()).ps1"
+        try {
+            Invoke-WebRequest -Uri 'https://community.chocolatey.org/install.ps1' -OutFile $installer -UseBasicParsing
+            & $installer
+        }
+        finally {
+            Remove-Item -Path $installer -Force -ErrorAction SilentlyContinue
+        }
     }
     else {
         $chocoVersion = choco --version

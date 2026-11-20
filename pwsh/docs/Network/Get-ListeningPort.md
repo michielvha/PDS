@@ -5,7 +5,9 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-Ports
+# Get-ListeningPort
+
+Alias: `Get-Ports`
 
 ## SYNOPSIS
 Lists all listening TCP and UDP ports with associated process information.
@@ -13,11 +15,11 @@ Lists all listening TCP and UDP ports with associated process information.
 ## SYNTAX
 
 ```
-Get-Ports
+Get-ListeningPort
 ```
 
 ## DESCRIPTION
-The Get-Ports function retrieves all currently listening TCP and UDP ports on the local system, similar to the 'netstat -tunlp' command on Linux. 
+The Get-ListeningPort function retrieves all currently listening TCP and UDP ports on the local system, similar to the 'netstat -tunlp' command on Linux. 
 For each port, it displays the protocol, local address and port, process ID (PID), and the name of the owning process. 
 This can be useful for troubleshooting, auditing, or monitoring network activity on a Windows machine.
 
@@ -25,7 +27,7 @@ This can be useful for troubleshooting, auditing, or monitoring network activity
 
 ### EXAMPLE 1
 ```
-Get-Ports
+Get-ListeningPort
 Lists all listening TCP and UDP ports with their associated process names and PIDs.
 ```
 

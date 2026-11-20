@@ -5,7 +5,7 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-RDSActiveSessions
+# Get-RDSActiveSession
 
 ## SYNOPSIS
 Retrieves and logs active Remote Desktop Services (RDS) user sessions.
@@ -13,12 +13,12 @@ Retrieves and logs active Remote Desktop Services (RDS) user sessions.
 ## SYNTAX
 
 ```
-Get-RDSActiveSessions [[-LogPath] <String>] [[-TranscriptPath] <String>] [[-IdleThresholdMinutes] <Int32>]
+Get-RDSActiveSession [[-LogPath] <String>] [[-TranscriptPath] <String>] [[-IdleThresholdMinutes] <Int32>]
  [-QuickMode]
 ```
 
 ## DESCRIPTION
-The Get-RDSActiveSessions function retrieves all active RDS user sessions that have not been 
+The Get-RDSActiveSession function retrieves all active RDS user sessions that have not been 
 idle for more than 1 hour (configurable).
 It displays details about each session including
 the username, idle time, server name, creation time, disconnect time, and session state.
@@ -35,7 +35,7 @@ All activity is also logged to a transcript file for auditing purposes.
 
 ### EXAMPLE 1
 ```
-Get-RDSActiveSessions
+Get-RDSActiveSession
 ```
 
 Retrieves all RDS sessions that haven't been idle for more than 1 hour, displays details,
@@ -43,14 +43,14 @@ and logs the information to the default log files.
 
 ### EXAMPLE 2
 ```
-Get-RDSActiveSessions -QuickMode
+Get-RDSActiveSession -QuickMode
 ```
 
 Quickly displays only the total count of active RDS sessions without detailed logging.
 
 ### EXAMPLE 3
 ```
-Get-RDSActiveSessions -IdleThresholdMinutes 30 -LogPath "D:\Logs\rds_sessions.csv"
+Get-RDSActiveSession -IdleThresholdMinutes 30 -LogPath "D:\Logs\rds_sessions.csv"
 ```
 
 Retrieves RDS sessions that haven't been idle for more than 30 minutes and logs

@@ -35,6 +35,7 @@ function Install-Winget {
         }
         catch {
             # Version check failed, but command exists - might need registration
+            Write-Verbose "winget version check failed, it may need registration: $_"
         }
     }
 
@@ -67,6 +68,7 @@ function Install-Winget {
                 }
                 catch {
                     # Registration didn't work, continue to download
+                    Write-Verbose "winget version check after registration failed, downloading instead: $_"
                 }
             }
         }

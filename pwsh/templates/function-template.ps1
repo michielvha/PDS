@@ -1,4 +1,4 @@
-function Template-Function {
+function Invoke-TemplateFunction {
     <#
     .SYNOPSIS
         Provide a brief summary of what the function does. This should be a concise description, typically one or two sentences, that gives an overview of the function's purpose and functionality.
@@ -22,14 +22,15 @@ function Template-Function {
 
     #>
 
-    # Parameters if any
+    # Parameters if any; CmdletBinding gives the function -Verbose and the other common parameters
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
         [string]$Example
     )
 
-    # function definition
-
+    # function definition: use every parameter you declare
+    Write-Verbose -Message "Running with Example '$Example'"
 }
 
 <#

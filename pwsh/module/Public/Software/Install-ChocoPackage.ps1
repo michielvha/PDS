@@ -1,4 +1,4 @@
-function Install-ChocoPackages {
+function Install-ChocoPackage {
     <#
     .SYNOPSIS
         Installs a list of Chocolatey packages from an array, if they are not already installed.
@@ -30,6 +30,7 @@ function Install-ChocoPackages {
         Learn more about Chocolatey and package management.
     #>
 
+    [Alias('Install-ChocoPackages')]
     param (
         [Alias("p")]
         [string[]]$packagesToInstall  # Accepts an array of package names

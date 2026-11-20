@@ -24,7 +24,15 @@ function Install-Scoop {
     if (!$Command) {
         Write-Output "Scoop will be installed"
         Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-        Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+        # Scoop's documented file install: download the installer, then run the file.
+        $installer = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "scoop-install-$([guid]::NewGuid()).ps1"
+        try {
+            Invoke-RestMethod -Uri 'https://get.scoop.sh' -OutFile $installer
+            & $installer
+        }
+        finally {
+            Remove-Item -Path $installer -Force -ErrorAction SilentlyContinue
+        }
     }
     else {
         $Version = scoop --version

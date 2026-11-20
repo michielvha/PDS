@@ -23,7 +23,17 @@ else {
 $chocoVersion = choco --version 2>$null
 if (!$chocoVersion) {
     Write-Output "Chocolatey will be installed"
-    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+    # Download the installer to a file and run that file, rather than evaluating a downloaded string.
+    $installer = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "choco-install-$([guid]::NewGuid()).ps1"
+    try {
+        Invoke-WebRequest -Uri 'https://community.chocolatey.org/install.ps1' -OutFile $installer -UseBasicParsing
+        & $installer
+    }
+    finally {
+        Remove-Item -Path $installer -Force -ErrorAction SilentlyContinue
+    }
 }
 else {
     Write-Output "Chocolatey is already installed. Version: $chocoVersion"
@@ -134,35 +144,35 @@ format = '[🏎💨 $workspace]($style) '
 "@
 
 # Function to create the .config directory and add the starship.toml file
-function Set-StarshipConfigForAllUsers {
+function Set-StarshipConfigForEveryUser {
     [CmdletBinding(SupportsShouldProcess)]
     param ()
 
     # Get all user profile directories
-    $userProfiles = Get-WmiObject Win32_UserProfile | Where-Object { $_.Special -eq $false }
+    $userProfiles = Get-CimInstance -ClassName Win32_UserProfile | Where-Object { $_.Special -eq $false }
     # loop through all users
-    foreach ($profile in $userProfiles) {
-        $userConfigDir = Join-Path $profile.LocalPath ".config"
+    foreach ($userProfile in $userProfiles) {
+        $userConfigDir = Join-Path $userProfile.LocalPath ".config"
         $starshipFile = Join-Path $userConfigDir "starship.toml"
         # Check if .config directory exists, create it if not
         if (-not (Test-Path $userConfigDir) -and $PSCmdlet.ShouldProcess($userConfigDir, 'Create directory')) {
-            Write-Host "Creating .config directory for user: $($profile.LocalPath)"
+            Write-Host "Creating .config directory for user: $($userProfile.LocalPath)"
             New-Item -Path $userConfigDir -ItemType Directory -Force
         }
         # Write the starship.toml configuration file
         if (-not (Test-Path $starshipFile)) {
             if ($PSCmdlet.ShouldProcess($starshipFile, 'Create starship configuration')) {
-                Write-Host "Creating starship.toml for user: $($profile.LocalPath)"
+                Write-Host "Creating starship.toml for user: $($userProfile.LocalPath)"
                 $configContent | Out-File -FilePath $starshipFile -Encoding utf8
             }
         }
         else {
-            Write-Host "starship.toml already exists for user: $($profile.LocalPath)"
+            Write-Host "starship.toml already exists for user: $($userProfile.LocalPath)"
         }
     }
 }
 # Run the function to create starship.toml for all users
-Set-StarshipConfigForAllUsers
+Set-StarshipConfigForEveryUser
 
 # 6.
 # ...

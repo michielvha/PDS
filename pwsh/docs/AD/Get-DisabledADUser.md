@@ -5,7 +5,9 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-DisabledADUsers
+# Get-DisabledADUser
+
+Alias: `Get-DisabledADUsers`
 
 ## SYNOPSIS
 Retrieves and displays disabled Active Directory user accounts.
@@ -13,11 +15,11 @@ Retrieves and displays disabled Active Directory user accounts.
 ## SYNTAX
 
 ```
-Get-DisabledADUsers [[-SearchBase] <String>] [[-Properties] <String[]>] [-ShowGridView] [[-Format] <String>]
+Get-DisabledADUser [[-SearchBase] <String>] [[-Properties] <String[]>] [-ShowGridView] [[-Format] <String>]
 ```
 
 ## DESCRIPTION
-The Get-DisabledADUsers function retrieves all disabled user accounts from Active Directory
+The Get-DisabledADUser function retrieves all disabled user accounts from Active Directory
 with detailed information about each account.
 Results can be displayed in various formats
 including a grid view, formatted table, or as raw objects for further processing.
@@ -28,35 +30,35 @@ This function automatically imports the required ActiveDirectory module if it's 
 
 ### EXAMPLE 1
 ```
-Get-DisabledADUsers
+Get-DisabledADUser
 ```
 
 Retrieves all disabled AD users and displays them in a formatted table.
 
 ### EXAMPLE 2
 ```
-Get-DisabledADUsers -ShowGridView
+Get-DisabledADUser -ShowGridView
 ```
 
 Retrieves all disabled AD users and displays them in a grid view.
 
 ### EXAMPLE 3
 ```
-Get-DisabledADUsers -Format List
+Get-DisabledADUser -Format List
 ```
 
 Retrieves all disabled AD users and displays them in a list format.
 
 ### EXAMPLE 4
 ```
-Get-DisabledADUsers -SearchBase "OU=Users,OU=Company,DC=contoso,DC=com"
+Get-DisabledADUser -SearchBase "OU=Users,OU=Company,DC=contoso,DC=com"
 ```
 
 Retrieves disabled AD users from the specified organizational unit.
 
 ### EXAMPLE 5
 ```
-$disabledUsers = Get-DisabledADUsers -Format None
+$disabledUsers = Get-DisabledADUser -Format None
 $disabledUsers | Export-Csv -Path "C:\Reports\DisabledUsers.csv" -NoTypeInformation
 ```
 

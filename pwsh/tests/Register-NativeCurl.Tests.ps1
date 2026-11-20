@@ -8,12 +8,21 @@ BeforeAll {
         $script:PROFILE = $ProfilePath
     }
 
-    # ncurl is defined by Invoke-Expression at run time; a stub lets the test mock it instead.
+    # The function smoke-tests ncurl after defining it; a module-scope stub, found before the
+    # global function, lets the test mock that call instead of running a real curl.exe.
     InModuleScope PDS { function script:ncurl { } }
+
+    # Returns the curl path the global ncurl closure calls. Get-Item and Remove-Item do not resolve a
+    # global: qualifier in a function: path, so the tests use the unqualified path, which finds the
+    # global function from the test scope.
+    function Get-NcurlTarget {
+        (Get-Item -Path function:ncurl).ScriptBlock.Module.SessionState.PSVariable.GetValue('nativeCurl')
+    }
 }
 
 AfterAll {
     InModuleScope PDS { Remove-Variable -Name PROFILE -Scope Script -ErrorAction SilentlyContinue }
+    Remove-Item -Path function:ncurl -ErrorAction SilentlyContinue
 }
 
 Describe 'Register-NativeCurl' {
@@ -24,19 +33,36 @@ Describe 'Register-NativeCurl' {
         Mock -ModuleName PDS Test-Path { $false } -ParameterFilter { $Path -eq 'C:\ProgramData\chocolatey\bin\curl.exe' }
         Mock -ModuleName PDS Test-Path { $true } -ParameterFilter { $Path -eq 'C:\Windows\System32\curl.exe' }
         Mock -ModuleName PDS Invoke-Expression { }
+        Remove-Item -Path function:ncurl -ErrorAction SilentlyContinue
         Mock -ModuleName PDS ncurl { @('curl 8.9.1 (Windows) libcurl/8.9.1', 'Release-Date: 2024-07-31') }
     }
 
-    It 'defines ncurl for the built-in curl and adds it to the profile' {
+    AfterEach {
+        Remove-Item -Path function:ncurl -ErrorAction SilentlyContinue
+    }
+
+    It 'defines a global ncurl for the built-in curl and adds it to the profile' {
         $output = Register-NativeCurl
 
-        Should -Invoke -ModuleName PDS Invoke-Expression -Times 1 -Exactly -ParameterFilter {
-            $Command -like "*function global:ncurl*& 'C:\Windows\System32\curl.exe'*"
-        }
+        Test-Path -Path function:global:ncurl | Should -BeTrue
+        Get-NcurlTarget | Should -Be 'C:\Windows\System32\curl.exe'
+        Should -Invoke -ModuleName PDS Invoke-Expression -Times 0 -Exactly
         $output | Should -Contain "Created 'ncurl' function for: C:\Windows\System32\curl.exe"
         $output | Should -Contain 'curl 8.9.1 (Windows) libcurl/8.9.1'
         $output | Should -Contain "Added ncurl function to your PowerShell profile at: $script:profilePath"
-        Get-Content -Path $script:profilePath -Raw | Should -BeLike '*function global:ncurl*'
+        Get-Content -Path $script:profilePath -Raw | Should -BeLike "*function global:ncurl*& 'C:\Windows\System32\curl.exe'*"
+    }
+
+    It 'makes the global ncurl pass every argument to the chosen curl' {
+        Register-NativeCurl | Out-Null
+        # Point the closure at a stand-in for curl.exe that echoes its arguments.
+        $fakeCurl = Join-Path $TestDrive 'fake-curl.ps1'
+        Set-Content -Path $fakeCurl -Value 'foreach ($argument in $args) { $argument }'
+        (Get-Item -Path function:ncurl).ScriptBlock.Module.SessionState.PSVariable.Set('nativeCurl', $fakeCurl)
+
+        $result = ncurl --head https://example.test
+
+        $result | Should -Be @('--head', 'https://example.test')
     }
 
     It 'prefers the Chocolatey curl when it exists' {
@@ -44,9 +70,7 @@ Describe 'Register-NativeCurl' {
 
         Register-NativeCurl | Out-Null
 
-        Should -Invoke -ModuleName PDS Invoke-Expression -Times 1 -Exactly -ParameterFilter {
-            $Command -like "*& 'C:\ProgramData\chocolatey\bin\curl.exe'*"
-        }
+        Get-NcurlTarget | Should -Be 'C:\ProgramData\chocolatey\bin\curl.exe'
     }
 
     It 'does not add ncurl to the profile twice' {
@@ -65,7 +89,7 @@ Describe 'Register-NativeCurl' {
         Register-NativeCurl -ErrorAction SilentlyContinue -ErrorVariable errors
 
         ($errors | Select-Object -First 1).ToString() | Should -BeLike 'Could not find curl.exe*'
-        Should -Invoke -ModuleName PDS Invoke-Expression -Times 0 -Exactly
+        Test-Path -Path function:global:ncurl | Should -BeFalse
         $script:profilePath | Should -Not -Exist
     }
 }

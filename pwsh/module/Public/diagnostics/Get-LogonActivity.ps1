@@ -1,10 +1,10 @@
-function Get-AllConnections {
+function Get-LogonActivity {
     <#
     .SYNOPSIS
         Retrieves and displays system logon and logoff events from the past 24 hours.
 
     .DESCRIPTION
-        The Get-AllConnections function retrieves all logon (Event ID 4624) and logoff (Event ID 4647) events
+        The Get-LogonActivity function retrieves all logon (Event ID 4624) and logoff (Event ID 4647) events
         from the Windows Security event log for the past 24 hours. It provides detailed information about
         each event including user name, domain, logon type, IP address (for remote connections), and timestamp.
 
@@ -15,13 +15,13 @@ function Get-AllConnections {
         identify potential security concerns or unusual access patterns.
 
     .EXAMPLE
-        Get-AllConnections
+        Get-LogonActivity
 
         Displays a summary of logon/logoff activity in the past 24 hours, followed by a detailed
         chronological table of all events with user, type, and source information.
 
     .EXAMPLE
-        $events = Get-AllConnections
+        $events = Get-LogonActivity
         $events | Where-Object {$_.LogonType -eq "RemoteInteractive"} | Format-Table
 
         Captures the returned events in a variable and filters to show only Remote Desktop (RDP) logons.
@@ -35,6 +35,9 @@ function Get-AllConnections {
           * Type 3: Network (e.g., connecting to shared folder)
           * Type 10: RemoteInteractive (RDP)
     #>
+    [Alias('Get-AllConnections')]
+    param ()
+
 
     # Get today's date
     $date = Get-Date
@@ -46,23 +49,39 @@ function Get-AllConnections {
     $logonEventID = 4624
     $logoffEventID = 4647
 
-    # Get the logon events from the Security log
-    $logonEvents = Get-EventLog -LogName Security -After $yesterday | Where-Object { $_.EventID -eq $logonEventID }
+    # Get the logon and logoff events from the Security log. Get-WinEvent reports an empty
+    # result as a NoMatchingEventsFound error, which means there are no events; any other
+    # error (such as access denied without elevation) is passed on.
+    $query = @{
+        LogName   = 'Security'
+        Id        = $logonEventID, $logoffEventID
+        StartTime = $yesterday
+    }
+    try {
+        $events = Get-WinEvent -FilterHashtable $query -ErrorAction Stop
+    }
+    catch {
+        if ($_.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*') {
+            throw
+        }
+        $events = @()
+    }
 
-    # Get the logoff events from the Security log
-    $logoffEvents = Get-EventLog -LogName Security -After $yesterday | Where-Object { $_.EventID -eq $logoffEventID }
+    # Split the logon events from the logoff events
+    $logonEvents = $events | Where-Object { $_.Id -eq $logonEventID }
+    $logoffEvents = $events | Where-Object { $_.Id -eq $logoffEventID }
 
     # Create an array to store all connection events
     $allEvents = @()
 
     # Process logon events
     if ($logonEvents) {
-        foreach ($event in $logonEvents) {
+        foreach ($logonEvent in $logonEvents) {
             # Extract useful information from the event
-            $userName = $event.ReplacementStrings[5]
-            $domainName = $event.ReplacementStrings[6]
-            $logonType = $event.ReplacementStrings[8]
-            $ipAddress = $event.ReplacementStrings[18]
+            $userName = $logonEvent.Properties[5].Value
+            $domainName = $logonEvent.Properties[6].Value
+            $logonType = $logonEvent.Properties[8].Value
+            $ipAddress = $logonEvent.Properties[18].Value
 
             # Convert logon type number to descriptive text
             $logonTypeText = switch ($logonType) {
@@ -80,31 +99,31 @@ function Get-AllConnections {
 
             # Add to our collection
             $allEvents += [PSCustomObject]@{
-                Time      = $event.TimeGenerated
+                Time      = $logonEvent.TimeCreated
                 Type      = "Logon"
                 User      = "$domainName\$userName"
                 LogonType = $logonTypeText
                 IPAddress = if ($ipAddress -and $ipAddress -ne "-") { $ipAddress } else { "Local" }
-                EventID   = $event.EventID
+                EventID   = $logonEvent.Id
             }
         }
     }
 
     # Process logoff events
     if ($logoffEvents) {
-        foreach ($event in $logoffEvents) {
+        foreach ($logoffEvent in $logoffEvents) {
             # Extract useful information from the event
-            $userName = $event.ReplacementStrings[1]
-            $domainName = $event.ReplacementStrings[2]
+            $userName = $logoffEvent.Properties[1].Value
+            $domainName = $logoffEvent.Properties[2].Value
 
             # Add to our collection
             $allEvents += [PSCustomObject]@{
-                Time      = $event.TimeGenerated
+                Time      = $logoffEvent.TimeCreated
                 Type      = "Logoff"
                 User      = "$domainName\$userName"
                 LogonType = "N/A"
                 IPAddress = "N/A"
-                EventID   = $event.EventID
+                EventID   = $logoffEvent.Id
             }
         }
     }

@@ -1,10 +1,10 @@
-﻿function Set-StarshipConfigForAllUsers {
+﻿function Set-StarshipConfigForEveryUser {
     <#
 .SYNOPSIS
     This function sets the Starship configuration for all users on the system.
 
 .DESCRIPTION
-    The `Set-StarshipConfigForAllUsers` function searches for the user profiles on the system,
+    The `Set-StarshipConfigForEveryUser` function searches for the user profiles on the system,
     creates a `.config` directory in each profile (if it doesn't exist), and then writes the
     Starship configuration (`starship.toml`) to that directory. If the file already exists, the
     function does not overwrite it.
@@ -20,12 +20,12 @@
     color = "blue"
     "@
 
-    Set-StarshipConfigForAllUsers
+    Set-StarshipConfigForEveryUser
 
     This will set the Starship configuration for all users on the system using the specified content.
 
 .EXAMPLE
-    Set-StarshipConfigForAllUsers -configContent @"
+    Set-StarshipConfigForEveryUser -configContent @"
     [character]
     symbol = "❯"
     color = "blue"
@@ -41,13 +41,14 @@
     # TODO: add a step that checks if starship is already installed installed, if not install it with choco
 
     [CmdletBinding(SupportsShouldProcess)]
+    [Alias('Set-StarshipConfigForAllUsers')]
     param (
         # Define a string parameter for the starship configuration content
         [Parameter(Mandatory = $true, HelpMessage = "Provide the content for the starship.toml configuration.")]
         [string]$configContent
     )
     # Get all user profile directories
-    $userProfiles = Get-WmiObject Win32_UserProfile | Where-Object { $_.Special -eq $false }
+    $userProfiles = Get-CimInstance -ClassName Win32_UserProfile | Where-Object { $_.Special -eq $false }
     # loop through all users
     foreach ($uprofile in $userProfiles) {
         $userConfigDir = Join-Path $uprofile.LocalPath ".config"

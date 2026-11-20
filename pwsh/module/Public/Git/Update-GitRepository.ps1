@@ -1,4 +1,4 @@
-function Update-GitRepositories {
+function Update-GitRepository {
     <#
     .SYNOPSIS
         Updates all Git repositories in immediate subdirectories by performing a git pull operation.
@@ -11,11 +11,11 @@ function Update-GitRepositories {
         The root directory containing the Git repositories to update. Defaults to the current directory.
 
     .EXAMPLE
-        Update-GitRepositories
+        Update-GitRepository
         Updates all Git repositories in the immediate subdirectories of the current directory.
 
     .EXAMPLE
-        Update-GitRepositories -RootDirectory "C:\Projects"
+        Update-GitRepository -RootDirectory "C:\Projects"
         Updates all Git repositories in the immediate subdirectories of the C:\Projects directory.
 
     .NOTES
@@ -28,6 +28,7 @@ function Update-GitRepositories {
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
+    [Alias('Update-GitRepositories')]
     param (
         [Parameter(Mandatory = $false, Position = 0)]
         [string]$RootDirectory = (Get-Location)

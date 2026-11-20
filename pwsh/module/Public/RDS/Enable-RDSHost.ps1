@@ -1,4 +1,4 @@
-function Enable-RDSHosts {
+function Enable-RDSHost {
     <#
     .SYNOPSIS
         Enables connections to specified Remote Desktop Session Hosts.
@@ -21,17 +21,17 @@ function Enable-RDSHosts {
         If both ServerNames and ConfigPath are provided, ServerNames takes precedence.
 
     .EXAMPLE
-        Enable-RDSHosts
+        Enable-RDSHost
 
         Enables new connections on the default set of RDS hosts.
 
     .EXAMPLE
-        Enable-RDSHosts -ServerNames "server1.domain.com", "server2.domain.com"
+        Enable-RDSHost -ServerNames "server1.domain.com", "server2.domain.com"
 
         Enables new connections on the specified RDS servers.
 
     .EXAMPLE
-        Enable-RDSHosts -ConfigPath "C:\Config\rds-servers.txt"
+        Enable-RDSHost -ConfigPath "C:\Config\rds-servers.txt"
 
         Enables new connections on RDS servers listed in the specified configuration file.
 
@@ -46,6 +46,7 @@ function Enable-RDSHosts {
     #>
 
     [CmdletBinding()]
+    [Alias('Enable-RDSHosts')]
     param(
         [Parameter(Mandatory = $false)]
         [string[]]$ServerNames,

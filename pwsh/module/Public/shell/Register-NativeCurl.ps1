@@ -41,7 +41,7 @@ function Register-NativeCurl {
         }
     }
 
-    # Create the ncurl function for the current session
+    # Definition persisted to the profile, so later sessions get the same function
     $functionDef = @"
 function global:ncurl {
     param([Parameter(ValueFromRemainingArguments=`$true)]`$params)
@@ -49,7 +49,13 @@ function global:ncurl {
 }
 "@
 
-    Invoke-Expression -Command $functionDef
+    # Create the ncurl function for the current session; the closure keeps the chosen curl path
+    $nativeCurl = $curlPath
+    $ncurlBody = {
+        param([Parameter(ValueFromRemainingArguments = $true)]$params)
+        & $nativeCurl $params
+    }.GetNewClosure()
+    Set-Item -Path function:global:ncurl -Value $ncurlBody
     Write-Output "Created 'ncurl' function for: $curlPath"
 
     # Test that it works

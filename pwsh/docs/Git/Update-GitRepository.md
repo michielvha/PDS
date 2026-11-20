@@ -1,4 +1,6 @@
-# Update-GitRepositories
+# Update-GitRepository
+
+Alias: `Update-GitRepositories`
 
 Updates all Git repositories in subdirectories by performing a git pull operation.
 
@@ -58,25 +60,25 @@ Accept wildcard characters: False
 
 ### Example 1
 ```powershell
-Update-GitRepositories
+Update-GitRepository
 ```
 Updates all Git repositories in the current directory.
 
 ### Example 2
 ```powershell
-Update-GitRepositories -RootDirectory "C:\Projects"
+Update-GitRepository -RootDirectory "C:\Projects"
 ```
 Updates all Git repositories in the C:\Projects directory.
 
 ### Example 3
 ```powershell
-Update-GitRepositories -Recurse
+Update-GitRepository -Recurse
 ```
 Updates all Git repositories in the current directory and all its subdirectories recursively.
 
 ### Example 4
 ```powershell
-Update-GitRepositories -Branch main
+Update-GitRepository -Branch main
 ```
 Updates all Git repositories in the current directory, checking out the main branch first.
 
