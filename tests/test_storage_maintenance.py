@@ -509,8 +509,8 @@ class StorageBalanceTests(unittest.TestCase):
         result = self.run_script('balance', root=True, hour='03', tables=tables)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.balances(), [
-            ['balance', 'start', '-ddevid=1,usage=20,limit=5', '/'],
-            ['balance', 'start', '-ddevid=1,usage=20,limit=5', '/']])
+            ['balance', 'start', '-ddevid=1,usage=20,limit=1..5', '/'],
+            ['balance', 'start', '-ddevid=1,usage=20,limit=1..5', '/']])
         self.assertEqual(len(self.commands('sleep')), 2)
         for entry in self.commands('btrfs'):
             self.assertFalse(any(arg.startswith('-m') for arg in entry['args']), entry)
@@ -539,7 +539,7 @@ class StorageBalanceTests(unittest.TestCase):
                                  tables=[device_table(100 * GIB, 1048576),
                                          device_table(100 * GIB, 20 * GIB)])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual(self.balances(), [['balance', 'start', '-ddevid=2,usage=20,limit=5', '/']])
+        self.assertEqual(self.balances(), [['balance', 'start', '-ddevid=2,usage=20,limit=1..5', '/']])
 
     def test_balance_escalates_usage_and_stops_when_nothing_relocates(self):
         result = self.run_script('balance', root=True, hour='03',
@@ -547,8 +547,8 @@ class StorageBalanceTests(unittest.TestCase):
                                  balance_output='Done, had to relocate 0 out of 120 chunks')
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertEqual([args[2] for args in self.balances()], [
-            '-ddevid=1,usage=20,limit=5', '-ddevid=1,usage=50,limit=5',
-            '-ddevid=1,usage=90,limit=5'])
+            '-ddevid=1,usage=20,limit=1..5', '-ddevid=1,usage=50,limit=1..5',
+            '-ddevid=1,usage=90,limit=1..5'])
         self.assertIn('WARN', result.stdout)
 
     def test_balance_is_bounded_by_max_batches(self):
@@ -578,7 +578,7 @@ class StorageBalanceTests(unittest.TestCase):
         result = self.run_script('balance', root=True, hour='03', options=['--dry-run'],
                                  tables=[device_table(1048576, 100 * GIB)])
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn('DRY-RUN would run: btrfs balance start -ddevid=1,usage=20,limit=5 /',
+        self.assertIn('DRY-RUN would run: btrfs balance start -ddevid=1,usage=20,limit=1..5 /',
                       result.stdout)
         self.assertFalse(self.balances())
 
@@ -632,8 +632,8 @@ Id Path           single       DUP         DUP      Unallocated  Total        Sl
                                          self.single_device_table(17 * GIB)])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.balances(), [
-            ['balance', 'start', '-ddevid=1,usage=20,limit=5', '/'],
-            ['balance', 'start', '-ddevid=1,usage=20,limit=5', '/']])
+            ['balance', 'start', '-ddevid=1,usage=20,limit=1..5', '/'],
+            ['balance', 'start', '-ddevid=1,usage=20,limit=1..5', '/']])
         self.assertIn('OK 1 of the devices', result.stdout)
 
     def test_balance_single_device_dup_by_day_fixes_only_an_urgent_shortfall(self):
@@ -645,7 +645,7 @@ Id Path           single       DUP         DUP      Unallocated  Total        Sl
         result = self.run_script('balance', root=True, hour='14', df=dup, options=['--dry-run'],
                                  tables=[self.single_device_table(1048576)])
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn('-ddevid=1,usage=20,limit=5', result.stdout)
+        self.assertIn('-ddevid=1,usage=20,limit=1..5', result.stdout)
 
     def test_check_warns_for_a_single_device_below_the_reserve(self):
         usage = USAGE.replace('Metadata,RAID1', 'Metadata,DUP').replace(
@@ -740,7 +740,12 @@ class StorageFedoraIntegration(unittest.TestCase):
                     'truncate -s 12G /var/tmp/pds-loop/a.img /var/tmp/pds-loop/b.img')
         cls.loop_files = ['/var/tmp/pds-loop/a.img', '/var/tmp/pds-loop/b.img']
         for image in ('a.img', 'b.img'):
-            device = cls.execute('losetup --find --show /var/tmp/pds-loop/' + image).stdout.strip()
+            # A container's /dev can predate loop nodes the kernel adds later.
+            device = cls.execute(
+                'free=$(losetup --find); '
+                '[[ "$free" =~ ^/dev/loop[0-9]+$ ]]; '
+                'test -b "$free" || mknod "$free" b 7 "${free#/dev/loop}"; '
+                'losetup --show "$free" /var/tmp/pds-loop/' + image).stdout.strip()
             if not re.fullmatch(r'/dev/loop[0-9]+', device):
                 raise AssertionError(f'Unexpected owned loop device: {device}')
             cls.loops.append(device)
@@ -837,7 +842,10 @@ class StorageFedoraIntegration(unittest.TestCase):
             'truncate -s 21G ~/.cache/go-build/aa/'
             'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d; '
             'touch -d "3 days ago" ~/.cache/go-build/aa/'
-            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d',
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-d; '
+            'mkdir -p ~/.cache/go-build/bb; '
+            'head -c 64M /dev/urandom >~/.cache/go-build/bb/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-d; '
+            'touch -d "3 days ago" ~/.cache/go-build/bb/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-d',
             user='1000:1000')
         self.execute('btrfs filesystem sync /test-btrfs')
         before_free = int(self.execute(
@@ -1012,20 +1020,30 @@ systemctl enable pds-test-loop.service
         self.execute(
             'mkdir -p /test-btrfs/balance-fixture; cd /test-btrfs/balance-fixture; '
             'for i in $(seq 1 24); do head -c 64M /dev/urandom >file-$i; done; '
-            'sync; rm file-*[02468]; btrfs filesystem sync /test-btrfs', timeout=300)
+            'sync; for i in $(seq 1 24); do (( i % 8 == 0 )) || rm file-$i; done; '
+            'btrfs filesystem sync /test-btrfs', timeout=300)
+        # The container shares the host's load average; pin a quiet one.
+        self.execute('printf "0.10 0.10 0.10 1/100 1\\n" >/var/tmp/pds-quiet-load')
+        quiet = 'PDS_STORAGE_LOADAVG=/var/tmp/pds-quiet-load '
         dry = self.execute(f'bash {script} balance --user pds-test --mount /test-btrfs '
                            '--target-gib 11 --dry-run', check=False)
         self.assertEqual(dry.returncode, 1, dry.stdout + dry.stderr)
         self.assertIn('DRY-RUN would run: btrfs balance start -ddevid=', dry.stdout)
-        real = self.execute(f'bash {script} balance --user pds-test --mount /test-btrfs '
-                            '--target-gib 11 --max-batches 2 --pause 0', check=False,
+        real = self.execute(quiet + f'bash {script} balance --user pds-test --mount /test-btrfs '
+                            '--target-gib 11 --max-batches 3 --pause 0', check=False,
                             timeout=600)
         self.assertIn(real.returncode, (0, 1), real.stdout + real.stderr)
         relocated = [int(n) for n in re.findall(r'relocate ([0-9]+) out of', real.stdout)]
-        self.assertTrue(relocated and sum(relocated) > 0, real.stdout + real.stderr)
-        self.assertLessEqual(len(relocated), 2)
+        if not (relocated and sum(relocated) > 0):
+            layout = self.execute(
+                'btrfs filesystem usage -b -T /test-btrfs; '
+                f'btrfs inspect-internal dump-tree -t chunk {shlex.quote(self.loops[0])} | '
+                'grep -E "CHUNK_ITEM|type|devid"; btrfs filesystem du -s /test-btrfs/*',
+                check=False)
+            self.fail(real.stdout + real.stderr + layout.stdout + layout.stderr)
+        self.assertLessEqual(len(relocated), 3)
         self.execute('btrfs balance status /test-btrfs')
-        self.execute('test "$(ls /test-btrfs/balance-fixture | wc -l)" = 12; '
+        self.execute('test "$(ls /test-btrfs/balance-fixture | wc -l)" = 3; '
                      'rm -r /test-btrfs/balance-fixture')
 
     def test_ac03_ac08_native_go_flags_preserve_modules(self):

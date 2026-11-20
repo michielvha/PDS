@@ -54,7 +54,7 @@ with the least unallocated space:
 1. It stops if another balance is already running.
 2. It waits while the one-minute load average is at or above the number of CPUs,
    checking ten times with the pause in between, and otherwise postpones to the next run.
-3. It runs `btrfs balance start -ddevid=ID,usage=U,limit=5`, starting at
+3. It runs `btrfs balance start -ddevid=ID,usage=U,limit=1..5`, starting at
    `usage=20` and moving to 50 and 90 only when a batch relocates nothing.
 4. It pauses 60 seconds and measures again.
 5. It stops when the target is met, after 12 batches, or when no chunk below

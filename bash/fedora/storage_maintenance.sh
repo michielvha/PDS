@@ -320,7 +320,7 @@ _pds_storage_balance() {
             return 1
         fi
         if (( storage_dry_run )); then
-            printf 'DRY-RUN would run: btrfs balance start -ddevid=%s,usage=%s,limit=5 %s\n' \
+            printf 'DRY-RUN would run: btrfs balance start -ddevid=%s,usage=%s,limit=1..5 %s\n' \
                 "$short_id" "${usages[step]}" "$storage_mount"
             return 1
         fi
@@ -334,9 +334,11 @@ _pds_storage_balance() {
             return 2
         fi
         _pds_storage_wait_for_quiet_host || return $?
-        printf 'INFO balancing data chunks off %s (devid %s): usage<=%s limit=5\n' \
+        printf 'INFO balancing data chunks off %s (devid %s): usage<=%s limit=1..5\n' \
             "$short_path" "$short_id" "${usages[step]}"
-        output=$(btrfs balance start -ddevid="$short_id",usage="${usages[step]}",limit=5 \
+        # The range form matters: with devid and usage, kernel 7.1 relocates
+        # nothing for a single-value limit=5 but honours limit=1..5.
+        output=$(btrfs balance start -ddevid="$short_id",usage="${usages[step]}",limit=1..5 \
             "$storage_mount" 2>&1) || {
             printf '%s\n' "$output"
             _pds_storage_error 'Balance batch failed.'
