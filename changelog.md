@@ -7,6 +7,7 @@
 - Keep Btrfs allocation headroom from the Fedora storage maintenance: a new `balance` mode and hourly `pds-btrfs-balance` timer check per-device unallocated space against what the metadata profile needs (two devices for RAID1), aiming for 16 GiB at night and 8 GiB by day. When a device is short it balances data chunks off it in bounded, load-guarded batches. `--dry-run` previews it.
 - Docker retention also prunes build cache unused for 72 hours and dangling images older than a day. Volumes and containers stay untouched.
 - Add `Install-SwiftToolchain`, which prepares a Windows machine to build Swift packages: Git, the Visual Studio 2022 Build Tools with MSVC and the Windows 11 SDK, the latest Swift toolchain (or a pinned `-Version`) through winget, and Developer Mode, verified with `swift --version`.
+- Add `Install-DotnetSdk`, which installs or upgrades the newest .NET SDK of a release channel (10, the current LTS, by default) through winget and checks `dotnet --list-sdks`.
 - Add `Enable-WinRmServer` and `Disable-WinRmServer`, which prepare a Windows test host for Ansible over WinRM with NTLM authentication, also on networks classed Public, and undo it.
 
 ### Documentation
