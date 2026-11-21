@@ -40,6 +40,8 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          # Reads the Releases on main, to judge it from the latest released tag.
+          GH_TOKEN: ${{ github.token }}
         run: scripts/detect-changes.sh
 
   checks:

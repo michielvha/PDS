@@ -12,8 +12,8 @@ git init -q -b main "$work/repo"
 cd "$work/repo"
 git config user.email test@example.invalid
 git config user.name test
-mkdir -p pwsh packaging bash tests .github scripts docs
-for f in pwsh/a.ps1 packaging/a bash/a.sh tests/a.sh .github/a.yml scripts/a.sh docs/a.md readme.md PSScriptAnalyzerSettings.psd1; do
+mkdir -p pwsh/docs packaging bash tests .github scripts docs darwin
+for f in pwsh/a.ps1 pwsh/docs/a.md packaging/a bash/a.sh tests/a.sh .github/a.yml scripts/a.sh docs/a.md readme.md darwin/a.ps1 PSScriptAnalyzerSettings.psd1; do
   echo base > "$f"
 done
 git add -A && git commit -qm base
@@ -52,6 +52,8 @@ check 'packaging only' push feature "$(commit_on "$main_tip" packaging/a)" true 
 check 'bash only' push feature "$(commit_on "$main_tip" bash/a.sh)" true false false
 check 'package tests only' push feature "$(commit_on "$main_tip" tests/a.sh)" true false false
 check 'documentation with readme.md' push feature "$(commit_on "$main_tip" docs/a.md readme.md)" false false false
+check 'markdown under pwsh/' push feature "$(commit_on "$main_tip" pwsh/docs/a.md)" false false false
+check 'powershell file outside pwsh/' push feature "$(commit_on "$main_tip" darwin/a.ps1)" false true false
 check 'workflow change' push feature "$(commit_on "$main_tip" .github/a.yml)" true true true
 check 'script change' push feature "$(commit_on "$main_tip" scripts/a.sh)" true true false
 
@@ -62,21 +64,28 @@ third="$(commit_on "$second" docs/a.md)"
 check 'later push of a branch' push feature "$second" true true false
 check 'documentation push on a branch with code' push feature "$third" true true false
 
-# A force push is judged on its new diff from main, not on what it replaced.
-check 'force-pushed branch' push feature "$(commit_on "$main_tip" pwsh/a.ps1)" false true false
+# A force push is judged on its new diff from main: dropping the bash/ change drops its checks.
+check 'force push that drops a bash/ change' push feature "$(commit_on "$main_tip" pwsh/a.ps1)" false true false
 
-# main is judged on everything since the latest stable tag it contains.
+# main is judged on everything since the latest stable tag it contains that has a Release.
 released="$(commit_on "$main_tip" bash/a.sh)"
 git tag v1.2.3 "$released"
 git tag v1.2.10 "$released"
 prerelease="$(commit_on "$released" pwsh/a.ps1)"
 git tag v1.3.0-rc.1 "$prerelease"
 merged="$(commit_on "$prerelease" docs/a.md)"
-check 'main since the latest stable tag' push main "$merged" false true false
-check 'main with only documentation since the tag' push main "$(commit_on "$released" docs/a.md)" false false false
+published=$'v1.2.3\nv1.2.10\nv1.3.0-rc.1'
+check 'main since the latest released stable tag' push main "$merged" false true false "PUBLISHED_TAGS=$published"
+check 'main with only documentation since the tag' push main "$(commit_on "$released" docs/a.md)" false false false "PUBLISHED_TAGS=$published"
+
+# A newer stable tag whose release failed has no Release: main is judged from the older one.
+failed="$(commit_on "$released" packaging/a)"
+git tag v1.2.11 "$failed"
+after_failed="$(commit_on "$failed" docs/a.md)"
+check 'main after a tag whose release failed' push main "$after_failed" true false false "PUBLISHED_TAGS=$published"
 
 # Anything the script cannot judge runs every check.
-check 'main without a stable tag' push main "$(commit_on "$main_tip" docs/a.md)" true true true
+check 'main without a released stable tag' push main "$merged" true true true PUBLISHED_TAGS=
 check 'branch without a main ref' push feature "$(commit_on "$main_tip" docs/a.md)" true true true MAIN_REF=refs/remotes/origin/missing
 check 'dispatch' workflow_dispatch feature "$third" true true true
 
