@@ -1,9 +1,9 @@
 name: Checks
 
 # Every PDS check, defined once. ci.yml runs it on each branch push at the
-# default version with only the groups the push changed; release.yml runs
-# every check on the exact tag at the tag's version and releases the .deb it
-# uploads. It computes no version and receives no secrets.
+# default version with only the groups the push's changes need; release.yml
+# passes no group inputs, so a tag runs every check at the tag's version, and
+# releases the .deb it uploads. It computes no version and receives no secrets.
 on:
   workflow_call:
     inputs:
@@ -19,6 +19,10 @@ on:
         description: "'true' runs the PowerShell checks"
         type: string
         default: 'true'
+      workflows:
+        description: "'true' runs actionlint"
+        type: string
+        default: 'true'
 
 permissions: {}
 
@@ -29,6 +33,7 @@ defaults:
 jobs:
   workflows:
     name: Lint workflows
+    if: inputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
