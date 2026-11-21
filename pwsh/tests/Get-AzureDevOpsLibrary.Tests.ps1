@@ -16,6 +16,7 @@ Describe 'Get-AzureDevOpsLibrary' {
         $script:destination = Join-Path $TestDrive ([guid]::NewGuid().ToString())
         $script:gitExitCode = 0
         $script:pullLocations = @()
+        $script:gitCalls = @()
         $script:params = @{
             Organization        = 'contoso'
             Project             = 'MyProject'
@@ -28,6 +29,7 @@ Describe 'Get-AzureDevOpsLibrary' {
         Mock -ModuleName PDS Write-Warning { }
         Mock -ModuleName PDS Invoke-RestMethod { [pscustomobject]@{ value = $script:repos } }
         Mock -ModuleName PDS git {
+            $script:gitCalls += [pscustomobject]@{ Arguments = "$args"; Header = $env:GIT_CONFIG_VALUE_0; Key = $env:GIT_CONFIG_KEY_0 }
             if ($args[0] -eq 'pull') {
                 $script:pullLocations += (Get-Location).Path
             }
@@ -44,21 +46,34 @@ Describe 'Get-AzureDevOpsLibrary' {
         }
     }
 
-    It 'creates the destination and clones every repository with the encoded username and token' {
+    It 'creates the destination and clones every repository from its URL without a user name' {
         Get-AzureDevOpsLibrary @script:params
 
         $script:destination | Should -Exist
         Should -Invoke -ModuleName PDS git -Times 1 -Exactly -ParameterFilter {
             $args[0] -eq 'clone' -and
-            $args[1] -eq 'https://john%40contoso.com:pat123@dev.azure.com/contoso/MyProject/_git/repo1' -and
+            $args[1] -eq 'https://dev.azure.com/contoso/MyProject/_git/repo1' -and
             $args[2] -eq (Join-Path $script:destination 'repo1')
         }
         Should -Invoke -ModuleName PDS git -Times 1 -Exactly -ParameterFilter {
             $args[0] -eq 'clone' -and
-            $args[1] -eq 'https://john%40contoso.com:pat123@dev.azure.com/contoso/MyProject/_git/repo2' -and
+            $args[1] -eq 'https://dev.azure.com/contoso/MyProject/_git/repo2' -and
             $args[2] -eq (Join-Path $script:destination 'repo2')
         }
         Should -Invoke -ModuleName PDS Write-Host -Times 1 -Exactly -ParameterFilter { $Object -eq '  Successful: 2' }
+    }
+
+    It 'gives git the token only as a header for the duration of each call' {
+        Get-AzureDevOpsLibrary @script:params
+
+        $expectedHeader = 'Authorization: Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('john@contoso.com:pat123'))
+        $clones = @($script:gitCalls | Where-Object Arguments -Like 'clone *')
+        $clones.Count | Should -Be 2
+        $clones.Key | Should -Be @('http.extraHeader', 'http.extraHeader')
+        $clones.Header | Should -Be @($expectedHeader, $expectedHeader)
+        $script:gitCalls.Arguments | Should -Not -Match 'pat123'
+        $env:GIT_CONFIG_COUNT | Should -BeNullOrEmpty
+        $env:GIT_CONFIG_VALUE_0 | Should -BeNullOrEmpty
     }
 
     It 'pulls a repository that already exists inside its directory' {
@@ -68,6 +83,11 @@ Describe 'Get-AzureDevOpsLibrary' {
         Get-AzureDevOpsLibrary @script:params
 
         $script:pullLocations | Should -Be $repo1
+        # A clone made by an earlier version kept the token in its remote URL; it is replaced.
+        Should -Invoke -ModuleName PDS git -Times 1 -Exactly -ParameterFilter {
+            "$args" -eq 'remote set-url origin https://dev.azure.com/contoso/MyProject/_git/repo1'
+        }
+        ($script:gitCalls | Where-Object Arguments -EQ 'pull').Header | Should -Match '^Authorization: Basic '
         Should -Invoke -ModuleName PDS git -Times 0 -ParameterFilter { $args[0] -eq 'clone' -and $args[2] -eq $repo1 }
         Should -Invoke -ModuleName PDS git -Times 1 -Exactly -ParameterFilter { $args[0] -eq 'clone' -and $args[2] -like '*repo2' }
     }

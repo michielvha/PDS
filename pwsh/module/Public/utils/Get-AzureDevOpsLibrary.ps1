@@ -99,6 +99,23 @@ function Get-AzureDevOpsLibrary {
         # Encode PAT for Basic Authentication
         $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PersonalAccessToken"))
 
+        # Git gets the credential as an HTTP header through GIT_CONFIG_* environment variables,
+        # set only around each clone or pull, so the token never lands in .git/config or on a
+        # command line.
+        $gitAuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${Username}:$PersonalAccessToken"))
+        function Invoke-AuthenticatedGit {
+            param ([Parameter(ValueFromRemainingArguments = $true)][string[]]$GitArgument)
+            $env:GIT_CONFIG_COUNT = '1'
+            $env:GIT_CONFIG_KEY_0 = 'http.extraHeader'
+            $env:GIT_CONFIG_VALUE_0 = "Authorization: Basic $gitAuthInfo"
+            try {
+                git @GitArgument 2>&1
+            }
+            finally {
+                Remove-Item -Path Env:GIT_CONFIG_COUNT, Env:GIT_CONFIG_KEY_0, Env:GIT_CONFIG_VALUE_0 -ErrorAction SilentlyContinue
+            }
+        }
+
         # API endpoint
         $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories?api-version=7.0"
     }
@@ -132,7 +149,8 @@ function Get-AzureDevOpsLibrary {
             # Clone each repository
             foreach ($repo in $repos) {
                 $repoName = $repo.name
-                $cloneUrl = $repo.remoteUrl
+                # The remote URL without any user name in it
+                $cleanUrl = $repo.remoteUrl -replace "https://[^@]*@", "https://"
                 $repoPath = Join-Path $DestinationPath $repoName
 
                 Write-Host "Processing: $repoName" -ForegroundColor Yellow
@@ -141,7 +159,9 @@ function Get-AzureDevOpsLibrary {
                     Write-Host "  Repository already exists. Pulling latest changes..." -ForegroundColor Gray
                     Push-Location $repoPath
                     try {
-                        $gitOutput = git pull 2>&1
+                        # A clone made by an earlier version kept the token in its remote URL.
+                        git remote set-url origin $cleanUrl 2>&1 | Out-Null
+                        $gitOutput = Invoke-AuthenticatedGit pull
                         if ($LASTEXITCODE -eq 0) {
                             Write-Host "  ✓ Updated successfully" -ForegroundColor Green
                             $successCount++
@@ -167,15 +187,8 @@ function Get-AzureDevOpsLibrary {
 
                     Write-Host "  Cloning repository..." -ForegroundColor Gray
 
-                    # Remove any existing username from URL and add your username + PAT
-                    # URL-encode the username to handle special characters like @
-                    # Format: https://encoded-username:PAT@dev.azure.com/org/project/_git/repo
-                    $cleanUrl = $cloneUrl -replace "https://[^@]*@", "https://"
-                    $encodedUsername = [System.Web.HttpUtility]::UrlEncode($Username)
-                    $authenticatedUrl = $cleanUrl -replace "https://", "https://${encodedUsername}:$PersonalAccessToken@"
-
                     try {
-                        $gitOutput = git clone $authenticatedUrl $repoPath 2>&1
+                        $gitOutput = Invoke-AuthenticatedGit clone $cleanUrl $repoPath
                         if ($LASTEXITCODE -eq 0) {
                             Write-Host "  ✓ Cloned successfully" -ForegroundColor Green
                             $successCount++

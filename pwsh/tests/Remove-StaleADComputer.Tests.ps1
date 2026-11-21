@@ -23,7 +23,14 @@ Describe 'Remove-StaleADComputer' {
             [pscustomobject]@{ Name = 'PC-RECENT'; DistinguishedName = 'CN=PC-RECENT,DC=contoso,DC=com'; LastLogonDate = (Get-Date).AddMonths(-2) }
             [pscustomobject]@{ Name = 'PC-STALE'; DistinguishedName = 'CN=PC-STALE,DC=contoso,DC=com'; LastLogonDate = (Get-Date).AddMonths(-18) }
             [pscustomobject]@{ Name = 'PC-ANCIENT'; DistinguishedName = 'CN=PC-ANCIENT,DC=contoso,DC=com'; LastLogonDate = (Get-Date).AddYears(-5) }
+            [pscustomobject]@{ Name = 'PC-NEW'; DistinguishedName = 'CN=PC-NEW,DC=contoso,DC=com'; LastLogonDate = $null }
         }
+    }
+
+    It 'never removes a computer that has not logged on yet' {
+        Remove-StaleADComputer
+
+        Should -Invoke Remove-ADComputer -ModuleName PDS -Times 0 -Exactly -ParameterFilter { $Identity -eq 'CN=PC-NEW,DC=contoso,DC=com' }
     }
 
     It 'removes only computers not seen within the default year' {

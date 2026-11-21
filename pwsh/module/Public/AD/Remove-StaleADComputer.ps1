@@ -45,6 +45,12 @@ function Remove-StaleADComputer {
     $cutoffDate = (Get-Date).AddYears(-$Years)
 
     foreach ($computer in $computers) {
+        # A computer that never logged on has no LastLogonDate; $null would compare as older
+        # than any date, so it is skipped rather than removed.
+        if ($null -eq $computer.LastLogonDate) {
+            Write-Verbose "$($computer.name) - Skipped - never logged on"
+            continue
+        }
         if ($computer.LastLogonDate -lt $cutoffDate) {
             try {
                 if ($PSCmdlet.ShouldProcess($computer.DistinguishedName, 'Remove AD computer')) {
