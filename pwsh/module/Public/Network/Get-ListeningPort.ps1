@@ -44,7 +44,8 @@ function Get-ListeningPort {
         }
     }
 
-    $tcp + $udp | Sort-Object Protocol, LocalAddress | Format-Table -AutoSize
+    # @() keeps a single result a collection, so one TCP listener does not break the addition.
+    @($tcp) + @($udp) | Sort-Object Protocol, LocalAddress | Format-Table -AutoSize
     # TODO: we might get better output from
     # Get-NetTCPConnection -State Listen | Where-Object { $_.OwningProcess -ne 4 } | Sort-Object LocalPort | Format-Table -AutoSize
 

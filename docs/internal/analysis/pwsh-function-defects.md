@@ -15,7 +15,6 @@ Writing a Pester test for every public function, and running each changed functi
 
 | Function | Defect |
 | --- | --- |
-| `Get-ListeningPort` | `$tcp + $udp` throws `op_Addition` when exactly one TCP port is listening. |
 | `Get-WlanPass` | Splits each line on `:` and keeps the last part, so a password or SSID containing `:` is cut short. |
 | `Enable-BGInfoAtStartup` | Builds the `.bgi` path under `Public/System/assets`; the file ships at `Public/Assets/default.bgi`. |
 | `Set-LangReg` | Its comments say English (US), but it sets the system locale and language list to `nl-BE`. |
