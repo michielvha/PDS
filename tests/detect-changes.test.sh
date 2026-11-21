@@ -12,8 +12,8 @@ git init -q -b main "$work/repo"
 cd "$work/repo"
 git config user.email test@example.invalid
 git config user.name test
-mkdir -p pwsh/docs packaging bash tests .github scripts docs darwin
-for f in pwsh/a.ps1 pwsh/docs/a.md packaging/a bash/a.sh tests/a.sh .github/a.yml scripts/a.sh docs/a.md readme.md darwin/a.ps1 PSScriptAnalyzerSettings.psd1; do
+mkdir -p pwsh/docs packaging bash/common tests .github scripts docs darwin
+for f in pwsh/a.ps1 pwsh/docs/a.md packaging/a bash/a.sh bash/common/x.sh tests/a.sh .github/a.yml .github/a.ps1 .github/a.md scripts/a.sh scripts/vm-set.ps1 docs/a.md readme.md darwin/a.ps1 PSScriptAnalyzerSettings.psd1; do
   echo base > "$f"
 done
 git add -A && git commit -qm base
@@ -56,6 +56,15 @@ check 'markdown under pwsh/' push feature "$(commit_on "$main_tip" pwsh/docs/a.m
 check 'powershell file outside pwsh/' push feature "$(commit_on "$main_tip" darwin/a.ps1)" false true false
 check 'workflow change' push feature "$(commit_on "$main_tip" .github/a.yml)" true true true
 check 'script change' push feature "$(commit_on "$main_tip" scripts/a.sh)" true true false
+check 'powershell script under scripts/' push feature "$(commit_on "$main_tip" scripts/vm-set.ps1)" true true false
+check 'powershell file under .github/' push feature "$(commit_on "$main_tip" .github/a.ps1)" true true true
+check 'markdown under .github/' push feature "$(commit_on "$main_tip" .github/a.md)" false false false
+
+# Both sides of a rename count, so moving a file out of a group still selects it.
+git checkout -q --detach "$main_tip"
+git mv bash/common/x.sh darwin/x.sh
+git commit -qm move
+check 'file moved out of bash/' push feature "$(git rev-parse HEAD)" true false false
 
 # A later push of a branch still covers what its earlier pushes changed.
 first="$(commit_on "$main_tip" bash/a.sh)"

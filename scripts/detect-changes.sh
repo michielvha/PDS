@@ -4,7 +4,8 @@
 #   package     packaging/, bash/ or tests/ (ShellCheck, the .deb build and install tests)
 #   workflows   .github/ (actionlint); it also selects both groups above
 # scripts/ selects powershell and package. Markdown anywhere, and any other path, is
-# documentation and selects nothing.
+# documentation and selects nothing. Each file takes the first rule that matches, in the order of
+# the case below, and both sides of a rename count, so moving a file out of a group selects it.
 #
 # A branch is judged on its whole diff from its merge base with main, so a later push still runs
 # the checks for everything the branch changed. main is judged on everything since the latest
@@ -66,6 +67,6 @@ while IFS= read -r file; do
     *.ps1 | *.psm1 | *.psd1 | pwsh/*) powershell=true ;;
     packaging/* | bash/* | tests/*) package=true ;;
   esac
-done < <(git diff --name-only "$base" "$head")
+done < <(git diff --no-renames --name-only "$base" "$head")
 
 emit "$package" "$powershell" "$workflows" "$reason"
