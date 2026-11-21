@@ -44,7 +44,8 @@ function Get-WindowsKey {
         Enhanced with modern PowerShell techniques and improved error handling
         this makes the function faster and more robust.
 
-        The digital product key decoding algorithm works on Windows XP through Windows 11.
+        The digital product key decoding handles both the pre-Windows 8 format and the Windows 8 and
+        later format, which flags itself in byte 66 and inserts an "N" into the key.
         Remote access requires appropriate permissions and network connectivity.
 
         Author: Michiel VH
@@ -151,7 +152,17 @@ function Get-WindowsKey {
                 $productKey = $null
 
                 try {
-                    # Decrypt base24 encoded binary data
+                    # Windows 8 and later set bit 3 of byte 66 (the last of the 15 key bytes) and keep
+                    # the position of an "N" in the key as its most significant base-24 digit.
+                    # Published scripts derive the flag from the byte divided by 6, which is wrong for
+                    # several byte values (with the rounding [int] cast, for all but 0 to 3 and 8). The
+                    # 0xF7 mask they apply clears exactly bit 3, and no pre-Windows 8 key sets it.
+                    $isWin8 = ($binArray[14] -shr 3) -band 1
+                    $binArray[14] = $binArray[14] -band 0xF7
+
+                    # Decrypt base24 encoded binary data, least significant digit first
+                    $keyChars = ""
+                    $last = 0
                     for ($i = 24; $i -ge 0; $i--) {
                         $k = 0
                         for ($j = 14; $j -ge 0; $j--) {
@@ -159,11 +170,17 @@ function Get-WindowsKey {
                             $binArray[$j] = [math]::Truncate($k / 24)
                             $k = $k % 24
                         }
-                        $productKey = $charsArray[$k] + $productKey
-                        if (($i % 5 -eq 0) -and ($i -ne 0)) {
-                            $productKey = "-" + $productKey
-                        }
+                        $keyChars = $charsArray[$k] + $keyChars
+                        $last = $k
                     }
+
+                    if ($isWin8) {
+                        # The most significant digit is the position of the "N", not a key character
+                        $keyChars = $keyChars.Substring(1).Insert($last, "N")
+                    }
+
+                    # Group the 25 characters in fives
+                    $productKey = $keyChars -replace '(.{5})(?!$)', '$1-'
                 }
                 catch {
                     Write-Warning "Error decoding product key on $target`: $_"

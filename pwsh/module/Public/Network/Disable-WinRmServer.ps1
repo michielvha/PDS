@@ -1,4 +1,4 @@
-Function Disable-WinRmServer {
+function Disable-WinRmServer {
     <#
     .SYNOPSIS
         Reverses Enable-WinRmServer: removes the WinRM listener and firewall rule, stops WinRM and optionally removes the test user.

@@ -23,11 +23,17 @@ function Set-AwsCli {
     }
 
 
-    if (-not (Select-String -Path $PROFILE -Pattern '^\s*\$env:AWS_CA_BUNDLE=' -Quiet -ErrorAction SilentlyContinue)) {
+    # Select-String throws a terminating error on a missing path, so check that the profile exists first
+    $profileExists = Test-Path -LiteralPath $PROFILE -PathType Leaf
+    if (-not $profileExists -or -not (Select-String -LiteralPath $PROFILE -Pattern '^\s*\$env:AWS_CA_BUNDLE=' -Quiet)) {
         $PATH = $env:USERPROFILE
 
         if ($PSCmdlet.ShouldProcess($PROFILE, 'Add AWS_CA_BUNDLE')) {
-            "`$env:AWS_CA_BUNDLE=`"$PATH\.aws\cacert.pem`"" | Add-Content $PROFILE
+            if (-not $profileExists) {
+                # -Force also creates the profile's folder when it does not exist yet
+                $null = New-Item -ItemType File -Path $PROFILE -Force
+            }
+            "`$env:AWS_CA_BUNDLE=`"$PATH\.aws\cacert.pem`"" | Add-Content -LiteralPath $PROFILE
         }
     }
     else {

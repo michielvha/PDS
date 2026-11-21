@@ -24,7 +24,7 @@ Describe 'Set-AutoAdminLogin' {
             $Path -eq $script:winlogon -and $Name -eq 'DefaultUserName' -and $Value -eq 'devUser'
         }
         Should -Invoke Set-ItemProperty -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
-            $Path -eq $script:winlogon -and $Name -eq 'DefaultPassword'
+            $Path -eq $script:winlogon -and $Name -eq 'DefaultPassword' -and $Value -is [string] -and $Value -ceq 'test-only-password'
         }
         Should -Invoke Set-ItemProperty -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
             $Path -eq $script:winlogon -and $Name -eq 'AutoAdminLogon' -and $Value -eq '1'
@@ -54,8 +54,17 @@ Describe 'Set-AutoAdminLogin' {
 
         $result = Set-AutoAdminLogin -Username 'devUser'
 
-        $result | Should -Contain 'An error occured while trying to set the `DefaultUserName`: access denied'
+        $result | Should -Contain 'An error occurred while trying to set the `DefaultUserName`: access denied'
         Should -Invoke Set-ItemProperty -ModuleName PDS -Times 1 -Exactly -ParameterFilter { $Name -eq 'AutoAdminLogon' }
+    }
+
+    It 'reports a failed password write' {
+        Mock Set-ItemProperty -ModuleName PDS -ParameterFilter { $Name -eq 'DefaultPassword' } -MockWith { throw 'access denied' }
+        $password = [System.Net.NetworkCredential]::new('', 'test-only-password').SecurePassword
+
+        $result = Set-AutoAdminLogin -Password $password
+
+        $result | Should -Contain 'An error occurred while trying to set the `DefaultPassword`: access denied'
     }
 
     It 'changes nothing under -WhatIf' {

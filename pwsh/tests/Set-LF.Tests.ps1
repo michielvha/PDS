@@ -28,6 +28,38 @@ Describe 'Set-LF' {
         Should -Invoke git -ModuleName PDS -Times 0 -Exactly
     }
 
+    It 'writes a file without a byte-order mark back without one' {
+        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::WriteAllText($script:topScript, "#!/bin/sh`r`necho caf$([char]0xE9)`r`n", $utf8NoBom)
+
+        Set-LF -Path $script:topScript 6>$null
+
+        $bytes = [System.IO.File]::ReadAllBytes($script:topScript)
+        $bytes[0..1] | Should -Be @(0x23, 0x21)
+        $bytes | Should -Be $utf8NoBom.GetBytes("#!/bin/sh`necho caf$([char]0xE9)`n")
+    }
+
+    It 'keeps the byte-order mark of a UTF-8 file that has one' {
+        $utf8Bom = [System.Text.UTF8Encoding]::new($true)
+        [System.IO.File]::WriteAllText($script:topScript, "#!/bin/sh`r`necho caf$([char]0xE9)`r`n", $utf8Bom)
+
+        Set-LF -Path $script:topScript 6>$null
+
+        $bytes = [System.IO.File]::ReadAllBytes($script:topScript)
+        $bytes[0..2] | Should -Be @(0xEF, 0xBB, 0xBF)
+        $bytes | Should -Be ($utf8Bom.GetPreamble() + $utf8Bom.GetBytes("#!/bin/sh`necho caf$([char]0xE9)`n"))
+    }
+
+    It 'keeps a UTF-16 file in UTF-16' {
+        $utf16 = [System.Text.UnicodeEncoding]::new($false, $true)
+        [System.IO.File]::WriteAllText($script:topScript, "#!/bin/sh`r`necho one`r`n", $utf16)
+
+        Set-LF -Path $script:topScript 6>$null
+
+        $bytes = [System.IO.File]::ReadAllBytes($script:topScript)
+        $bytes | Should -Be ($utf16.GetPreamble() + $utf16.GetBytes("#!/bin/sh`necho one`n"))
+    }
+
     It 'does not descend into subdirectories when Recurse is false' {
         Set-LF -Path $script:root -Recurse $false 6>$null
 

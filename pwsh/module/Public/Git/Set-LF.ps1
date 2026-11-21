@@ -92,17 +92,26 @@ function Set-LF {
                     Write-Host "Converting: $($file.FullName)" -ForegroundColor Gray
 
                     try {
-                        # Read file content preserving encoding
-                        $content = Get-Content $file.FullName -Raw -Encoding UTF8
+                        # Read the file as UTF-8 without a byte-order mark unless it starts with one;
+                        # CurrentEncoding then carries the mark the file had, if any
+                        $reader = [System.IO.StreamReader]::new($file.FullName, [System.Text.UTF8Encoding]::new($false), $true)
+                        try {
+                            $content = $reader.ReadToEnd()
+                            $encoding = $reader.CurrentEncoding
+                        }
+                        finally {
+                            $reader.Dispose()
+                        }
 
                         if ($null -ne $content -and $content.Length -gt 0) {
                             # Convert CRLF to LF, then CR to LF (handles all cases)
                             $content = $content -replace "`r`n", "`n"
                             $content = $content -replace "`r", "`n"
 
-                            # Write back with UTF8 encoding and LF line endings
+                            # Write back in the original encoding, so a file without a byte-order mark
+                            # gets none (a mark before #! breaks a shell script)
                             if ($PSCmdlet.ShouldProcess($file.FullName, 'Convert line endings to LF')) {
-                                [System.IO.File]::WriteAllText($file.FullName, $content, [System.Text.Encoding]::UTF8)
+                                [System.IO.File]::WriteAllText($file.FullName, $content, $encoding)
                                 $fileCount++
                             }
                         }

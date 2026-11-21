@@ -5,14 +5,17 @@ BeforeAll {
 Describe 'Set-AwsCli' {
     BeforeEach {
         # Shadow $PROFILE in the module scope with an empty TestDrive file, so the real profile
-        # is never read or written. The file must exist: Select-String -Quiet throws on a
-        # missing path despite -ErrorAction SilentlyContinue.
+        # is never read or written. Tests that need a missing profile point it elsewhere.
         $script:profilePath = Join-Path $TestDrive "$([guid]::NewGuid())-profile.ps1"
         $null = New-Item -ItemType File -Path $script:profilePath
-        InModuleScope PDS -Parameters @{ Path = $script:profilePath } {
+        $script:setProfile = {
             param($Path)
-            Set-Variable -Name PROFILE -Value $Path -Scope Script
+            InModuleScope PDS -Parameters @{ Path = $Path } {
+                param($Path)
+                Set-Variable -Name PROFILE -Value $Path -Scope Script
+            }
         }
+        & $script:setProfile $script:profilePath
         Mock Get-Command -ModuleName PDS -ParameterFilter { $Name -eq 'aws' } { [pscustomobject]@{ Name = 'aws' } }
         $script:expectedLine = '$env:AWS_CA_BUNDLE="' + $env:USERPROFILE + '\.aws\cacert.pem"'
     }
@@ -46,6 +49,16 @@ Describe 'Set-AwsCli' {
         @(Get-Content -Path $script:profilePath).Count | Should -Be 1
     }
 
+    It 'creates the profile and its folder when they do not exist' {
+        $missingProfile = Join-Path $TestDrive ([guid]::NewGuid().ToString()) 'PowerShell' 'profile.ps1'
+        & $script:setProfile $missingProfile
+
+        $result = Set-AwsCli 2>&1 6>$null
+
+        $result | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | Should -BeNullOrEmpty
+        Get-Content -Path $missingProfile | Should -BeExactly $script:expectedLine
+    }
+
     It 'writes an error and leaves the profile alone when the AWS CLI is missing' {
         Mock Get-Command -ModuleName PDS -ParameterFilter { $Name -eq 'aws' } { }
 
@@ -63,5 +76,15 @@ Describe 'Set-AwsCli' {
 
         Should -Invoke Add-Content -ModuleName PDS -Times 0 -Exactly
         Get-Content -Raw -Path $script:profilePath | Should -BeNullOrEmpty
+    }
+
+    It 'creates no profile under -WhatIf when it does not exist' {
+        $missingFolder = Join-Path $TestDrive ([guid]::NewGuid().ToString())
+        & $script:setProfile (Join-Path $missingFolder 'profile.ps1')
+
+        $result = Set-AwsCli -WhatIf 2>&1 6>$null
+
+        $result | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | Should -BeNullOrEmpty
+        $missingFolder | Should -Not -Exist
     }
 }

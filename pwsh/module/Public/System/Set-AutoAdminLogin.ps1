@@ -19,9 +19,9 @@ function Set-AutoAdminLogin {
         Consider using a method to securely encrypt the password.
 
     .EXAMPLE
-        Set-AutoAdminLogin -Username "devUser" -Password "devPass123"
+        Set-AutoAdminLogin -Username "devUser" -Password (Read-Host -AsSecureString -Prompt "Password")
 
-        This example configures the system to automatically log in to the account `devUser` with the password `devPass123`.
+        This example configures the system to automatically log in to the account `devUser` with the password typed at the prompt.
         The system will bypass the login screen and log in to this account after rebooting.
 
     .NOTES
@@ -58,16 +58,17 @@ function Set-AutoAdminLogin {
             Set-ItemProperty -Path $registryPath -Name "DefaultUserName" -Value $Username
         }
         catch {
-            Write-Output "An error occured while trying to set the ``DefaultUserName``: $_"
+            Write-Output "An error occurred while trying to set the ``DefaultUserName``: $_"
         }
     }
     if ($Password -and $PSCmdlet.ShouldProcess("$registryPath\DefaultPassword", 'Set registry value')) {
         try {
             Write-Output "setting DefaultPassword"
-            Set-ItemProperty -Path $registryPath -Name "DefaultPassword" -Value $Password
+            # Winlogon reads DefaultPassword as plain text, so convert the SecureString only at the write
+            Set-ItemProperty -Path $registryPath -Name "DefaultPassword" -Value ([System.Net.NetworkCredential]::new('', $Password).Password)
         }
         catch {
-            Write-Output "An error occured while trying to set the ``DefaultPassword``: $_"
+            Write-Output "An error occurred while trying to set the ``DefaultPassword``: $_"
         }
     }
 
