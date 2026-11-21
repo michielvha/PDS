@@ -65,6 +65,12 @@ jobs:
           make -C packaging lint
           make -C packaging lint-image-provisioning
           shellcheck scripts/*.sh tests/detect-changes.test.sh
+      # The workflows run scripts/ directly, so each script there must be executable in Git.
+      - name: Check that the scripts are executable
+        run: |
+          for script in scripts/*.sh; do
+            [ -x "$script" ] || { echo "::error file=$script::$script is not executable"; exit 1; }
+          done
 
   powershell:
     name: PowerShell checks
