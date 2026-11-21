@@ -102,5 +102,6 @@ Describe 'Remove-WindowsBloat' {
         Should -Invoke Stop-Service -ModuleName PDS -Times 0 -Exactly
         Should -Invoke Set-Service -ModuleName PDS -Times 0 -Exactly
         Should -Invoke Set-ItemProperty -ModuleName PDS -Times 0 -Exactly
+        Should -Invoke Write-Host -ModuleName PDS -Times 0 -Exactly -ParameterFilter { $Object -like '*reboot*' }
     }
 }

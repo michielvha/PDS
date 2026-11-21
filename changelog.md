@@ -28,6 +28,7 @@
 
 ### Fixed
 
+- `Remove-WindowsBloat -WhatIf` no longer suggests a reboot, since it changed nothing.
 - `Get-AzureDevOpsLibrary` passes the access token to Git only for the duration of each clone or pull, and removes it from the remote URL of clones made earlier. `Remove-StaleADComputer` skips computers that have never logged on.
 - Fix what real runs on Windows 11 exposed: `Set-AwsCli` creates the PowerShell profile when it does not exist instead of failing; `Remove-WindowsBloat` disables the per-user service templates (OneSyncSvc, PrintWorkflowUserSvc, CDPUserSvc, MessagingService) instead of failing on their per-user copies; `Install-Scoop` passes `-RunAsAdmin` in an elevated session and reports an install that did not happen; `Set-AzCli` adds each extension separately, reports any that fails, and no longer asks for the `storage` extension, whose commands are built into the Azure CLI; `Set-AutoAdminLogin` stores the password instead of the text `System.Security.SecureString`; `Set-LF` keeps each file's encoding, so a script without a byte-order mark stays without one; `Get-WindowsKey` decodes Windows 8 and later product keys correctly.
 - `Get-DisabledADUser` returns the disabled users again; it failed on every call with a type conversion error. `Get-LogonActivity` and `Get-LogonEvent` read the Security log with `Get-WinEvent`, so they work on PowerShell 7. `Get-WindowsKey` uses a credential for the remote OS lookup too and returns `InstallDate` without a conversion error. `Get-RDSActiveSessionReport` writes its log to `-LogPath` explicitly.

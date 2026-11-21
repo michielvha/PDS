@@ -89,7 +89,9 @@
         }
     }
 
-    Write-Host "`n✅ Done. You may want to reboot for all changes to take effect." -ForegroundColor Green
+    if (-not $WhatIfPreference) {
+        Write-Host "`n✅ Done. You may want to reboot for all changes to take effect." -ForegroundColor Green
+    }
 
 }
 
