@@ -65,8 +65,6 @@ jobs:
           make -C packaging lint
           make -C packaging lint-image-provisioning
           shellcheck scripts/*.sh tests/detect-changes.test.sh
-      - name: Test the check selection
-        run: bash tests/detect-changes.test.sh
 
   powershell:
     name: PowerShell checks

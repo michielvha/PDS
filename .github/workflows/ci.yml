@@ -35,6 +35,10 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      # First, so a broken selection fails every run, including one that
+      # would deselect the checks of its own change.
+      - name: Test the check selection
+        run: bash tests/detect-changes.test.sh
       - name: Select the checks this push needs
         id: select
         env:
