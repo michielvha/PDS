@@ -107,13 +107,18 @@ jobs:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: scripts/build-apt-repo.sh packages pages
+      # Each attempt names its own artifact: deploy-pages refuses a run that holds
+      # two artifacts with one name, which a rerun of this job would otherwise make.
       - name: Upload the Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: pages
+          name: github-pages-${{ github.run_attempt }}
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
 
   gallery:
     name: Publish to the PowerShell Gallery
