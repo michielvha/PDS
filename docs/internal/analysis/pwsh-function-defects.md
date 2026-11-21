@@ -52,4 +52,3 @@ Writing a Pester test for every public function, and running each changed functi
 | `New-Branch` | Changes the session's location to the repository and does not restore it. |
 | `Set-SshdConfigOption` (in `Enable-SshServer`) | Treats a `Match` block on the first line as no `Match` block. |
 | `Export-ComputerInfo` | Passes the obsolete `-NoTypeInformation`, which warns on PowerShell 7. |
-| `Remove-WindowsBloat` | Prints "you may want to reboot" under `-WhatIf`. |
