@@ -1,4 +1,4 @@
-Function Get-NetProfile {
+function Get-NetProfile {
     <#
     .SYNOPSIS
         Retrieves all saved network profiles for both wired (LAN) and wireless (Wi-Fi) connections.

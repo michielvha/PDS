@@ -1,4 +1,4 @@
-Function Enable-WinRmServer {
+function Enable-WinRmServer {
     <#
     .SYNOPSIS
         Enables WinRM over HTTP with NTLM authentication and optionally creates a local user for remote management.
@@ -160,8 +160,8 @@ Function Enable-WinRmServer {
         }
 
         $ips = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
-            Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
-            Select-Object -ExpandProperty IPAddress)
+                Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
+                Select-Object -ExpandProperty IPAddress)
         Write-Host "`nWinRM is listening on HTTP port $port with NTLM authentication." -ForegroundColor Green
         foreach ($ip in $ips) {
             Write-Host "  http://${ip}:$port/wsman" -ForegroundColor Green

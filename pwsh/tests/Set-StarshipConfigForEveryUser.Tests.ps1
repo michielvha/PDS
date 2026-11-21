@@ -1,0 +1,67 @@
+BeforeAll {
+    Import-Module (Join-Path $PSScriptRoot '..' 'module' 'PDS.psm1') -Force
+
+    $script:usersDir = Join-Path $TestDrive 'Users'
+    $script:config = "[character]`nsuccess_symbol = '>'"
+}
+
+Describe 'Set-StarshipConfigForEveryUser' {
+    BeforeEach {
+        Remove-Item -Path $script:usersDir -Recurse -Force -ErrorAction SilentlyContinue
+        $script:alice = Join-Path $script:usersDir 'alice'
+        $script:bob = Join-Path $script:usersDir 'bob'
+        $script:system = Join-Path $script:usersDir 'systemprofile'
+        New-Item -Path $script:alice, $script:system -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:bob '.config') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $script:bob '.config' 'starship.toml') -Value 'existing'
+
+        $profiles = @(
+            [pscustomobject]@{ LocalPath = $script:alice; Special = $false }
+            [pscustomobject]@{ LocalPath = $script:bob; Special = $false }
+            [pscustomobject]@{ LocalPath = $script:system; Special = $true }
+        )
+        Mock -ModuleName PDS Get-CimInstance { $profiles }
+        Mock -ModuleName PDS Write-Host { }
+    }
+
+    It 'writes starship.toml for each normal user that has none' {
+        Set-StarshipConfigForEveryUser -configContent $script:config | Out-Null
+
+        Get-Content -Path (Join-Path $script:alice '.config' 'starship.toml') -Raw | Should -Be ($script:config + [Environment]::NewLine)
+        Should -Invoke -ModuleName PDS Get-CimInstance -Times 1 -Exactly -ParameterFilter { $ClassName -eq 'Win32_UserProfile' }
+    }
+
+    It 'keeps an existing starship.toml' {
+        Set-StarshipConfigForEveryUser -configContent $script:config | Out-Null
+
+        Get-Content -Path (Join-Path $script:bob '.config' 'starship.toml') | Should -Be 'existing'
+    }
+
+    It 'skips special profiles' {
+        Set-StarshipConfigForEveryUser -configContent $script:config | Out-Null
+
+        Join-Path $script:system '.config' | Should -Not -Exist
+    }
+
+    It 'changes nothing under -WhatIf' {
+        Mock -ModuleName PDS New-Item { }
+        Mock -ModuleName PDS Out-File { }
+
+        Set-StarshipConfigForEveryUser -configContent $script:config -WhatIf | Out-Null
+
+        Should -Invoke -ModuleName PDS New-Item -Times 0 -Exactly
+        Should -Invoke -ModuleName PDS Out-File -Times 0 -Exactly
+        Join-Path $script:alice '.config' | Should -Not -Exist
+        Get-Content -Path (Join-Path $script:bob '.config' 'starship.toml') | Should -Be 'existing'
+    }
+
+    It 'still runs under its old name' {
+        $old = Get-Command 'Set-StarshipConfigForAllUsers' -Module PDS
+        $old.CommandType | Should -Be 'Alias'
+        $old.ResolvedCommand.Name | Should -Be 'Set-StarshipConfigForEveryUser'
+
+        Set-StarshipConfigForAllUsers -configContent $script:config | Out-Null
+
+        Join-Path $script:alice '.config' 'starship.toml' | Should -Exist
+    }
+}

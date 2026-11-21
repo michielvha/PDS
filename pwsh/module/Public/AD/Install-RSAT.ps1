@@ -7,7 +7,7 @@ function Install-RSAT {
         The Install-RSAT function installs Remote Server Administration Tools (RSAT) features on Windows 10
         version 1809 or later where RSAT is available as optional features. The function can install
         specific RSAT features or all available RSAT features.
-        
+
         The function checks if the current Windows version and edition support RSAT features, and
         provides appropriate feedback if installation is not possible.
 
@@ -27,17 +27,17 @@ function Install-RSAT {
 
     .EXAMPLE
         Install-RSAT
-        
+
         Installs all available RSAT features.
 
     .EXAMPLE
         Install-RSAT -Feature AD
-        
+
         Installs only Active Directory management tools.
 
     .EXAMPLE
         Install-RSAT -Feature AD,DNS,DHCP
-        
+
         Installs Active Directory, DNS, and DHCP management tools.
 
     .NOTES
@@ -46,16 +46,16 @@ function Install-RSAT {
         - Not available on Windows 10 Home edition
         - On Windows 10, RSAT is installed as optional features
         - Internet connection may be required for installation
-        
+
         Author: Michiel VH
     #>
-    
+
     [CmdletBinding()]
     param (
-        [Parameter(Position=0)]
+        [Parameter(Position = 0)]
         [ValidateSet('All', 'AD', 'DNS', 'DHCP', 'GroupPolicy', 'ServerManager', 'FileServices', 'HyperV')]
         [string[]]$Feature = @('All'),
-        
+
         [Parameter()]
         [switch]$Force
     )
@@ -87,13 +87,13 @@ function Install-RSAT {
 
     # Define mapping of feature names to their corresponding Windows optional feature names
     $featureMapping = @{
-        'AD' = @('Rsat.ActiveDirectory.DS-LDS.Tools*')
-        'DNS' = @('Rsat.Dns.Tools*')
-        'DHCP' = @('Rsat.DHCP.Tools*')
-        'GroupPolicy' = @('Rsat.GroupPolicy.Management.Tools*')
+        'AD'            = @('Rsat.ActiveDirectory.DS-LDS.Tools*')
+        'DNS'           = @('Rsat.Dns.Tools*')
+        'DHCP'          = @('Rsat.DHCP.Tools*')
+        'GroupPolicy'   = @('Rsat.GroupPolicy.Management.Tools*')
         'ServerManager' = @('Rsat.ServerManager.Tools*')
-        'FileServices' = @('Rsat.FileServices.Tools*')
-        'HyperV' = @('Rsat.HyperV.Tools*')
+        'FileServices'  = @('Rsat.FileServices.Tools*')
+        'HyperV'        = @('Rsat.HyperV.Tools*')
     }
 
     # If All is specified, use all RSAT features
@@ -110,17 +110,17 @@ function Install-RSAT {
     }
 
     Write-Host "Checking for available RSAT features..." -ForegroundColor Cyan
-    
+
     # Get list of all available optional features
     $availableFeatures = Get-WindowsCapability -Online | Where-Object { $_.Name -like "Rsat*" }
-    
+
     if (-not $availableFeatures) {
         Write-Warning "No RSAT features found. This could be due to network connectivity issues or Windows edition limitations."
         return
     }
 
     # Filter the features based on what was requested
-    $selectedFeatures = $availableFeatures | Where-Object { 
+    $selectedFeatures = $availableFeatures | Where-Object {
         foreach ($pattern in $featuresToInstall) {
             if ($_.Name -like $pattern) {
                 return $true
@@ -171,7 +171,7 @@ function Install-RSAT {
     Write-Host "  Features installed: $installCount" -ForegroundColor Green
     Write-Host "  Features skipped (already installed): $skipCount" -ForegroundColor Yellow
     Write-Host "  Features failed: $errorCount" -ForegroundColor $(if ($errorCount -gt 0) { "Red" } else { "Green" })
-    
+
     if ($installCount -gt 0 -or $errorCount -gt 0) {
         Write-Host "`nNote: You may need to restart your computer to complete the installation." -ForegroundColor Yellow
     }

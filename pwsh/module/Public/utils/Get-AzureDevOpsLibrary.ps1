@@ -1,11 +1,11 @@
-<#
+﻿<#
 .SYNOPSIS
     Clones or updates all Git repositories from an Azure DevOps project.
 
 .DESCRIPTION
-    The Get-AzureDevOpsLibrary function retrieves all repositories from a specified Azure DevOps 
-    project and clones them to a local directory. If repositories already exist locally, it will 
-    pull the latest changes instead. This provides a complete local backup of your Azure DevOps 
+    The Get-AzureDevOpsLibrary function retrieves all repositories from a specified Azure DevOps
+    project and clones them to a local directory. If repositories already exist locally, it will
+    pull the latest changes instead. This provides a complete local backup of your Azure DevOps
     repository library.
 
 .PARAMETER Organization
@@ -22,7 +22,7 @@
     To create a PAT: User Settings → Personal Access Tokens → New Token
 
 .PARAMETER DestinationPath
-    The local directory path where repositories will be cloned. Defaults to 
+    The local directory path where repositories will be cloned. Defaults to
     "C:\AzureDevOps\<ProjectName>". The directory will be created if it doesn't exist.
 
 .PARAMETER Force
@@ -30,17 +30,17 @@
 
 .EXAMPLE
     Get-AzureDevOpsLibrary -Organization "contoso" -Project "MyProject" -Username "john@contoso.com" -PersonalAccessToken "abc123..."
-    
+
     Clones all repositories from the MyProject project to C:\AzureDevOps\MyProject
 
 .EXAMPLE
     Get-AzureDevOpsLibrary -Organization "your-org" -Project "your-project" -Username "your-email@domain.com" -PersonalAccessToken "your-pat" -DestinationPath "D:\Repos"
-    
+
     Clones all repositories to the specified destination path D:\Repos
 
 .EXAMPLE
     Get-AzureDevOpsLibrary -Organization "contoso" -Project "MyProject" -Username "john@contoso.com" -PersonalAccessToken "abc123..." -Force
-    
+
     Re-clones all repositories even if they already exist locally
 
 .NOTES
@@ -81,7 +81,7 @@ function Get-AzureDevOpsLibrary {
     begin {
         # Load System.Web assembly for URL encoding
         Add-Type -AssemblyName System.Web
-        
+
         # Verify Git is available
         try {
             $null = git --version
@@ -98,7 +98,24 @@ function Get-AzureDevOpsLibrary {
 
         # Encode PAT for Basic Authentication
         $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PersonalAccessToken"))
-        
+
+        # Git gets the credential as an HTTP header through GIT_CONFIG_* environment variables,
+        # set only around each clone or pull, so the token never lands in .git/config or on a
+        # command line.
+        $gitAuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${Username}:$PersonalAccessToken"))
+        function Invoke-AuthenticatedGit {
+            param ([Parameter(ValueFromRemainingArguments = $true)][string[]]$GitArgument)
+            $env:GIT_CONFIG_COUNT = '1'
+            $env:GIT_CONFIG_KEY_0 = 'http.extraHeader'
+            $env:GIT_CONFIG_VALUE_0 = "Authorization: Basic $gitAuthInfo"
+            try {
+                git @GitArgument 2>&1
+            }
+            finally {
+                Remove-Item -Path Env:GIT_CONFIG_COUNT, Env:GIT_CONFIG_KEY_0, Env:GIT_CONFIG_VALUE_0 -ErrorAction SilentlyContinue
+            }
+        }
+
         # API endpoint
         $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories?api-version=7.0"
     }
@@ -114,7 +131,7 @@ function Get-AzureDevOpsLibrary {
             $headers = @{
                 Authorization = "Basic $base64AuthInfo"
             }
-            
+
             $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ErrorAction Stop
             $repos = $response.value
 
@@ -132,7 +149,8 @@ function Get-AzureDevOpsLibrary {
             # Clone each repository
             foreach ($repo in $repos) {
                 $repoName = $repo.name
-                $cloneUrl = $repo.remoteUrl
+                # The remote URL without any user name in it
+                $cleanUrl = $repo.remoteUrl -replace "https://[^@]*@", "https://"
                 $repoPath = Join-Path $DestinationPath $repoName
 
                 Write-Host "Processing: $repoName" -ForegroundColor Yellow
@@ -141,7 +159,9 @@ function Get-AzureDevOpsLibrary {
                     Write-Host "  Repository already exists. Pulling latest changes..." -ForegroundColor Gray
                     Push-Location $repoPath
                     try {
-                        $gitOutput = git pull 2>&1
+                        # A clone made by an earlier version kept the token in its remote URL.
+                        git remote set-url origin $cleanUrl 2>&1 | Out-Null
+                        $gitOutput = Invoke-AuthenticatedGit pull
                         if ($LASTEXITCODE -eq 0) {
                             Write-Host "  ✓ Updated successfully" -ForegroundColor Green
                             $successCount++
@@ -166,16 +186,9 @@ function Get-AzureDevOpsLibrary {
                     }
 
                     Write-Host "  Cloning repository..." -ForegroundColor Gray
-                    
-                    # Remove any existing username from URL and add your username + PAT
-                    # URL-encode the username to handle special characters like @
-                    # Format: https://encoded-username:PAT@dev.azure.com/org/project/_git/repo
-                    $cleanUrl = $cloneUrl -replace "https://[^@]*@", "https://"
-                    $encodedUsername = [System.Web.HttpUtility]::UrlEncode($Username)
-                    $authenticatedUrl = $cleanUrl -replace "https://", "https://${encodedUsername}:$PersonalAccessToken@"
-                    
+
                     try {
-                        $gitOutput = git clone $authenticatedUrl $repoPath 2>&1
+                        $gitOutput = Invoke-AuthenticatedGit clone $cleanUrl $repoPath
                         if ($LASTEXITCODE -eq 0) {
                             Write-Host "  ✓ Cloned successfully" -ForegroundColor Green
                             $successCount++
@@ -213,4 +226,3 @@ function Get-AzureDevOpsLibrary {
         }
     }
 }
-

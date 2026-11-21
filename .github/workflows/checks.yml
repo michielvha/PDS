@@ -1,0 +1,159 @@
+name: Checks
+
+# Every PDS check, defined once. ci.yml runs it on each branch push at the
+# default version with only the groups the push's changes need; release.yml
+# passes no group inputs, so a tag runs every check at the tag's version, and
+# releases the .deb it uploads. It computes no version and receives no secrets.
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Package version to build, without the v prefix
+        type: string
+        default: 0.0.0
+      package:
+        description: "'true' runs ShellCheck, the package build and the install tests"
+        type: string
+        default: 'true'
+      powershell:
+        description: "'true' runs the PowerShell checks"
+        type: string
+        default: 'true'
+      workflows:
+        description: "'true' runs actionlint"
+        type: string
+        default: 'true'
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  workflows:
+    name: Lint workflows
+    if: inputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Lint workflows
+        uses: docker://rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+        with:
+          args: -color
+
+  shell:
+    name: Lint shell scripts
+    if: inputs.package == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Run shellcheck
+        run: |
+          make -C packaging lint
+          make -C packaging lint-image-provisioning
+          shellcheck scripts/*.sh tests/detect-changes.test.sh
+
+  powershell:
+    name: PowerShell checks
+    if: inputs.powershell == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: vhco-pro/pwsh-ci-action@0d93cdc9722375b2e5423dd886c8e3878d4bebf0 # v0.1.1
+        with:
+          module-manifest: pwsh/module/PDS.psm1
+          tests: pwsh/tests
+
+  package:
+    name: Build package
+    if: inputs.package == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [shell]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install nfpm
+        run: |
+          bash packaging/scripts/fetch-nfpm.sh "$RUNNER_TEMP/pds-nfpm"
+          echo "$RUNNER_TEMP/pds-nfpm" >> "$GITHUB_PATH"
+      - name: Set the package version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          sed -i "s/version: .*/version: $VERSION/" packaging/nfpm.yaml
+          sed -i "s/VERSION := .*/VERSION := $VERSION/" packaging/Makefile
+          mkdir -p packaging/usr/share/pds
+          echo "$VERSION" > packaging/usr/share/pds/VERSION
+      - name: Build package
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          chmod +x packaging/build.sh
+          packaging/build.sh build
+      # The Makefile mounts $(PWD)/dist, so these run from packaging/ rather than with make -C.
+      - name: Test package
+        working-directory: packaging
+        run: make test
+      - name: Test image provisioning package
+        working-directory: packaging
+        run: make test-image-provisioning
+      - name: Show package info
+        run: |
+          ls -la packaging/dist/
+          dpkg-deb -c packaging/dist/*.deb | sed -n '1,20p'
+      - name: Upload package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: pds-deb
+          path: packaging/dist/*.deb
+          if-no-files-found: error
+          retention-days: 30
+
+  install:
+    name: Test installation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [package]
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        ubuntu-version: ['22.04', '24.04']
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: pds-deb
+          path: packages
+      - name: Install and run on Ubuntu ${{ matrix.ubuntu-version }}
+        env:
+          UBUNTU_VERSION: ${{ matrix.ubuntu-version }}
+        run: |
+          docker run --rm -v "$PWD/packages:/packages" "ubuntu:$UBUNTU_VERSION" /bin/bash -c "
+            apt-get update &&
+            apt-get install -y /packages/*.deb &&
+            pds doctor &&
+            pds info
+          "

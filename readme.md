@@ -91,7 +91,7 @@ Read the [macOS guide](darwin/readme.md) and review [the installer](darwin/insta
 
 [AGENTS.md](AGENTS.md) pins the shared engineering conventions used with vh-adlc. Read it before changing the scripts. A new feature gets a feature document with acceptance criteria and a test plan; its issue tracks the work.
 
-The APT workflow includes ShellCheck and package installation checks. PowerShell validation and broader bootstrap coverage still need work. See the [open issues](https://github.com/michielvha/PDS/issues) for the backlog.
+Every push runs the checks its branch's changes need: the PowerShell checks (formatting, PSScriptAnalyzer and Pester) for `pwsh/`, and ShellCheck with the package build and installation tests for `packaging/`, `bash/` and `tests/`. A change to `scripts/` runs both, a change to `.github/` also runs actionlint, and documentation alone runs nothing. A merge to `main` that bumps the version is tagged, and the tag publishes the APT repository, the PowerShell Gallery module and a GitHub Release. Broader bootstrap coverage still needs work. See the [open issues](https://github.com/michielvha/PDS/issues) for the backlog.
 
 ## References
 

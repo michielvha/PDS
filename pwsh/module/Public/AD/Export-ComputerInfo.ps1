@@ -4,9 +4,9 @@ function Export-ComputerInfo {
         Exports Active Directory computer information to CSV or Excel format.
 
     .DESCRIPTION
-        The Export-ComputerInfo function retrieves all computer objects from Active Directory 
+        The Export-ComputerInfo function retrieves all computer objects from Active Directory
         and exports their information (name, location, last logon date) to either a CSV or Excel file.
-        
+
         The function sorts computers by their last seen date in descending order (most recent first).
         For Excel export, the ImportExcel module will be automatically installed if not available.
 
@@ -31,35 +31,35 @@ function Export-ComputerInfo {
 
     .EXAMPLE
         Export-ComputerInfo -Path "C:\temp\ComputerInfo.csv"
-        
+
         Exports all computer information to a CSV file.
 
     .EXAMPLE
         Export-ComputerInfo -Path "C:\temp\ComputerInfo.xlsx"
-        
+
         Exports all computer information to an Excel file.
 
     .EXAMPLE
         Export-ComputerInfo -Path "C:\temp\Computers.csv" -Format CSV
-        
+
         Explicitly specifies CSV format for export.
 
     .EXAMPLE
         Export-ComputerInfo -Path "C:\temp\ServersOnly.xlsx" -Filter "Name -like '*SRV*'"
-        
+
         Exports only computers with 'SRV' in their name to an Excel file.
 
     .EXAMPLE
         Export-ComputerInfo -Path "C:\temp\OUComputers.csv" -SearchBase "OU=Computers,DC=contoso,DC=com"
-        
+
         Exports computers from a specific organizational unit to a CSV file.
 
     .NOTES
         For Excel export, the ImportExcel module is required and will be installed automatically.
         Requires appropriate permissions to read computer objects in Active Directory.
-        
+
         Output is sorted by Last Seen date in descending order (most recent first).
-        
+
         Author: Michiel VH
 
     .LINK
@@ -153,8 +153,8 @@ function Export-ComputerInfo {
     process {
         try {
             $GetADComputerParams = @{
-                Filter = $Filter
-                Properties = @('Name', 'DistinguishedName', 'LastLogonDate')
+                Filter      = $Filter
+                Properties  = @('Name', 'DistinguishedName', 'LastLogonDate')
                 ErrorAction = 'Stop'
             }
 
@@ -164,7 +164,7 @@ function Export-ComputerInfo {
 
             Write-Verbose "Retrieving Active Directory computers with filter: $Filter"
             $Computers = Get-ADComputer @GetADComputerParams
-            
+
             if ($Computers.Count -eq 0) {
                 Write-Warning "No computers found matching the specified criteria"
                 return
@@ -177,8 +177,8 @@ function Export-ComputerInfo {
                 # Create a custom object for each computer
                 [pscustomobject]@{
                     'Computer Name' = $Computer.Name
-                    'Location' = $Computer.DistinguishedName
-                    'Last Seen' = $Computer.LastLogonDate
+                    'Location'      = $Computer.DistinguishedName
+                    'Last Seen'     = $Computer.LastLogonDate
                 }
             }
 

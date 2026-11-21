@@ -4,9 +4,10 @@
 # Get the module path
 $ModulePath = $PSScriptRoot
 
-# Public functions - all scripts are public
+# Public functions - every script under Public except Pester tests
 $PublicFunctions = @(
-    Get-ChildItem -Path "$ModulePath\Public" -Filter *.ps1 -Recurse -ErrorAction SilentlyContinue
+    Get-ChildItem -Path "$ModulePath\Public" -Filter *.ps1 -Recurse -ErrorAction SilentlyContinue |
+        Where-Object Name -NotLike '*.Tests.ps1'
 )
 
 # Define module-wide variables or constants here if needed

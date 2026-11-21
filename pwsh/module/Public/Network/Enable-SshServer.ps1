@@ -1,4 +1,4 @@
-Function Enable-SshServer {
+function Enable-SshServer {
     <#
     .SYNOPSIS
         Installs and enables the Windows OpenSSH server and optionally authorizes public keys.
@@ -239,8 +239,8 @@ Function Enable-SshServer {
         Restart-Service -Name sshd -Force
 
         $ips = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
-            Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
-            Select-Object -ExpandProperty IPAddress)
+                Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
+                Select-Object -ExpandProperty IPAddress)
         $portArg = if ($Port -ne 22) { " -p $Port" } else { "" }
         if ($withKeys) {
             Write-Host "`nOpenSSH server is running with key-based access for '$UserName'." -ForegroundColor Green
@@ -259,11 +259,18 @@ Function Enable-SshServer {
 
 function Set-SshdConfigOption {
     # Sets a global sshd_config option, replacing an existing (or commented) entry before any Match block.
+    # It only returns the changed text; under -WhatIf it returns the text unchanged.
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([string])]
     param(
         [string]$Config,
         [string]$Name,
         [string]$Value
     )
+
+    if (-not $PSCmdlet.ShouldProcess("sshd_config option $Name", "Set to '$Value'")) {
+        return $Config
+    }
 
     $matchIndex = [regex]::Match($Config, '(?mi)^\s*Match\s').Index
     $globalPart = if ($matchIndex -gt 0) { $Config.Substring(0, $matchIndex) } else { $Config }

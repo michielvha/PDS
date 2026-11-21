@@ -1,4 +1,4 @@
-# -- Environment --
+﻿# -- Environment --
 # -- **Fully Deprecated - functions are not reflective of current module, retained for if we want to revisit the concept** --
 
 # Set $ScriptPath to current directory compatible with PS2EXE
@@ -22,10 +22,21 @@ else {
 # Check if already installed before installing chocolatey
 $chocoVersion = choco --version 2>$null
 if (!$chocoVersion) {
- Write-Output "Chocolatey will be installed"
- Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-} else {
- Write-Output "Chocolatey is already installed. Version: $chocoVersion"
+    Write-Output "Chocolatey will be installed"
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+    # Download the installer to a file and run that file, rather than evaluating a downloaded string.
+    $installer = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath "choco-install-$([guid]::NewGuid()).ps1"
+    try {
+        Invoke-WebRequest -Uri 'https://community.chocolatey.org/install.ps1' -OutFile $installer -UseBasicParsing
+        & $installer
+    }
+    finally {
+        Remove-Item -Path $installer -Force -ErrorAction SilentlyContinue
+    }
+}
+else {
+    Write-Output "Chocolatey is already installed. Version: $chocoVersion"
 }
 
 # Define an array of package names
@@ -63,15 +74,20 @@ Install-ChocoPackagesFromFile -packagesToInstall $packagesToInstall
 # 3. Configure psreadline module for all users
 # https://www.powershellgallery.com/packages/PSReadLine/2.2.6
 function Set-PSReadLineModule {
-$commands = @"
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
+
+    $commands = @"
 Install-Module -Name PSReadLine -Force -SkipPublisherCheck
 Import-Module -Name PSReadLine
 Invoke-Expression (&starship init powershell)
 Set-PSReadLineOption -PredictionViewStyle ListView
 "@
 
-# Append the commands to the global profile using tee
-$commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
+    # Append the commands to the global profile using tee
+    if ($PSCmdlet.ShouldProcess($PROFILE.AllUsersAllHosts, 'Write PSReadLine and starship commands to profile')) {
+        $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8
+    }
 
 }
 Set-PSReadLineModule
@@ -80,12 +96,13 @@ Set-PSReadLineModule
 $KubectlVer = kubectl version 2>$null
 $KubeloginVer = kubelogin --version  2>$null
 if (!$KubectlVer -or !$KubeloginVer) {
- Write-Host "kubectl & kubelogin will be installed via az cli"
- az aks install-cli
-} else {
- Write-Host "Kubectl and kubelogin are already installed:"
- $KubectlVer
- $KubeloginVer
+    Write-Host "kubectl & kubelogin will be installed via az cli"
+    az aks install-cli
+}
+else {
+    Write-Host "Kubectl and kubelogin are already installed:"
+    $KubectlVer
+    $KubeloginVer
 }
 
 # 5. shell customizations with the startship
@@ -127,29 +144,35 @@ format = '[🏎💨 $workspace]($style) '
 "@
 
 # Function to create the .config directory and add the starship.toml file
-function Set-StarshipConfigForAllUsers {
+function Set-StarshipConfigForEveryUser {
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
+
     # Get all user profile directories
-    $userProfiles = Get-WmiObject Win32_UserProfile | Where-Object { $_.Special -eq $false }
+    $userProfiles = Get-CimInstance -ClassName Win32_UserProfile | Where-Object { $_.Special -eq $false }
     # loop through all users
-    foreach ($profile in $userProfiles) {
-        $userConfigDir = Join-Path $profile.LocalPath ".config"
+    foreach ($userProfile in $userProfiles) {
+        $userConfigDir = Join-Path $userProfile.LocalPath ".config"
         $starshipFile = Join-Path $userConfigDir "starship.toml"
         # Check if .config directory exists, create it if not
-        if (-Not (Test-Path $userConfigDir)) {
-            Write-Host "Creating .config directory for user: $($profile.LocalPath)"
+        if (-not (Test-Path $userConfigDir) -and $PSCmdlet.ShouldProcess($userConfigDir, 'Create directory')) {
+            Write-Host "Creating .config directory for user: $($userProfile.LocalPath)"
             New-Item -Path $userConfigDir -ItemType Directory -Force
         }
         # Write the starship.toml configuration file
-        if (-Not (Test-Path $starshipFile)) {
-            Write-Host "Creating starship.toml for user: $($profile.LocalPath)"
-            $configContent | Out-File -FilePath $starshipFile -Encoding utf8
-        } else {
-            Write-Host "starship.toml already exists for user: $($profile.LocalPath)"
+        if (-not (Test-Path $starshipFile)) {
+            if ($PSCmdlet.ShouldProcess($starshipFile, 'Create starship configuration')) {
+                Write-Host "Creating starship.toml for user: $($userProfile.LocalPath)"
+                $configContent | Out-File -FilePath $starshipFile -Encoding utf8
+            }
+        }
+        else {
+            Write-Host "starship.toml already exists for user: $($userProfile.LocalPath)"
         }
     }
 }
 # Run the function to create starship.toml for all users
-Set-StarshipConfigForAllUsers
+Set-StarshipConfigForEveryUser
 
 # 6.
 # ...

@@ -1,4 +1,5 @@
 function New-Branch {
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [string]$RepoPath = (Get-Location), # Default to the current directory if no path is provided
         [string]$BranchPrefix = "dev-"      # Default branch prefix
@@ -7,7 +8,8 @@ function New-Branch {
     # Navigate to the repository
     if (Test-Path $RepoPath) {
         Set-Location -Path $RepoPath
-    } else {
+    }
+    else {
         Write-Host "The specified repository path does not exist: $RepoPath" -ForegroundColor Red
         return
     }
@@ -19,9 +21,11 @@ function New-Branch {
     }
 
     # Pull the latest changes from the main branch
-    Write-Host "Switching to 'main' and pulling the latest changes..." -ForegroundColor Yellow
-    git checkout main
-    git pull origin main
+    if ($PSCmdlet.ShouldProcess($RepoPath, "Check out 'main' and pull origin main")) {
+        Write-Host "Switching to 'main' and pulling the latest changes..." -ForegroundColor Yellow
+        git checkout main
+        git pull origin main
+    }
 
     # Generate a unique branch name with an incrementing number
     Write-Host "Generating a unique branch name..." -ForegroundColor Yellow
@@ -33,8 +37,10 @@ function New-Branch {
     } while ($existingBranches -contains $newBranchName)
 
     # Create and switch to the new branch
-    git checkout -b $newBranchName
-    Write-Host "New branch '$newBranchName' created and checked out." -ForegroundColor Green
+    if ($PSCmdlet.ShouldProcess($RepoPath, "Create and check out branch '$newBranchName'")) {
+        git checkout -b $newBranchName
+        Write-Host "New branch '$newBranchName' created and checked out." -ForegroundColor Green
+    }
 }
 # New-Branch
 # To make it available in the current session, dot source the script or add it to your profile:

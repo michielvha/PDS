@@ -7,7 +7,7 @@ function Get-WindowsKey {
         The Get-WindowsKey function retrieves the Windows product key by decoding the DigitalProductId
         from the registry. It also collects additional operating system information such as OS version,
         build number, architecture, and registration details.
-        
+
         This function can target local or remote computers and returns comprehensive information
         about each system's Windows installation.
 
@@ -21,72 +21,64 @@ function Get-WindowsKey {
 
     .EXAMPLE
         Get-WindowsKey
-        
+
         Retrieves the Windows product key and OS information from the local computer.
 
     .EXAMPLE
         Get-WindowsKey -ComputerName "Server01", "Server02"
-        
+
         Retrieves the Windows product key and OS information from two remote servers.
 
     .EXAMPLE
         Get-WindowsKey -ComputerName "Server01" -Credential (Get-Credential)
-        
+
         Prompts for credentials and uses them to retrieve the Windows product key from a remote server.
 
     .EXAMPLE
         "Server01", "Server02" | Get-WindowsKey | Export-Csv -Path "C:\WindowsKeys.csv" -NoTypeInformation
-        
+
         Retrieves Windows product keys from multiple servers and exports the results to a CSV file.
 
     .NOTES
         Original concept by Jakob Bindslet (jakob@bindslet.dk)
         Enhanced with modern PowerShell techniques and improved error handling
         this makes the function faster and more robust.
-        
-        The digital product key decoding algorithm works on Windows XP through Windows 11.
+
+        The digital product key decoding handles both the pre-Windows 8 format and the Windows 8 and
+        later format, which flags itself in byte 66 and inserts an "N" into the key.
         Remote access requires appropriate permissions and network connectivity.
 
         Author: Michiel VH
     #>
-    
+
     [CmdletBinding()]
     param (
-        [Parameter(ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
+        [Parameter(ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true, Position = 0)]
         [Alias("Computer", "ComputerName", "HostName")]
         [string[]]$Targets = ".",
-        
+
         [Parameter()]
         [System.Management.Automation.PSCredential]
         [System.Management.Automation.Credential()]
         $Credential
     )
 
-    Begin {
+    begin {
         Write-Verbose "Starting Get-WindowsKey function"
         $hklm = 2147483650  # HKEY_LOCAL_MACHINE
         $regPath = "Software\Microsoft\Windows NT\CurrentVersion"
         $regValue = "DigitalProductId"
-        
+
         # Character set for the Windows product key
-        $charsArray = "B","C","D","F","G","H","J","K","M","P","Q","R","T","V","W","X","Y","2","3","4","6","7","8","9"
+        $charsArray = "B", "C", "D", "F", "G", "H", "J", "K", "M", "P", "Q", "R", "T", "V", "W", "X", "Y", "2", "3", "4", "6", "7", "8", "9"
     }
-    
-    Process {
-        Foreach ($target in $Targets) {
+
+    process {
+        foreach ($target in $Targets) {
             Write-Verbose "Processing computer: $target"
+            # CIM session for a remote target; stays $null for the local machine
+            $session = $null
             try {
-                # Create hashtable for WMI parameters
-                $wmiParams = @{
-                    ComputerName = $target
-                    ErrorAction = 'Stop'
-                }
-                
-                # Add credentials if specified
-                if ($Credential) {
-                    $wmiParams.Add('Credential', $Credential)
-                }
-                
                 # Check if target is local machine or remote
                 if ($target -eq "." -or $target -eq "localhost" -or $target -eq $env:COMPUTERNAME) {
                     # Access registry directly on local machine for better performance
@@ -98,103 +90,158 @@ function Get-WindowsKey {
                             $digitalProductId = $regSubKey.GetValue($regValue)
                             if ($digitalProductId) {
                                 $binArray = $digitalProductId[52..66]
-                            } else {
+                            }
+                            else {
                                 Write-Warning "DigitalProductId value not found in registry on $target"
                                 continue
                             }
-                        } else {
+                        }
+                        else {
                             Write-Warning "Windows NT registry key not found on $target"
                             continue
                         }
-                    } catch {
+                    }
+                    catch {
                         Write-Warning "Error accessing local registry on $target`: $_"
                         continue
                     }
-                } else {
-                    # Use WMI for remote registry access
-                    Write-Verbose "Accessing remote registry via WMI"
+                }
+                else {
+                    # Use CIM for remote registry access
+                    Write-Verbose "Accessing remote registry via CIM"
                     try {
-                        $wmi = Get-WmiObject -Class "StdRegProv" -Namespace "root\default" @wmiParams
-                        $data = $wmi.GetBinaryValue($hklm, $regPath, $regValue)
-                        
+                        $sessionParams = @{
+                            ComputerName = $target
+                            ErrorAction  = 'Stop'
+                        }
+
+                        # Add credentials if specified
+                        if ($Credential) {
+                            $sessionParams.Add('Credential', $Credential)
+                        }
+
+                        $session = New-CimSession @sessionParams
+                        $methodParams = @{
+                            CimSession  = $session
+                            Namespace   = 'root\default'
+                            ClassName   = 'StdRegProv'
+                            MethodName  = 'GetBinaryValue'
+                            Arguments   = @{
+                                hDefKey     = [uint32]$hklm
+                                sSubKeyName = $regPath
+                                sValueName  = $regValue
+                            }
+                            ErrorAction = 'Stop'
+                        }
+                        $data = Invoke-CimMethod @methodParams
+
                         if (-not $data -or -not $data.uValue) {
                             Write-Warning "Failed to retrieve product key data from $target"
                             continue
                         }
-                        
+
                         $binArray = ($data.uValue)[52..66]
-                    } catch {
+                    }
+                    catch {
                         Write-Warning "Error connecting to $target`: $_"
                         continue
                     }
                 }
-                
+
                 # Decode the product key
                 $productKey = $null
-                
+
                 try {
-                    # Decrypt base24 encoded binary data
-                    For ($i = 24; $i -ge 0; $i--) {
+                    # Windows 8 and later set bit 3 of byte 66 (the last of the 15 key bytes) and keep
+                    # the position of an "N" in the key as its most significant base-24 digit.
+                    # Published scripts derive the flag from the byte divided by 6, which is wrong for
+                    # several byte values (with the rounding [int] cast, for all but 0 to 3 and 8). The
+                    # 0xF7 mask they apply clears exactly bit 3, and no pre-Windows 8 key sets it.
+                    $isWin8 = ($binArray[14] -shr 3) -band 1
+                    $binArray[14] = $binArray[14] -band 0xF7
+
+                    # Decrypt base24 encoded binary data, least significant digit first
+                    $keyChars = ""
+                    $last = 0
+                    for ($i = 24; $i -ge 0; $i--) {
                         $k = 0
-                        For ($j = 14; $j -ge 0; $j--) {
+                        for ($j = 14; $j -ge 0; $j--) {
                             $k = $k * 256 -bxor $binArray[$j]
                             $binArray[$j] = [math]::Truncate($k / 24)
                             $k = $k % 24
                         }
-                        $productKey = $charsArray[$k] + $productKey
-                        If (($i % 5 -eq 0) -and ($i -ne 0)) {
-                            $productKey = "-" + $productKey
-                        }
+                        $keyChars = $charsArray[$k] + $keyChars
+                        $last = $k
                     }
-                } catch {
+
+                    if ($isWin8) {
+                        # The most significant digit is the position of the "N", not a key character
+                        $keyChars = $keyChars.Substring(1).Insert($last, "N")
+                    }
+
+                    # Group the 25 characters in fives
+                    $productKey = $keyChars -replace '(.{5})(?!$)', '$1-'
+                }
+                catch {
                     Write-Warning "Error decoding product key on $target`: $_"
                     $productKey = "DECODE-ERROR"
                 }
-                
+
                 # Get OS Details
                 try {
-                    # Get OS info using CIM on newer systems or WMI as fallback
-                    $osInfoParams = $wmiParams.Clone()
-                    $win32os = Get-CimInstance -ClassName Win32_OperatingSystem @osInfoParams -ErrorAction Stop
-                } catch {
-                    try {
-                        $win32os = Get-WmiObject -Class Win32_OperatingSystem @wmiParams
-                    } catch {
-                        Write-Warning "Error retrieving OS information from $target`: $_"
-                        # Create minimal object if OS info collection fails
-                        $win32os = [PSCustomObject]@{
-                            Caption = "Unknown"
-                            CSDVersion = "Unknown"
-                            OSArchitecture = "Unknown"
-                            BuildNumber = "Unknown"
-                            RegisteredUser = "Unknown"
-                            SerialNumber = "Unknown"
-                        }
+                    # Get OS info over the remote session, or locally when there is none
+                    $osInfoParams = @{
+                        ClassName   = 'Win32_OperatingSystem'
+                        ErrorAction = 'Stop'
+                    }
+                    if ($session) {
+                        $osInfoParams.Add('CimSession', $session)
+                    }
+                    $win32os = Get-CimInstance @osInfoParams
+                }
+                catch {
+                    Write-Warning "Error retrieving OS information from $target`: $_"
+                    # Create minimal object if OS info collection fails
+                    $win32os = [PSCustomObject]@{
+                        Caption        = "Unknown"
+                        CSDVersion     = "Unknown"
+                        OSArchitecture = "Unknown"
+                        BuildNumber    = "Unknown"
+                        RegisteredUser = "Unknown"
+                        SerialNumber   = "Unknown"
                     }
                 }
-                
+
                 # Create and return the output object with OS and product key information
                 [PSCustomObject]@{
-                    Computer = $target
-                    Caption = $win32os.Caption
-                    Version = $win32os.Version
-                    CSDVersion = $win32os.CSDVersion
+                    Computer       = $target
+                    Caption        = $win32os.Caption
+                    Version        = $win32os.Version
+                    CSDVersion     = $win32os.CSDVersion
                     OSArchitecture = $win32os.OSArchitecture
-                    BuildNumber = $win32os.BuildNumber
-                    RegisteredTo = $win32os.RegisteredUser
-                    ProductID = $win32os.SerialNumber
-                    ProductKey = $productKey
-                    InstallDate = if ($win32os.InstallDate) { 
-                        [System.Management.ManagementDateTimeConverter]::ToDateTime($win32os.InstallDate)
-                    } else { $null }
+                    BuildNumber    = $win32os.BuildNumber
+                    RegisteredTo   = $win32os.RegisteredUser
+                    ProductID      = $win32os.SerialNumber
+                    ProductKey     = $productKey
+                    # CIM already returns InstallDate as a DateTime
+                    InstallDate    = if ($win32os.InstallDate) {
+                        [datetime]$win32os.InstallDate
+                    }
+                    else { $null }
                 }
-            } catch {
+            }
+            catch {
                 Write-Error "An unexpected error occurred while processing $target`: $_"
+            }
+            finally {
+                if ($session) {
+                    Remove-CimSession -CimSession $session -ErrorAction SilentlyContinue
+                }
             }
         }
     }
-    
-    End {
+
+    end {
         Write-Verbose "Get-WindowsKey function completed"
     }
 }

@@ -1,4 +1,4 @@
-Function Set-AutoAdminLogin {
+function Set-AutoAdminLogin {
     <#
     .SYNOPSIS
         Sets the system to automatically log in with a specified user account. This is especially useful in development environments where auto-login is needed for testing purposes.
@@ -19,9 +19,9 @@ Function Set-AutoAdminLogin {
         Consider using a method to securely encrypt the password.
 
     .EXAMPLE
-        Set-AutoAdminLogin -Username "devUser" -Password "devPass123"
+        Set-AutoAdminLogin -Username "devUser" -Password (Read-Host -AsSecureString -Prompt "Password")
 
-        This example configures the system to automatically log in to the account `devUser` with the password `devPass123`.
+        This example configures the system to automatically log in to the account `devUser` with the password typed at the prompt.
         The system will bypass the login screen and log in to this account after rebooting.
 
     .NOTES
@@ -34,6 +34,7 @@ Function Set-AutoAdminLogin {
 
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Alias("u")]
         [string]$Username,
@@ -42,34 +43,39 @@ Function Set-AutoAdminLogin {
         [SecureString]$Password
     )
 
-#    # Define the auto-login user and password
-#    $Username = "YourUsername"    # Replace with your username
-#    # TDO: Implement password encryption to securely store the password in the registry
-#    $Password = "YourPassword"    # Replace with your password
+    #    # Define the auto-login user and password
+    #    $Username = "YourUsername"    # Replace with your username
+    #    # TDO: Implement password encryption to securely store the password in the registry
+    #    $Password = "YourPassword"    # Replace with your password
 
     # Registry path for auto-login settings
     $registryPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 
     # Set the DefaultUserName and password (creates the key if it doesn't exist)
-    if($Username){
+    if ($Username -and $PSCmdlet.ShouldProcess("$registryPath\DefaultUserName", 'Set registry value')) {
         try {
-            write-output "setting ${Username} as DefaultUserName"
+            Write-Output "setting ${Username} as DefaultUserName"
             Set-ItemProperty -Path $registryPath -Name "DefaultUserName" -Value $Username
-        } catch {
-            write-output "An error occured while trying to set the ``DefaultUserName``: $_"
+        }
+        catch {
+            Write-Output "An error occurred while trying to set the ``DefaultUserName``: $_"
         }
     }
-    if($Password){
+    if ($Password -and $PSCmdlet.ShouldProcess("$registryPath\DefaultPassword", 'Set registry value')) {
         try {
-            write-output "setting DefaultPassword"
-            Set-ItemProperty -Path $registryPath -Name "DefaultPassword" -Value $Password
-        } catch {
-            write-output "An error occured while trying to set the ``DefaultPassword``: $_"
+            Write-Output "setting DefaultPassword"
+            # Winlogon reads DefaultPassword as plain text, so convert the SecureString only at the write
+            Set-ItemProperty -Path $registryPath -Name "DefaultPassword" -Value ([System.Net.NetworkCredential]::new('', $Password).Password)
+        }
+        catch {
+            Write-Output "An error occurred while trying to set the ``DefaultPassword``: $_"
         }
     }
 
     # Enable AutoAdminLogon by setting it to "1"
-    Set-ItemProperty -Path $registryPath -Name "AutoAdminLogon" -Value "1"
+    if ($PSCmdlet.ShouldProcess("$registryPath\AutoAdminLogon", 'Set registry value to 1')) {
+        Set-ItemProperty -Path $registryPath -Name "AutoAdminLogon" -Value "1"
+    }
 
     # Verify the changes were applied
     Get-ItemProperty -Path $registryPath | Select-Object DefaultUserName, DefaultPassword, AutoAdminLogon

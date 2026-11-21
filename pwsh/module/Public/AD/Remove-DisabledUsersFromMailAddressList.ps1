@@ -4,13 +4,13 @@
         Hides disabled Active Directory users from Exchange address lists.
 
     .DESCRIPTION
-        The Remove-DisabledUsersFromMailAddressList function retrieves all disabled user accounts 
-        from Active Directory and sets their msExchHideFromAddressLists attribute to $true, 
+        The Remove-DisabledUsersFromMailAddressList function retrieves all disabled user accounts
+        from Active Directory and sets their msExchHideFromAddressLists attribute to $true,
         effectively hiding them from Exchange address lists and Global Address Lists (GAL).
-        
-        This function is useful for maintaining clean address lists by automatically hiding 
+
+        This function is useful for maintaining clean address lists by automatically hiding
         inactive user accounts while preserving the accounts themselves for potential reactivation.
-        
+
         This function automatically imports the required ActiveDirectory module if it's not already loaded.
 
     .PARAMETER WhatIf
@@ -24,28 +24,28 @@
 
     .EXAMPLE
         Remove-DisabledUsersFromMailAddressList
-        
+
         Hides all disabled AD users from Exchange address lists.
 
     .EXAMPLE
         Remove-DisabledUsersFromMailAddressList -WhatIf
-        
+
         Shows which disabled users would be hidden from address lists without making any changes.
 
     .EXAMPLE
         Remove-DisabledUsersFromMailAddressList -Confirm
-        
+
         Prompts for confirmation before hiding each disabled user from address lists.
 
     .EXAMPLE
         $ModifiedUsers = Remove-DisabledUsersFromMailAddressList -PassThru
-        
+
         Hides disabled users from address lists and returns the modified user objects.
 
     .NOTES
         This function modifies the msExchHideFromAddressLists attribute for disabled user accounts.
         Requires appropriate permissions to modify user objects in Active Directory.
-        
+
         Author: Michiel VH
 
     .LINK
@@ -78,8 +78,8 @@
     process {
         try {
             Write-Verbose "Retrieving disabled Active Directory users..."
-            $DisabledUsers = Get-ADUser -Filter {Enabled -eq $false} -ErrorAction Stop
-            
+            $DisabledUsers = Get-ADUser -Filter { Enabled -eq $false } -ErrorAction Stop
+
             if ($DisabledUsers.Count -eq 0) {
                 Write-Warning "No disabled users found in Active Directory"
                 return
@@ -90,9 +90,9 @@
             foreach ($User in $DisabledUsers) {
                 if ($PSCmdlet.ShouldProcess($User.SamAccountName, "Hide from Exchange address lists")) {
                     try {
-                        Set-ADObject -Identity $User.DistinguishedName -Replace @{msExchHideFromAddressLists=$true} -ErrorAction Stop
+                        Set-ADObject -Identity $User.DistinguishedName -Replace @{msExchHideFromAddressLists = $true } -ErrorAction Stop
                         Write-Verbose "Successfully hidden user '$($User.SamAccountName)' from address lists"
-                        
+
                         if ($PassThru) {
                             # Return the modified user object
                             Get-ADUser -Identity $User.SamAccountName -Properties msExchHideFromAddressLists

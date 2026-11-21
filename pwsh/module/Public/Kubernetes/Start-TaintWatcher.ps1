@@ -7,18 +7,18 @@ function Start-TaintWatcher {
         The Start-TaintWatcher function continuously monitors Kubernetes nodes for taints and logs their status to a file.
         It runs in an infinite loop, checking for taints every 2 seconds and recording the results to 'taint_watch.log'.
         This is useful for troubleshooting node scheduling issues or monitoring cluster state changes over time.
-        
+
         Requires kubectl to be installed and configured to access the target cluster.
 
     .EXAMPLE
         Start-TaintWatcher
-        
+
         Starts monitoring node taints and logs them to 'taint_watch.log' in the current directory.
         Use Ctrl+C to stop the monitoring process.
-    
+
     .EXAMPLE
         Start-Job -ScriptBlock { Start-TaintWatcher }
-        
+
         Runs the taint monitoring as a background job.
 
     .NOTES
@@ -27,12 +27,17 @@ function Start-TaintWatcher {
         File: taint_watch.log will be created in the current directory
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param()
 
-   $logFile = "taint_watch.log"
+    $logFile = "taint_watch.log"
+    if (-not $PSCmdlet.ShouldProcess($logFile, 'Append node taints every 2 seconds')) {
+        return
+    }
+
     while ($true) {
         Add-Content $logFile "`n===== $(Get-Date) ====="
-        
+
         $nodes = kubectl get nodes -o json | ConvertFrom-Json
         foreach ($node in $nodes.items) {
             $nodeName = $node.metadata.name
@@ -41,7 +46,8 @@ function Start-TaintWatcher {
             if ($taints) {
                 Add-Content $logFile "[$nodeName] has taints:"
                 $taints | ForEach-Object { "$($_.key)=$($_.value):$($_.effect)" } | Add-Content $logFile
-            } else {
+            }
+            else {
                 Add-Content $logFile "[$nodeName] has no taints."
             }
         }

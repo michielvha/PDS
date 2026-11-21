@@ -2,38 +2,39 @@ function Set-LF {
     <#
     .SYNOPSIS
         Converts line endings to LF (Unix-style) for files in specified paths.
-    
+
     .DESCRIPTION
         This function converts CRLF and CR line endings to LF for files in the specified paths.
         It supports multiple methods including Git normalization and direct file conversion.
         By default, it processes shell script files (.sh) only.
-    
+
     .PARAMETER Path
         One or more paths to process. Can be files or directories. Defaults to current directory.
-    
+
     .PARAMETER Method
         The method to use for conversion:
         - 'Git': Uses Git's normalization feature (requires Git repository)
         - 'Direct': Direct file content replacement (works anywhere)
-    
+
     .PARAMETER FileTypes
         Array of file extensions to process. Defaults to .sh files only.
-    
+
     .PARAMETER Recurse
         Process subdirectories recursively. Default is $true.
-    
+
     .EXAMPLE
         Set-LF -Path "bash", "packaging"
         Converts line endings for all .sh files in bash and packaging folders.
-    
+
     .EXAMPLE
         Set-LF -Path "." -Method Direct
         Converts line endings using direct method for .sh files in current directory.
-    
+
     .EXAMPLE
         Set-LF -Path "script.sh"
         Converts line endings for a specific shell script file.
     #>
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [string[]]$Path = @("."),                                           # Default to current directory
         [ValidateSet("Git", "Direct")]
@@ -49,23 +50,27 @@ function Set-LF {
     try {
         if ($Method -eq "Git") {
             # Git method: Disable autocrlf and use Git's normalization
-            Write-Host "Disabling Git autocrlf..." -ForegroundColor Yellow
-            git config core.autocrlf false
-            
+            if ($PSCmdlet.ShouldProcess('core.autocrlf', 'Set Git config to false')) {
+                Write-Host "Disabling Git autocrlf..." -ForegroundColor Yellow
+                git config core.autocrlf false
+            }
+
             Write-Host "Using Git normalization method..." -ForegroundColor Yellow
             foreach ($currentPath in $Path) {
                 if (-not (Test-Path $currentPath)) {
                     Write-Warning "Path does not exist: $currentPath"
                     continue
                 }
-                
-                $files = Get-ChildItem -Path $currentPath -Recurse:$Recurse -File | 
+
+                $files = Get-ChildItem -Path $currentPath -Recurse:$Recurse -File |
                     Where-Object { $_.Extension -in $FileTypes -or ($FileTypes -contains "" -and $_.Extension -eq "") }
-                
+
                 foreach ($file in $files) {
-                    Write-Host "Processing: $($file.FullName)" -ForegroundColor Gray
-                    git add $file.FullName
-                    git reset $file.FullName
+                    if ($PSCmdlet.ShouldProcess($file.FullName, 'Re-stage with Git normalization')) {
+                        Write-Host "Processing: $($file.FullName)" -ForegroundColor Gray
+                        git add $file.FullName
+                        git reset $file.FullName
+                    }
                 }
             }
         }
@@ -73,31 +78,42 @@ function Set-LF {
             # Direct method: Read and write files with LF line endings
             Write-Host "Using direct file conversion method..." -ForegroundColor Yellow
             $fileCount = 0
-            
+
             foreach ($currentPath in $Path) {
                 if (-not (Test-Path $currentPath)) {
                     Write-Warning "Path does not exist: $currentPath"
                     continue
                 }
-                
-                $files = Get-ChildItem -Path $currentPath -Recurse:$Recurse -File | 
+
+                $files = Get-ChildItem -Path $currentPath -Recurse:$Recurse -File |
                     Where-Object { $_.Extension -in $FileTypes -or ($FileTypes -contains "" -and $_.Extension -eq "") }
-                
+
                 foreach ($file in $files) {
                     Write-Host "Converting: $($file.FullName)" -ForegroundColor Gray
-                    
+
                     try {
-                        # Read file content preserving encoding
-                        $content = Get-Content $file.FullName -Raw -Encoding UTF8
-                        
+                        # Read the file as UTF-8 without a byte-order mark unless it starts with one;
+                        # CurrentEncoding then carries the mark the file had, if any
+                        $reader = [System.IO.StreamReader]::new($file.FullName, [System.Text.UTF8Encoding]::new($false), $true)
+                        try {
+                            $content = $reader.ReadToEnd()
+                            $encoding = $reader.CurrentEncoding
+                        }
+                        finally {
+                            $reader.Dispose()
+                        }
+
                         if ($null -ne $content -and $content.Length -gt 0) {
                             # Convert CRLF to LF, then CR to LF (handles all cases)
                             $content = $content -replace "`r`n", "`n"
                             $content = $content -replace "`r", "`n"
-                            
-                            # Write back with UTF8 encoding and LF line endings
-                            [System.IO.File]::WriteAllText($file.FullName, $content, [System.Text.Encoding]::UTF8)
-                            $fileCount++
+
+                            # Write back in the original encoding, so a file without a byte-order mark
+                            # gets none (a mark before #! breaks a shell script)
+                            if ($PSCmdlet.ShouldProcess($file.FullName, 'Convert line endings to LF')) {
+                                [System.IO.File]::WriteAllText($file.FullName, $content, $encoding)
+                                $fileCount++
+                            }
                         }
                     }
                     catch {
@@ -105,7 +121,7 @@ function Set-LF {
                     }
                 }
             }
-            
+
             Write-Host "Conversion complete. Processed $fileCount files." -ForegroundColor Green
         }
     }

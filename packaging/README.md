@@ -266,9 +266,9 @@ networking disabled. It is never a production runtime or a published container.
 
 Run `bash tests/check-package.sh` from the repository root with Docker, Make, curl and ShellCheck
 available on an amd64 Linux host. It verifies the pinned nFPM archive, builds a local candidate and
-runs all package/helper checks in disposable Ubuntu. The existing PR/publisher workflow uses the
-same verified compiler, strict lint target and package tests. PR jobs have read-only tokens and
-version calculation never tags; the release job creates the tag at the checked commit after tests.
+runs all package/helper checks in disposable Ubuntu. CI runs the same verified compiler, strict lint
+target and package tests on every branch push with a read-only token. Only `main` is tagged, after
+the checks pass, and the tag's release run rebuilds and tests the package at that version first.
 The local check does not tag, publish a package or deploy the APT repository. `make -C packaging lint-image-provisioning`
 checks the relevant shell files without suppressing failures. The older broad lint target retains
 its existing behavior for unrelated scripts.

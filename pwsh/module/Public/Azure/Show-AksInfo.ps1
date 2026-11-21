@@ -1,16 +1,16 @@
-Function Show-AksInfo {
+﻿function Show-AksInfo {
     <#
     .SYNOPSIS
         Retrieves and displays AKS cluster information, including VNet details.
 
     .DESCRIPTION
-        Fetches all AKS clusters in a given Azure subscription and retrieves their 
-        resource groups, associated virtual networks, and subnet details. This function 
+        Fetches all AKS clusters in a given Azure subscription and retrieves their
+        resource groups, associated virtual networks, and subnet details. This function
         is designed for Azure CNI-based AKS clusters.
 
     .PARAMETER SubscriptionId
-        (Optional) Specifies the Azure subscription ID to use when querying AKS clusters 
-        and network details. If not provided, the function uses the currently active 
+        (Optional) Specifies the Azure subscription ID to use when querying AKS clusters
+        and network details. If not provided, the function uses the currently active
         Azure subscription.
 
     .EXAMPLE
@@ -83,7 +83,7 @@ Function Show-AksInfo {
             $subnetId = $aks.agentPoolProfiles[0].vnetSubnetId
 
             if ($subnetId) {
-                $vnetDetails = Get-VNetSubnetDetails -subnetId $subnetId
+                $vnetDetails = Get-VNetSubnetDetail -subnetId $subnetId
 
                 if ($vnetDetails) {
                     $subnetDetails = az network vnet subnet show --resource-group $vnetDetails.VNetResourceGroup --vnet-name $vnetDetails.VNetName --name $vnetDetails.SubnetName @subscriptionArg --query "{addressPrefix:addressPrefix}" --output json | ConvertFrom-Json
@@ -108,13 +108,14 @@ Function Show-AksInfo {
     # Display the table
     if ($results.Count -gt 0) {
         $results | Format-Table -AutoSize
-    } else {
+    }
+    else {
         Write-Host "No AKS clusters with VNet information found." -ForegroundColor Red
     }
 }
 
 # Function to extract VNet and Subnet details from a subnet ID
-function Get-VNetSubnetDetails {
+function Get-VNetSubnetDetail {
     param (
         [string]$subnetId
     )

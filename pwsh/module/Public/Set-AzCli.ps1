@@ -1,4 +1,4 @@
-Function Set-AzCli {
+function Set-AzCli {
     <#
     .SYNOPSIS
 
@@ -21,6 +21,17 @@ Function Set-AzCli {
         https://learn.microsoft.com/en-us/cli/azure/azure-cli-extensions-list
 
     #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
 
-    az extension add --name ssh, aks-preview, mesh, terraform, storage
+    # az extension add takes one name per --name, so add each extension with its own call
+    $extensions = 'ssh', 'aks-preview', 'mesh', 'terraform'
+    foreach ($extension in $extensions) {
+        if ($PSCmdlet.ShouldProcess('Azure CLI', "Add extension $extension")) {
+            az extension add --name $extension
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Adding the Azure CLI extension '$extension' failed with exit code $LASTEXITCODE."
+            }
+        }
+    }
 }

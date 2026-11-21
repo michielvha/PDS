@@ -1,0 +1,71 @@
+name: CI
+
+# Every branch push runs the checks its changes need, judged over the whole
+# branch since it left main (on main, since the latest stable tag), then
+# version-workflow. Only main is tagged, and only after the checks pass; the
+# App's tag push starts release.yml, which runs every check. Other branches,
+# and a PR's head, only calculate the version.
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+# No concurrency group: version-workflow serializes tagging per ref itself, and
+# a group that cancels only branch runs would need a computed expression.
+
+jobs:
+  changes:
+    name: Select the checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      package: ${{ steps.select.outputs.package }}
+      powershell: ${{ steps.select.outputs.powershell }}
+      workflows: ${{ steps.select.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # First, so a broken selection fails every run, including one that
+      # would deselect the checks of its own change.
+      - name: Test the check selection
+        run: bash tests/detect-changes.test.sh
+      - name: Select the checks this push needs
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          # Reads the Releases on main, to judge it from the latest released tag.
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/detect-changes.sh
+
+  checks:
+    needs: [changes]
+    permissions:
+      contents: read
+    uses: ./.github/workflows/checks.yml
+    with:
+      package: ${{ needs.changes.outputs.package }}
+      powershell: ${{ needs.changes.outputs.powershell }}
+      workflows: ${{ needs.changes.outputs.workflows }}
+
+  version:
+    needs: [checks]
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: vhco-pro/version-workflow/.github/workflows/version.yml@46a1ac93fdbd3abaa3a7d17259c5565edd2053c0 # v0.1.2
+    with:
+      preview-label: ''
+      release-app-client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+    secrets:
+      release-app-private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}

@@ -17,13 +17,15 @@ function Set-DockerAlias {
     .NOTES
         Author: Michiel VH
     #>
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
 
     $profilePath = $PROFILE
 
     $aliases = @(
-        @{Name="d"; Command="docker"}
-        @{Name="dcu"; Command="docker compose up -d"}
-        @{Name="dcd"; Command="docker compose down"}
+        @{Name = "d"; Command = "docker" }
+        @{Name = "dcu"; Command = "docker compose up -d" }
+        @{Name = "dcd"; Command = "docker compose down" }
     )
 
     foreach ($alias in $aliases) {
@@ -34,9 +36,12 @@ function Set-DockerAlias {
         if (!(Get-Content $profilePath -ErrorAction SilentlyContinue | Select-String -Pattern "function $aliasName")) {
             # Add the function to the profile
             $functionDefinition = "function $aliasName { $aliasCommand }"
-            Add-Content -Path $profilePath -Value $functionDefinition
-            Write-Output "Function $aliasName added to profile successfully."
-        } else {
+            if ($PSCmdlet.ShouldProcess($profilePath, "Add function $aliasName")) {
+                Add-Content -Path $profilePath -Value $functionDefinition
+                Write-Output "Function $aliasName added to profile successfully."
+            }
+        }
+        else {
             Write-Output "Function $aliasName is already defined in the profile."
         }
     }

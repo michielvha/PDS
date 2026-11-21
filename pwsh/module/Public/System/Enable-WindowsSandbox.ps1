@@ -1,5 +1,5 @@
 function Enable-WindowsSandbox {
-<#
+    <#
 .SYNOPSIS
     Enables Windows Sandbox if it is not already enabled on the system.
 
@@ -35,7 +35,7 @@ function Enable-WindowsSandbox {
     try {
         # Check if Windows Sandbox is already enabled
         $sandboxFeature = Get-WindowsOptionalFeature -Online -FeatureName "Containers-DisposableClientVM" -ErrorAction Stop
-        
+
         if ($sandboxFeature.State -eq "Enabled") {
             Write-Output "Windows Sandbox is already enabled."
             return
@@ -44,11 +44,12 @@ function Enable-WindowsSandbox {
         # Enable Windows Sandbox
         Write-Output "Enabling Windows Sandbox feature..."
         $result = Enable-WindowsOptionalFeature -Online -FeatureName "Containers-DisposableClientVM" -NoRestart -ErrorAction Stop
-        
+
         if ($result.RestartNeeded) {
             Write-Output "Windows Sandbox has been enabled."
             Write-Warning "A system restart is required for changes to take effect. Please restart your computer when convenient."
-        } else {
+        }
+        else {
             Write-Output "Windows Sandbox has been successfully enabled."
         }
     }
@@ -57,4 +58,3 @@ function Enable-WindowsSandbox {
         throw
     }
 }
-

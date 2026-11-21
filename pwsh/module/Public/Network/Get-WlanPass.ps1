@@ -1,4 +1,4 @@
-Function Get-WlanPass {
+function Get-WlanPass {
     <#
     .SYNOPSIS
         Retrieves all saved WiFi profiles on the system and displays their passwords.
@@ -38,20 +38,21 @@ Function Get-WlanPass {
     $wifiCredentials = @()
 
     # Iterate over each profile and fetch its password
-    foreach ($profile in $profiles) {
+    foreach ($wlanProfile in $profiles) {
         # Fetch password (key content)
-        $passwordLine = netsh wlan show profile name="$profile" key=clear | Select-String "Key Content"
+        $passwordLine = netsh wlan show profile name="$wlanProfile" key=clear | Select-String "Key Content"
 
         # Extract password if found, otherwise set it to "N/A"
         if ($passwordLine) {
             $password = ($passwordLine -split ":")[-1].Trim()
-        } else {
+        }
+        else {
             $password = "N/A"
         }
 
         # Store SSID and password in an object
         $wifiCredentials += [PSCustomObject]@{
-            SSID     = $profile
+            SSID     = $wlanProfile
             Password = $password
         }
     }

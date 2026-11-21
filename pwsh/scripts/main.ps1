@@ -1,4 +1,4 @@
-# -- Environment --
+﻿# -- Environment --
 
 # Set $ScriptPath to current directory compatible with PS2EXE
 if ($MyInvocation.MyCommand.CommandType -eq "ExternalScript") {
@@ -77,7 +77,7 @@ $packagesToInstall = @(
 # TODO: Evalute packages:
 # - msys2: Unix-like shell & tools for Windows
 
-Install-ChocoPackages -packagesToInstall $packagesToInstall
+Install-ChocoPackage -packagesToInstall $packagesToInstall
 
 
 # 3. Configure psreadline module for all users
@@ -122,7 +122,7 @@ format = '[🏎💨 $workspace]($style) '
 "@
 
 # Run the function to create starship.toml for all users
-Set-StarshipConfigForAllUsers -configContent $configContent
+Set-StarshipConfigForEveryUser -configContent $configContent
 
 # - ncurl alias
 #   for powershell 5.1 we need a seperate alias for curl since it conflicts with the native curl binary

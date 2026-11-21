@@ -10,7 +10,7 @@ Locale: en-US
 ## Description
 {{ Fill in the Description }}
 ## AD Cmdlets
-### [Get-DisabledADUsers](AD/Get-DisabledADUsers.md)
+### [Get-DisabledADUser](AD/Get-DisabledADUser.md)
 {{ Fill in the Description }}
 
 ### [Install-RSAT](AD/Install-RSAT.md)
@@ -34,13 +34,13 @@ Locale: en-US
 {{ Fill in the Description }}
 
 ## diagnostics Cmdlets
-### [Get-AllConnections](diagnostics/Get-AllConnections.md)
+### [Get-LogonActivity](diagnostics/Get-LogonActivity.md)
 {{ Fill in the Description }}
 
-### [Get-LogonEvents](diagnostics/Get-LogonEvents.md)
+### [Get-LogonEvent](diagnostics/Get-LogonEvent.md)
 {{ Fill in the Description }}
 
-### [Get-RDSActiveSessions](diagnostics/Get-RDSActiveSessions.md)
+### [Get-RDSActiveSession](diagnostics/Get-RDSActiveSession.md)
 {{ Fill in the Description }}
 
 ## Git Cmdlets
@@ -54,7 +54,7 @@ Locale: en-US
 ### [Install-ArgoCLI](Kubernetes/Install-ArgoCLI.md)
 {{ Fill in the Description }}
 
-### [Install-KubeCLI](Kubernetes/Install-KubeCLI.md)
+### [Install-AzureKubeCLI](Kubernetes/Install-AzureKubeCLI.md)
 {{ Fill in the Description }}
 
 ### [Install-Minikube](Kubernetes/Install-Minikube.md)
@@ -73,7 +73,7 @@ Locale: en-US
 ### [Get-NetProfile](Network/Get-NetProfile.md)
 {{ Fill in the Description }}
 
-### [Get-Ports](Network/Get-Ports.md)
+### [Get-ListeningPort](Network/Get-ListeningPort.md)
 {{ Fill in the Description }}
 
 ### [Get-WlanPass](Network/Get-WlanPass.md)
@@ -95,7 +95,7 @@ Locale: en-US
 ### [Set-ShellHistory](shell/Set-ShellHistory.md)
 {{ Fill in the Description }}
 
-### [Set-StarshipConfigForAllUsers](shell/Set-StarshipConfigForAllUsers.md)
+### [Set-StarshipConfigForEveryUser](shell/Set-StarshipConfigForEveryUser.md)
 {{ Fill in the Description }}
 
 ### [Set-UserProfile](shell/Set-UserProfile.md)
@@ -105,7 +105,7 @@ Locale: en-US
 ### [Install-Choco](Software/Install-Choco.md)
 {{ Fill in the Description }}
 
-### [Install-ChocoPackages](Software/Install-ChocoPackages.md)
+### [Install-ChocoPackage](Software/Install-ChocoPackage.md)
 {{ Fill in the Description }}
 
 ### [Set-DockerAlias](Software/Set-DockerAlias.md)
@@ -121,7 +121,7 @@ Locale: en-US
 ### [Enable-BGInfoAtStartup](System/Enable-BGInfoAtStartup.md)
 {{ Fill in the Description }}
 
-### [Enable-LongPaths](System/Enable-LongPaths.md)
+### [Enable-LongPath](System/Enable-LongPath.md)
 {{ Fill in the Description }}
 
 ### [Get-WindowsKey](System/Get-WindowsKey.md)

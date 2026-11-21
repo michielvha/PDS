@@ -36,6 +36,9 @@ function Set-PSReadLineModule {
 
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
     $commands = @"
 
 # PSreadLine configuration
@@ -52,25 +55,30 @@ Set-PSReadLineOption -PredictionViewStyle ListView
 
 
     if (-not (Get-Module -ListAvailable -Name PSReadLine)) {
-        Write-Host "Installing PSReadLine Module."
-        try {
-            Install-Module PSReadLine -Force -SkipPublisherCheck # -Scope CurrentUser # use this for scoped install
+        if ($PSCmdlet.ShouldProcess('PSReadLine', 'Install module')) {
+            Write-Host "Installing PSReadLine Module."
+            try {
+                Install-Module PSReadLine -Force -SkipPublisherCheck # -Scope CurrentUser # use this for scoped install
+            }
+            catch {
+                Write-Warning "Failed to install PSReadLine module: $_"
+                Write-Host "PSReadLine may already be in use. Please restart PowerShell and try again."
+                return
+            }
         }
-        catch {
-            Write-Warning "Failed to install PSReadLine module: $_"
-            Write-Host "PSReadLine may already be in use. Please restart PowerShell and try again."
-            return
-        }
-    } else {
+    }
+    else {
         Write-Host "PSReadLine Module is already installed. Continuing with configuration."
     }
 
-    # Ensure profile exists
-    if (-not (Test-Path $PROFILE.AllUsersAllHosts)) {
-        Write-Host "Creating PowerShell profile at $PROFILE"
-        New-Item -Path $PROFILE.AllUsersAllHosts -ItemType File -Force | Out-Null
-    }
+    if ($PSCmdlet.ShouldProcess($PROFILE.AllUsersAllHosts, 'Append PSReadLine configuration')) {
+        # Ensure profile exists
+        if (-not (Test-Path $PROFILE.AllUsersAllHosts)) {
+            Write-Host "Creating PowerShell profile at $PROFILE"
+            New-Item -Path $PROFILE.AllUsersAllHosts -ItemType File -Force | Out-Null
+        }
 
-    # Append the commands to the global profile using tee
-    $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
+        # Append the commands to the global profile using tee
+        $commands | Out-File -FilePath $PROFILE.AllUsersAllHosts -Encoding utf8 -Append
+    }
 }

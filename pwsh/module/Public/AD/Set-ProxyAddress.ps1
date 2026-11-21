@@ -4,14 +4,14 @@ function Set-ProxyAddress {
         Sets proxy addresses for Active Directory users based on their UserPrincipalName.
 
     .DESCRIPTION
-        The Set-ProxyAddress function retrieves all users from Active Directory and adds their 
-        current UserPrincipalName as a proxy address (smtp:) to their account. This is particularly 
+        The Set-ProxyAddress function retrieves all users from Active Directory and adds their
+        current UserPrincipalName as a proxy address (smtp:) to their account. This is particularly
         useful when changing domain names but users still need to be reachable on their old email address.
-        
-        The function adds the UserPrincipalName as a secondary SMTP proxy address, preserving 
-        existing proxy addresses. This ensures mail routing continues to work for both old and new 
+
+        The function adds the UserPrincipalName as a secondary SMTP proxy address, preserving
+        existing proxy addresses. This ensures mail routing continues to work for both old and new
         email addresses during domain transitions.
-        
+
         This function automatically imports the required ActiveDirectory module if it's not already loaded.
 
     .PARAMETER SearchBase
@@ -19,7 +19,7 @@ function Set-ProxyAddress {
         Default is to search the entire domain.
 
     .PARAMETER Filter
-        Specifies a custom filter for selecting users. 
+        Specifies a custom filter for selecting users.
         Default is to process all users with a UserPrincipalName.
 
     .PARAMETER WhatIf
@@ -33,36 +33,36 @@ function Set-ProxyAddress {
 
     .EXAMPLE
         Set-ProxyAddress
-        
+
         Adds proxy addresses for all Active Directory users based on their UserPrincipalName.
 
     .EXAMPLE
         Set-ProxyAddress -WhatIf
-        
+
         Shows which users would have proxy addresses added without making any changes.
 
     .EXAMPLE
         Set-ProxyAddress -SearchBase "OU=Users,OU=Company,DC=contoso,DC=com"
-        
+
         Sets proxy addresses for users in the specified organizational unit.
 
     .EXAMPLE
         Set-ProxyAddress -Filter "Department -eq 'IT'" -Confirm
-        
+
         Sets proxy addresses for users in the IT department with confirmation prompts.
 
     .EXAMPLE
         $ModifiedUsers = Set-ProxyAddress -PassThru
-        
+
         Sets proxy addresses and returns the modified user objects.
 
     .NOTES
         This function modifies the proxyAddresses attribute for user accounts.
         Requires appropriate permissions to modify user objects in Active Directory.
-        
+
         The function adds proxy addresses as secondary SMTP addresses (smtp:) not primary (SMTP:).
         Existing proxy addresses are preserved - this function only adds new ones.
-        
+
         Author: Michiel VH
 
     .LINK
@@ -101,8 +101,8 @@ function Set-ProxyAddress {
     process {
         try {
             $GetADUserParams = @{
-                Filter = $Filter
-                Properties = @('SamAccountName', 'UserPrincipalName', 'proxyAddresses')
+                Filter      = $Filter
+                Properties  = @('SamAccountName', 'UserPrincipalName', 'proxyAddresses')
                 ErrorAction = 'Stop'
             }
 
@@ -112,7 +112,7 @@ function Set-ProxyAddress {
 
             Write-Verbose "Retrieving Active Directory users with filter: $Filter"
             $Users = Get-ADUser @GetADUserParams
-            
+
             if ($Users.Count -eq 0) {
                 Write-Warning "No users found matching the specified criteria"
                 return
@@ -127,7 +127,7 @@ function Set-ProxyAddress {
                 }
 
                 $ProxyAddress = "smtp:$($User.UserPrincipalName)"
-                
+
                 # Check if proxy address already exists
                 if ($User.proxyAddresses -contains $ProxyAddress) {
                     Write-Verbose "User '$($User.SamAccountName)' already has proxy address '$ProxyAddress'"
@@ -136,9 +136,9 @@ function Set-ProxyAddress {
 
                 if ($PSCmdlet.ShouldProcess($User.SamAccountName, "Add proxy address '$ProxyAddress'")) {
                     try {
-                        Set-ADUser -Identity $User.SamAccountName -Add @{proxyAddresses = $ProxyAddress} -ErrorAction Stop
+                        Set-ADUser -Identity $User.SamAccountName -Add @{proxyAddresses = $ProxyAddress } -ErrorAction Stop
                         Write-Verbose "Successfully added proxy address '$ProxyAddress' to user '$($User.SamAccountName)'"
-                        
+
                         if ($PassThru) {
                             # Return the modified user object
                             Get-ADUser -Identity $User.SamAccountName -Properties SamAccountName, UserPrincipalName, proxyAddresses

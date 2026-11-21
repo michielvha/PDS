@@ -27,6 +27,7 @@ function Start-ScrollLockToggle {
         Author: Michiel VH
     #>
 
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter()]
         [int]$Interval = 350,
@@ -35,15 +36,19 @@ function Start-ScrollLockToggle {
         [int]$ToggleDuration = 200
     )
 
+    if (-not $PSCmdlet.ShouldProcess('ScrollLock key', "Toggle every $Interval seconds")) {
+        return
+    }
+
     Write-Host "Starting ScrollLock toggle every $Interval seconds..." -ForegroundColor Green
-    $WShell = New-Object -com "Wscript.Shell" 
-    
+    $WShell = New-Object -com "Wscript.Shell"
+
     try {
-        while ($true) { 
-            $WShell.sendkeys("{SCROLLLOCK}") 
-            Start-Sleep -Milliseconds $ToggleDuration   
-            $WShell.sendkeys("{SCROLLLOCK}") 
-            Start-Sleep -Seconds $Interval 
+        while ($true) {
+            $WShell.sendkeys("{SCROLLLOCK}")
+            Start-Sleep -Milliseconds $ToggleDuration
+            $WShell.sendkeys("{SCROLLLOCK}")
+            Start-Sleep -Seconds $Interval
         }
     }
     catch {

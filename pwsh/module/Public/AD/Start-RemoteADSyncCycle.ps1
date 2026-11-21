@@ -16,7 +16,7 @@ function Start-RemoteADSyncCycle {
         or a single server name.
 
     .PARAMETER SyncType
-        Specifies the type of synchronization to run. Valid values are 'Delta' (incremental sync, default) or 
+        Specifies the type of synchronization to run. Valid values are 'Delta' (incremental sync, default) or
         'Initial' (full sync).
 
     .PARAMETER ConfigPath
@@ -43,15 +43,15 @@ function Start-RemoteADSyncCycle {
         Requirements: PowerShell Remoting must be enabled on local and remote machines
         The account running this function must have appropriate permissions on the remote servers
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, Position = 0)]
         [string[]]$ComputerName,
-        
+
         [Parameter(Mandatory = $false)]
         [ValidateSet('Delta', 'Initial')]
         [string]$SyncType = 'Delta',
-        
+
         [Parameter(Mandatory = $false)]
         [ValidateScript({ Test-Path $_ -PathType Leaf })]
         [string]$ConfigPath
@@ -66,12 +66,12 @@ function Start-RemoteADSyncCycle {
 
         # Initialize the server list
         $servers = @()
-        
+
         # Add servers from ComputerName parameter
         if ($ComputerName) {
             $servers += $ComputerName
         }
-        
+
         # Add servers from config file if specified
         if ($ConfigPath) {
             try {
@@ -83,13 +83,13 @@ function Start-RemoteADSyncCycle {
                 return
             }
         }
-        
+
         # Ensure we have at least one server
         if ($servers.Count -eq 0) {
             Write-Error "No target servers specified. Use either -ComputerName or -ConfigPath parameter."
             return
         }
-        
+
         # Create the appropriate script block based on sync type
         $ScriptBlock = {
             try {
@@ -110,13 +110,17 @@ function Start-RemoteADSyncCycle {
     process {
         foreach ($server in $servers) {
             Write-Verbose "Processing server: $server"
-            
+
             # Check if we can contact the remote computer
             if (-not (Test-Connection -ComputerName $server -Quiet -Count 1)) {
                 Write-Error "Can't contact $server. Check your network connection."
                 continue
             }
-            
+
+            if (-not $PSCmdlet.ShouldProcess($server, "Start $SyncType AD sync cycle")) {
+                continue
+            }
+
             # Attempt to run the script block on the remote machine
             try {
                 Write-Verbose "Initiating $SyncType sync on $server..."

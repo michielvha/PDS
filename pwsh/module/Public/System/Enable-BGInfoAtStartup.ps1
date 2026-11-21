@@ -1,4 +1,4 @@
-Function Enable-BGInfoAtStartup {
+function Enable-BGInfoAtStartup {
     <#
     .SYNOPSIS
 

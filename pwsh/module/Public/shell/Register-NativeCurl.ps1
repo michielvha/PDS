@@ -1,4 +1,4 @@
-Function Register-NativeCurl {
+function Register-NativeCurl {
     <#
     .SYNOPSIS
         Creates an 'ncurl' function for the native curl binary.
@@ -11,13 +11,13 @@ Function Register-NativeCurl {
 
     .EXAMPLE
         Register-NativeCurl
-        
+
         # Creates the ncurl alias that points to the native curl.exe binary
 
     .NOTES
         Date: June 28, 2025
         Author: Michiel VH
-        
+
         PowerShell 7+ typically handles curl better, but this function helps in PowerShell 5.1
         where curl is aliased to Invoke-WebRequest.
 
@@ -30,44 +30,51 @@ Function Register-NativeCurl {
 
     # Path to the Chocolatey curl binary
     $curlPath = 'C:\ProgramData\chocolatey\bin\curl.exe'
-    
+
     # If not found, try using the Windows built-in curl
     if (-not (Test-Path -Path $curlPath -PathType Leaf)) {
         $curlPath = 'C:\Windows\System32\curl.exe'
-        
+
         if (-not (Test-Path -Path $curlPath -PathType Leaf)) {
             Write-Error "Could not find curl.exe. Please install it with: choco install curl"
             return
         }
     }
-    
-    # Create the ncurl function for the current session
+
+    # Definition persisted to the profile, so later sessions get the same function
     $functionDef = @"
 function global:ncurl {
     param([Parameter(ValueFromRemainingArguments=`$true)]`$params)
     & '$curlPath' `$params
 }
 "@
-    
-    Invoke-Expression -Command $functionDef
+
+    # Create the ncurl function for the current session; the closure keeps the chosen curl path
+    $nativeCurl = $curlPath
+    $ncurlBody = {
+        param([Parameter(ValueFromRemainingArguments = $true)]$params)
+        & $nativeCurl $params
+    }.GetNewClosure()
+    Set-Item -Path function:global:ncurl -Value $ncurlBody
     Write-Output "Created 'ncurl' function for: $curlPath"
-    
+
     # Test that it works
     try {
         $testOutput = ncurl --version
         Write-Output "Success! Native curl is accessible via 'ncurl'. Version info:"
         Write-Output $testOutput[0]
-    } catch {
+    }
+    catch {
         Write-Warning "Error testing the ncurl function: $_"
     }
-    
+
     # Add to profile (always persist)
     $profileContent = @"
-    
+
 # Create ncurl function that uses the native curl binary
 $functionDef
 "@
-    
+
     # Ensure profile exists
     if (-not (Test-Path -Path $PROFILE)) {
         $profileDir = Split-Path -Path $PROFILE -Parent
@@ -77,15 +84,16 @@ $functionDef
         New-Item -ItemType File -Path $PROFILE -Force | Out-Null
         Write-Verbose "Created PowerShell profile at: $PROFILE"
     }
-    
+
     # Add to profile if not already there
     $currentProfileContent = Get-Content -Path $PROFILE -Raw -ErrorAction SilentlyContinue
     if (-not $currentProfileContent -or -not $currentProfileContent.Contains("function global:ncurl")) {
         Add-Content -Path $PROFILE -Value $profileContent
         Write-Output "Added ncurl function to your PowerShell profile at: $PROFILE"
-    } else {
+    }
+    else {
         Write-Output "Your PowerShell profile already contains a ncurl function."
     }
-    
+
     Write-Output "Use 'ncurl' to access the native curl binary."
 }
