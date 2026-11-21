@@ -95,10 +95,13 @@ jobs:
         run: |
           chmod +x packaging/build.sh
           packaging/build.sh build
+      # The Makefile mounts $(PWD)/dist, so these run from packaging/ rather than with make -C.
       - name: Test package
-        run: make -C packaging test
+        working-directory: packaging
+        run: make test
       - name: Test image provisioning package
-        run: make -C packaging test-image-provisioning
+        working-directory: packaging
+        run: make test-image-provisioning
       - name: Show package info
         run: |
           ls -la packaging/dist/

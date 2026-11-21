@@ -14,7 +14,7 @@ Describe 'Install-WSTerminal' {
         Mock Remove-Item -ModuleName PDS { }
         Mock winget -ModuleName PDS { 'Successfully installed' }
         Mock Get-AppxPackage -ModuleName PDS -ParameterFilter { $Name -eq 'Microsoft.WindowsTerminal' } { }
-        Mock Get-AppxPackage -ModuleName PDS -ParameterFilter { -not $Name } {
+        Mock Get-AppxPackage -ModuleName PDS -ParameterFilter { -not $PesterBoundParameters.ContainsKey('Name') } {
             [pscustomobject]@{ Name = 'Microsoft.UI.Xaml.2.8'; Version = '8.2310.30001.0' }
             [pscustomobject]@{ Name = 'Microsoft.VCLibs.140.00.UWPDesktop'; Version = '14.0.33519.0' }
         }
@@ -68,7 +68,7 @@ Describe 'Install-WSTerminal' {
 
     It 'installs Windows App Runtime and VCLibs first when they are missing' {
         $script:frameworkLookups = 0
-        Mock Get-AppxPackage -ModuleName PDS -ParameterFilter { -not $Name } {
+        Mock Get-AppxPackage -ModuleName PDS -ParameterFilter { -not $PesterBoundParameters.ContainsKey('Name') } {
             $script:frameworkLookups++
             if ($script:frameworkLookups -gt 1) {
                 [pscustomobject]@{ Name = 'Microsoft.UI.Xaml.2.8'; Version = '8.2310.30001.0' }
@@ -92,7 +92,7 @@ Describe 'Install-WSTerminal' {
     }
 
     It 'stops when Windows App Runtime is missing and winget is not available' {
-        Mock Get-AppxPackage -ModuleName PDS -ParameterFilter { -not $Name } { }
+        Mock Get-AppxPackage -ModuleName PDS -ParameterFilter { -not $PesterBoundParameters.ContainsKey('Name') } { }
         Mock Get-Command -ModuleName PDS -ParameterFilter { $Name -eq 'winget' } { }
 
         { Install-WSTerminal 2>$null } | Should -Throw '*winget is not available*'
