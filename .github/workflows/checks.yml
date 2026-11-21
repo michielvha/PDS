@@ -1,9 +1,9 @@
 name: Checks
 
 # Every PDS check, defined once. ci.yml runs it on each branch push at the
-# default version; release.yml runs it on the exact tag at the tag's version
-# and releases the .deb it uploads. It computes no version and receives no
-# secrets.
+# default version with only the groups the push changed; release.yml runs
+# every check on the exact tag at the tag's version and releases the .deb it
+# uploads. It computes no version and receives no secrets.
 on:
   workflow_call:
     inputs:
@@ -11,6 +11,14 @@ on:
         description: Package version to build, without the v prefix
         type: string
         default: 0.0.0
+      package:
+        description: "'true' runs ShellCheck, the package build and the install tests"
+        type: string
+        default: 'true'
+      powershell:
+        description: "'true' runs the PowerShell checks"
+        type: string
+        default: 'true'
 
 permissions: {}
 
@@ -36,6 +44,7 @@ jobs:
 
   shell:
     name: Lint shell scripts
+    if: inputs.package == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -50,9 +59,13 @@ jobs:
         run: |
           make -C packaging lint
           make -C packaging lint-image-provisioning
+          shellcheck scripts/*.sh tests/detect-changes.test.sh
+      - name: Test the check selection
+        run: bash tests/detect-changes.test.sh
 
   powershell:
     name: PowerShell checks
+    if: inputs.powershell == 'true'
     runs-on: windows-latest
     timeout-minutes: 30
     permissions:
@@ -68,6 +81,7 @@ jobs:
 
   package:
     name: Build package
+    if: inputs.package == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [shell]

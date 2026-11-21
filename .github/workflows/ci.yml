@@ -1,8 +1,9 @@
 name: CI
 
-# Every branch push runs the checks, then version-workflow. Only main is
-# tagged, and only after the checks pass; the App's tag push starts
-# release.yml. Other branches, and a PR's head, only calculate the version.
+# Every branch push runs the checks its changes need, then version-workflow.
+# Only main is tagged, and only after the checks pass; the App's tag push
+# starts release.yml, which runs every check. Other branches, and a PR's
+# head, only calculate the version.
 on:
   push:
     branches: ['**']
@@ -18,10 +19,35 @@ defaults:
 # a group that cancels only branch runs would need a computed expression.
 
 jobs:
+  changes:
+    name: Select the checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      package: ${{ steps.select.outputs.package }}
+      powershell: ${{ steps.select.outputs.powershell }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Select the checks this push needs
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: scripts/detect-changes.sh
+
   checks:
+    needs: [changes]
     permissions:
       contents: read
     uses: ./.github/workflows/checks.yml
+    with:
+      package: ${{ needs.changes.outputs.package }}
+      powershell: ${{ needs.changes.outputs.powershell }}
 
   version:
     needs: [checks]
