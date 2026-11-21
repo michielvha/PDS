@@ -28,6 +28,7 @@
 
 ### Fixed
 
+- A push whose changes select no check, such as Markdown only, still runs the version workflow; it used to be skipped with the checks. A failed selection or check still stops it.
 - The release's APT job can run `scripts/build-apt-repo.sh` again: the script was committed without its executable bit, which stopped the `v0.26.0` release before its GitHub Release. The checks now fail on any script under `scripts/` that is not executable.
 - `Remove-WindowsBloat -WhatIf` no longer suggests a reboot, since it changed nothing.
 - `Get-AzureDevOpsLibrary` passes the access token to Git only for the duration of each clone or pull, and removes it from the remote URL of clones made earlier. `Remove-StaleADComputer` skips computers that have never logged on.

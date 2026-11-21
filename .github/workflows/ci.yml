@@ -58,8 +58,12 @@ jobs:
       powershell: ${{ needs.changes.outputs.powershell }}
       workflows: ${{ needs.changes.outputs.workflows }}
 
+  # When the selection skips every check, GitHub marks the checks job skipped,
+  # which would skip this job too. It runs unless the selection or a check
+  # failed or the run was cancelled.
   version:
-    needs: [checks]
+    needs: [changes, checks]
+    if: ${{ !failure() && !cancelled() }}
     permissions:
       contents: read
       pull-requests: read
