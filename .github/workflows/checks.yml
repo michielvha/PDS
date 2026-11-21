@@ -105,7 +105,7 @@ jobs:
       - name: Show package info
         run: |
           ls -la packaging/dist/
-          dpkg-deb -c packaging/dist/*.deb | head -20
+          dpkg-deb -c packaging/dist/*.deb | sed -n '1,20p'
       - name: Upload package
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
