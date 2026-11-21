@@ -69,3 +69,4 @@ Below links feature save ways to activate any windows distro & onprem office
 - [Official MAS Github Repo](https://github.com/massgravel/Microsoft-Activation-Scripts)
 
 Throwaway change for the release guard proof (T32); this branch is deleted afterwards.
+Second throwaway line.
