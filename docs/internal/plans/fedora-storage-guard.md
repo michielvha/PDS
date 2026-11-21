@@ -344,7 +344,7 @@ No editor type-check result is claimed.
   not run checks or change shell options.
 - [The raw loader](../../../bash/source_all.sh) lists sourced modules explicitly;
   see `bash/source_all.sh:44`.
-- [The APT workflow](../../../.github/workflows/build-apt-package.yml) runs
+- [The APT workflow](https://github.com/michielvha/PDS/blob/747168e019c5afbada5fb62d9493fbd9136e3dcf/.github/workflows/build-apt-package.yml) runs
   `packaging/build.sh build` and `make test`; see
   `.github/workflows/build-apt-package.yml:97` and `:101`.
 

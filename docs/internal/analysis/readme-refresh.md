@@ -9,7 +9,7 @@ The source inventory uses PDS commit `04c8deee5973252099d90df10a2e69565f728016`.
 | Earlier README item | Current evidence and tracker |
 | --- | --- |
 | Repository workflow | [#36](https://github.com/michielvha/PDS/issues/36) tracks pinned vh-adlc entry points. |
-| Add testing and linting | The [APT workflow](../../../.github/workflows/build-apt-package.yml) already invokes lint and package checks. [#37](https://github.com/michielvha/PDS/issues/37) tracks blocking library lint and PowerShell checks. |
+| Add testing and linting | [checks.yml](../../../.github/workflows/checks.yml) runs ShellCheck, the package build and install tests, and the PowerShell formatting, analyzer and Pester checks on every branch push. [#37](https://github.com/michielvha/PDS/issues/37) tracks making library ShellCheck failures block. |
 | Improve error handling | [Bootstrap stages](../../../bash/debian/deploy/bootstrap.sh) can hide intermediate failures. [#38](https://github.com/michielvha/PDS/issues/38) tracks failure propagation. |
 | Safe bootstrap reruns | [configure_zsh](../../../bash/common/shell/zsh.sh) replaces user configuration. [#39](https://github.com/michielvha/PDS/issues/39) tracks preservation; [#32](https://github.com/michielvha/PDS/issues/32) retains Linux installation and authentication validation. |
 | Single Linux bootstrap | The [Debian entry point](../../../bash/debian/deploy/bootstrap.sh) and [CLI dispatch](../../../packaging/bin/pds) exist. Fedora and Arch equivalents remain in [#40](https://github.com/michielvha/PDS/issues/40) and [#41](https://github.com/michielvha/PDS/issues/41). |
