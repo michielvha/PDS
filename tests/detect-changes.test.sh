@@ -12,8 +12,8 @@ git init -q -b main "$work/repo"
 cd "$work/repo"
 git config user.email test@example.invalid
 git config user.name test
-mkdir -p pwsh/docs packaging bash/common tests .github scripts docs darwin
-for f in pwsh/a.ps1 pwsh/docs/a.md packaging/a bash/a.sh bash/common/x.sh tests/a.sh .github/a.yml .github/a.ps1 .github/a.md scripts/a.sh scripts/vm-set.ps1 docs/a.md readme.md darwin/a.ps1 PSScriptAnalyzerSettings.psd1; do
+mkdir -p pwsh/docs pwsh/scripts packaging bash/common tests .github scripts docs darwin
+for f in pwsh/a.ps1 pwsh/scripts/main.ps1 pwsh/docs/a.md packaging/a bash/a.sh bash/common/x.sh tests/a.sh .github/a.yml .github/a.ps1 .github/a.md scripts/a.sh scripts/vm-set.ps1 docs/a.md readme.md darwin/a.ps1 PSScriptAnalyzerSettings.psd1; do
   echo base > "$f"
 done
 git add -A && git commit -qm base
@@ -57,6 +57,7 @@ check 'powershell file outside pwsh/' push feature "$(commit_on "$main_tip" darw
 check 'workflow change' push feature "$(commit_on "$main_tip" .github/a.yml)" true true true
 check 'script change' push feature "$(commit_on "$main_tip" scripts/a.sh)" true true false
 check 'powershell script under scripts/' push feature "$(commit_on "$main_tip" scripts/vm-set.ps1)" true true false
+check 'nested scripts/ under pwsh/' push feature "$(commit_on "$main_tip" pwsh/scripts/main.ps1)" false true false
 check 'powershell file under .github/' push feature "$(commit_on "$main_tip" .github/a.ps1)" true true true
 check 'markdown under .github/' push feature "$(commit_on "$main_tip" .github/a.md)" false false false
 
@@ -92,6 +93,16 @@ failed="$(commit_on "$released" packaging/a)"
 git tag v1.2.11 "$failed"
 after_failed="$(commit_on "$failed" docs/a.md)"
 check 'main after a tag whose release failed' push main "$after_failed" true false false "PUBLISHED_TAGS=$published"
+
+# The base tells an unreleased stable tag and a published prerelease apart from the released tag.
+v1="$(commit_on "$main_tip" docs/a.md)"
+git tag v2.0.0 "$v1"
+unreleased="$(commit_on "$v1" bash/a.sh)"
+git tag v2.1.0 "$unreleased"
+check 'main after an unreleased stable tag' push main "$(commit_on "$unreleased" pwsh/a.ps1)" true true false PUBLISHED_TAGS=v2.0.0
+rc="$(commit_on "$v1" bash/a.sh)"
+git tag v2.1.0-rc.1 "$rc"
+check 'main after a published prerelease' push main "$(commit_on "$rc" pwsh/a.ps1)" true true false $'PUBLISHED_TAGS=v2.0.0\nv2.1.0-rc.1'
 
 # Anything the script cannot judge runs every check.
 check 'main without a released stable tag' push main "$merged" true true true PUBLISHED_TAGS=
