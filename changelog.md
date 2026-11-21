@@ -20,6 +20,7 @@
 
 ### Documentation
 
+- Record the PowerShell function defects that the new tests and the Windows VM runs found and this change left open, in `docs/internal/analysis/pwsh-function-defects.md`.
 - Record the verified Fedora Btrfs recovery and the accepted cache-exclusion/scheduled-cleanup policy in `docs/internal/plans/fedora-storage-guard.md`.
 - Refresh the root README with platform coverage, usage examples, and light and dark project banners. Record backlog dispositions and deferred ideas in `docs/internal/analysis/readme-refresh.md`.
 - Move the Debian workstation bootstrap reference to `docs/workstation-bootstrap.md` and describe its remaining validation gaps.
