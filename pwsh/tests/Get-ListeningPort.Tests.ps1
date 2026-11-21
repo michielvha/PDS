@@ -28,6 +28,17 @@ Describe 'Get-ListeningPort' {
         $output | Should -Match '(?m)^UDP\s+0\.0\.0\.0:5353\s+3300\s+dnscache\s*$'
     }
 
+    It 'lists a single TCP listener with the UDP endpoints' {
+        Mock -ModuleName PDS Get-NetTCPConnection {
+            [pscustomobject]@{ LocalAddress = '0.0.0.0'; LocalPort = 22; OwningProcess = 2200 }
+        }
+
+        $output = Get-ListeningPort | Out-String
+
+        $output | Should -Match '(?m)^TCP\s+0\.0\.0\.0:22\s+2200\s+sshd\s*$'
+        $output | Should -Match '(?m)^UDP\s+0\.0\.0\.0:5353\s+3300\s+dnscache\s*$'
+    }
+
     It 'asks only for TCP connections in the Listen state' {
         Get-ListeningPort | Out-Null
 

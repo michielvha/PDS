@@ -28,6 +28,7 @@
 
 ### Fixed
 
+- `Get-ListeningPort` works when exactly one TCP port is listening; it used to fail with an `op_Addition` error.
 - Rerunning a release's APT job deploys Pages again; each attempt now uploads its own Pages artifact, where a second one with the same name made the deploy fail.
 - A push whose changes select no check, such as Markdown only, still runs the version workflow; it used to be skipped with the checks. A failed selection or check still stops it.
 - The release's APT job can run `scripts/build-apt-repo.sh` again: the script was committed without its executable bit, which stopped the `v0.26.0` release before its GitHub Release. The checks now fail on any script under `scripts/` that is not executable.
