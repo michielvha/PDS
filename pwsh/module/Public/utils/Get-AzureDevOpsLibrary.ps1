@@ -161,7 +161,7 @@ function Get-AzureDevOpsLibrary {
                     try {
                         # A clone made by an earlier version kept the token in its remote URL.
                         git remote set-url origin $cleanUrl 2>&1 | Out-Null
-                        $gitOutput = Invoke-AuthenticatedGit pull
+                        $gitOutput = Invoke-AuthenticatedGit -GitArgument pull
                         if ($LASTEXITCODE -eq 0) {
                             Write-Host "  ✓ Updated successfully" -ForegroundColor Green
                             $successCount++
@@ -188,7 +188,7 @@ function Get-AzureDevOpsLibrary {
                     Write-Host "  Cloning repository..." -ForegroundColor Gray
 
                     try {
-                        $gitOutput = Invoke-AuthenticatedGit clone $cleanUrl $repoPath
+                        $gitOutput = Invoke-AuthenticatedGit -GitArgument 'clone', $cleanUrl, $repoPath
                         if ($LASTEXITCODE -eq 0) {
                             Write-Host "  ✓ Cloned successfully" -ForegroundColor Green
                             $successCount++
