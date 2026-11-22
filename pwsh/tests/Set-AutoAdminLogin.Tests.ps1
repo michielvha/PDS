@@ -19,7 +19,7 @@ Describe 'Set-AutoAdminLogin' {
         $result = Set-AutoAdminLogin -Username 'tester' -Password $script:password -Domain 'HOST'
 
         Should -Invoke Test-AutoLogonCredential -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
-            $Username -eq 'tester' -and $Password -ceq 'test-only-password' -and $Domain -eq 'HOST'
+            $Credential.UserName -eq 'tester' -and $Credential.GetNetworkCredential().Password -ceq 'test-only-password' -and $Domain -eq 'HOST'
         }
         Should -Invoke Set-ItemProperty -ModuleName PDS -Times 1 -Exactly -ParameterFilter {
             $Path -eq $script:winlogon -and $Name -eq 'DefaultUserName' -and $Value -eq 'tester'

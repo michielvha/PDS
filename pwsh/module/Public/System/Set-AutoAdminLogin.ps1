@@ -1,4 +1,4 @@
-Function Set-AutoAdminLogin {
+function Set-AutoAdminLogin {
     <#
     .SYNOPSIS
         Signs a Windows account in automatically at startup, or turns that off again. Meant for test machines and kiosks.
@@ -76,8 +76,8 @@ Function Set-AutoAdminLogin {
         return
     }
 
-    $plain = if ($Password) { [System.Net.NetworkCredential]::new('', $Password).Password } else { '' }
-    if (-not (Test-AutoLogonCredential -Username $Username -Password $plain -Domain $Domain)) {
+    $credential = [pscredential]::new($Username, $(if ($Password) { $Password } else { [securestring]::new() }))
+    if (-not (Test-AutoLogonCredential -Credential $credential -Domain $Domain)) {
         Write-Error "The password for $Domain\$Username was not accepted, so automatic sign-in was not changed."
         return
     }
@@ -86,7 +86,7 @@ Function Set-AutoAdminLogin {
         Set-ItemProperty -Path $winlogon -Name 'DefaultUserName' -Value $Username
         Set-ItemProperty -Path $winlogon -Name 'DefaultDomainName' -Value $Domain
         Remove-ItemProperty -Path $winlogon -Name 'DefaultPassword' -ErrorAction SilentlyContinue
-        Set-AutoLogonSecret -Value $plain
+        Set-AutoLogonSecret -Value $credential.GetNetworkCredential().Password
         Set-ItemProperty -Path $winlogon -Name 'AutoAdminLogon' -Value '1'
         if (Test-Path -Path $passwordLess) {
             Set-ItemProperty -Path $passwordLess -Name 'DevicePasswordLessBuildVersion' -Value 0
@@ -97,7 +97,7 @@ Function Set-AutoAdminLogin {
 
 # Checks a password against a local or domain account without signing in.
 function Test-AutoLogonCredential {
-    param ([string]$Username, [string]$Password, [string]$Domain)
+    param ([pscredential]$Credential, [string]$Domain)
     Add-Type -AssemblyName System.DirectoryServices.AccountManagement
     $type = if ($Domain -eq $env:COMPUTERNAME) {
         [System.DirectoryServices.AccountManagement.ContextType]::Machine
@@ -106,12 +106,13 @@ function Test-AutoLogonCredential {
         [System.DirectoryServices.AccountManagement.ContextType]::Domain
     }
     $context = [System.DirectoryServices.AccountManagement.PrincipalContext]::new($type, $Domain)
-    try { $context.ValidateCredentials($Username, $Password) }
+    try { $context.ValidateCredentials($Credential.UserName, $Credential.GetNetworkCredential().Password) }
     finally { $context.Dispose() }
 }
 
 # Stores the password as Winlogon's DefaultPassword LSA secret, or deletes the secret for $null.
 function Set-AutoLogonSecret {
+    [CmdletBinding(SupportsShouldProcess)]
     # Untyped: a [string] parameter would turn $null into an empty string, storing an empty password.
     param ($Value)
     if (-not ('PDS.LsaSecret' -as [type])) {
@@ -184,5 +185,8 @@ namespace PDS {
     }
     # PowerShell passes $null to a .NET string parameter as an empty string; NullString keeps it null.
     $secret = if ($null -eq $Value) { [NullString]::Value } else { [string]$Value }
-    [PDS.LsaSecret]::Store('DefaultPassword', $secret)
+    $action = if ($null -eq $Value) { 'Delete' } else { 'Store' }
+    if ($PSCmdlet.ShouldProcess('LSA secret DefaultPassword', $action)) {
+        [PDS.LsaSecret]::Store('DefaultPassword', $secret)
+    }
 }
