@@ -1,70 +1,145 @@
 ---
 external help file: PDS-help.xml
 Module Name: PDS
-online version: https://support.microsoft.com/en-us/help/324737/how-to-turn-on-automatic-logon-in-windows
-Microsoft support article on configuring auto-logon in Windows.
+online version: https://learn.microsoft.com/troubleshoot/windows-server/user-profiles-and-logon/turn-on-automatic-logon
 schema: 2.0.0
 ---
 
 # Set-AutoAdminLogin
 
 ## SYNOPSIS
-Sets the system to automatically log in with a specified user account.
-This is especially useful in development environments where auto-login is needed for testing purposes.
+Signs a Windows account in automatically at startup, or turns that off again.
+Meant for test machines and kiosks.
 
 ## SYNTAX
 
+### Enable (Default)
 ```
-Set-AutoAdminLogin [[-Username] <String>] [[-Password] <SecureString>]
+Set-AutoAdminLogin -Username <String> [-Password <SecureString>] [-Domain <String>] [-WhatIf] [-Confirm]
+```
+
+### Disable
+```
+Set-AutoAdminLogin -Disable [-WhatIf] [-Confirm]
 ```
 
 ## DESCRIPTION
-The \`Set-AutoAdminLogin\` function configures the Windows system to automatically log in to a specified user account upon boot.
-It achieves this by modifying the necessary registry keys (\`DefaultUserName\`, \`DefaultPassword\`, and \`AutoAdminLogon\`) to enable the auto-login feature.
-This function is particularly useful for development builds where manual login is unnecessary and auto-login streamlines the process.
+`Set-AutoAdminLogin` turns on Windows automatic sign-in for one account.
+It first checks the password against the account, so a typo never leaves the machine stuck at the sign-in screen after a restart.
+Then it sets `DefaultUserName`, `DefaultDomainName` and `AutoAdminLogon` under the Winlogon key and stores the password as the LSA secret Winlogon reads (`DefaultPassword`), the way Sysinternals Autologon does.
+The password is never written to the registry in plain text, and a plain-text `DefaultPassword` value left by an earlier version or another tool is removed.
+On Windows 11 it also allows password sign-in when only Windows Hello sign-in is allowed, because automatic sign-in is ignored in that mode.
 
-**Note:** The password is currently stored in plain text, so make sure to use this function in secure environments or find an encryption mechanism
-for storing the password securely.
+`-Disable` turns automatic sign-in off and deletes the stored password.
+
+Run it elevated.
+The change takes effect at the next startup.
 
 ## EXAMPLES
 
 ### EXAMPLE 1
 ```
-Set-AutoAdminLogin -Username "devUser" -Password "devPass123"
+Set-AutoAdminLogin -Username 'tester' -Password (Read-Host -AsSecureString -Prompt 'Password')
 ```
 
-This example configures the system to automatically log in to the account \`devUser\` with the password \`devPass123\`.
-The system will bypass the login screen and log in to this account after rebooting.
+Signs the local account `tester` in automatically from the next startup on.
+
+### EXAMPLE 2
+```
+Set-AutoAdminLogin -Disable
+```
+
+Turns automatic sign-in off and removes the stored password.
 
 ## PARAMETERS
 
 ### -Username
-The username of the account that should be automatically logged in on system startup.
+The account that signs in automatically.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Enable
 Aliases: u
 
-Required: False
-Position: 1
+Required: True
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -Password
-The password of the user account.
-**Important**: Currently, the password is stored in plain text in the registry.
-Consider using a method to securely encrypt the password.
+The account's password.
+Leave it out for an account without a password.
 
 ```yaml
 Type: SecureString
-Parameter Sets: (All)
+Parameter Sets: Enable
 Aliases: p
 
 Required: False
-Position: 2
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Domain
+The account's domain.
+Defaults to this computer, for a local account.
+
+```yaml
+Type: String
+Parameter Sets: Enable
+Aliases:
+
+Required: False
+Position: Named
+Default value: $env:COMPUTERNAME
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Disable
+Turns automatic sign-in off and deletes the stored password.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Disable
+Aliases:
+
+Required: True
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would change without changing it.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Asks for confirmation before changing anything.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -75,15 +150,9 @@ Accept wildcard characters: False
 ## OUTPUTS
 
 ## NOTES
-Author: MKTHEPLUGG
-This function modifies registry keys to configure auto-login, so it must be run with elevated (Administrator) privileges.
+Author: Michiel VH
+Requires administrator rights: it writes HKLM and the LSA secret store.
 
 ## RELATED LINKS
 
-[https://support.microsoft.com/en-us/help/324737/how-to-turn-on-automatic-logon-in-windows
-Microsoft support article on configuring auto-logon in Windows.](https://support.microsoft.com/en-us/help/324737/how-to-turn-on-automatic-logon-in-windows
-Microsoft support article on configuring auto-logon in Windows.)
-
-[https://support.microsoft.com/en-us/help/324737/how-to-turn-on-automatic-logon-in-windows
-Microsoft support article on configuring auto-logon in Windows.]()
-
+[Turn on automatic logon in Windows](https://learn.microsoft.com/troubleshoot/windows-server/user-profiles-and-logon/turn-on-automatic-logon)

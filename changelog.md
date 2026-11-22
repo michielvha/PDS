@@ -14,6 +14,7 @@
 
 ### Features
 
+- `Set-AutoAdminLogin` stores the password as the LSA secret Winlogon reads, the way Sysinternals Autologon does, instead of in the registry in plain text, and removes a plain-text copy an earlier version left. It checks the password against the account first, so a typo cannot leave a machine stuck at the sign-in screen, allows password sign-in on Windows 11 when only Windows Hello sign-in was allowed, and gains `-Disable`, which turns automatic sign-in off and deletes the stored password. `-Username` is now required unless disabling.
 - Keep Btrfs allocation headroom from the Fedora storage maintenance: a new `balance` mode and hourly `pds-btrfs-balance` timer check per-device unallocated space against what the metadata profile needs (two devices for RAID1), aiming for 16 GiB at night and 8 GiB by day. When a device is short it balances data chunks off it in bounded, load-guarded batches. `--dry-run` previews it.
 - Docker retention also prunes build cache unused for 72 hours and dangling images older than a day. Volumes and containers stay untouched.
 - Add `Enable-WinRmServer` and `Disable-WinRmServer`, which prepare a Windows test host for Ansible over WinRM with NTLM authentication, also on networks classed Public, and undo it.
