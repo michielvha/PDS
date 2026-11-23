@@ -33,6 +33,11 @@ Over SSH on macOS the Keychain is out of reach, so the
   answer is Unknown there.
 - Workspace trust: the owner accepted the trust dialog for the directory or a parent.
 - Remote Control consent: the owner answered y to "Enable Remote Control?" once.
+- Terminal bridge: no claude remote-control started at a terminal serves the same directory.
+While
+  one does, the service fails with "This folder is already served by a terminal claude remote-control
+  on this device".
+The one left running after answering the consent prompt is the usual cause.
 - Linger (Linux only): the user's systemd instance keeps running after logout.
 
 Each check has a Status of Ready, Action, Unknown or Optional, and a Step that says what to do.

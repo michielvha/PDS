@@ -15,6 +15,9 @@ function Get-ClaudeRemoteControlStatus {
           answer is Unknown there.
         - Workspace trust: the owner accepted the trust dialog for the directory or a parent.
         - Remote Control consent: the owner answered y to "Enable Remote Control?" once.
+        - Terminal bridge: no claude remote-control started at a terminal serves the same directory. While
+          one does, the service fails with "This folder is already served by a terminal claude remote-control
+          on this device". The one left running after answering the consent prompt is the usual cause.
         - Linger (Linux only): the user's systemd instance keeps running after logout.
 
         Each check has a Status of Ready, Action, Unknown or Optional, and a Step that says what to do.
@@ -65,7 +68,7 @@ function Get-ClaudeRemoteControlStatus {
         Running          = $state.Running
         ProcessId        = $state.ProcessId
         Log              = $service.Log
-        Checks           = @(Get-ClaudeRcCheck -Service $service -ClaudePath $ClaudePath)
+        Checks           = @(Get-ClaudeRcCheck -Service $service -ClaudePath $ClaudePath -ServiceProcessId $state.ProcessId)
     }
 }
 
@@ -208,8 +211,34 @@ function ConvertTo-ClaudeRcCheck {
     [pscustomobject]@{ Check = $Check; Status = $Status; Detail = $Detail; Step = $Step }
 }
 
+function Get-ClaudeRcTerminalBridge {
+    param ($Service, $ServiceProcessId)
+
+    # Every claude remote-control process whose working directory is the service's, except the service itself.
+    $processes = Invoke-ClaudeRcCommand -FilePath 'ps' -ArgumentList '-A', '-o', 'pid=,args='
+    foreach ($line in $processes.Output) {
+        if ($line -notmatch '^\s*(\d+)\s+(.*)$') {
+            continue
+        }
+        $processId = [int]$Matches[1]
+        if ($processId -eq $ServiceProcessId -or $Matches[2] -notmatch '(^|/)claude\s+remote-control(\s|$)') {
+            continue
+        }
+        $cwd = if ($Service.Platform -eq 'macOS') {
+            (Invoke-ClaudeRcCommand -FilePath 'lsof' -ArgumentList '-a', '-p', "$processId", '-d', 'cwd', '-Fn').Output |
+                Where-Object { $_ -like 'n*' } | Select-Object -First 1 | ForEach-Object { $_.Substring(1) }
+        }
+        else {
+            (Invoke-ClaudeRcCommand -FilePath 'readlink' -ArgumentList "/proc/$processId/cwd").Output | Select-Object -First 1
+        }
+        if ($cwd -and $cwd.TrimEnd('/', '\') -eq $Service.WorkingDirectory) {
+            $processId
+        }
+    }
+}
+
 function Get-ClaudeRcCheck {
-    param ($Service, [string]$ClaudePath)
+    param ($Service, [string]$ClaudePath, $ServiceProcessId)
 
     $userHome = Get-ClaudeRcHome
     $directory = $Service.WorkingDirectory
@@ -320,7 +349,7 @@ function Get-ClaudeRcCheck {
         ConvertTo-ClaudeRcCheck -Check 'Workspace trust' -Status 'Action' -Detail "No trust recorded for $directory." -Step $trustStep
     }
 
-    $consentStep = "At a terminal in $directory, run claude remote-control once, answer y to 'Enable Remote Control?', then stop it with Ctrl+C. A background service cannot answer that prompt."
+    $consentStep = "At a terminal in $directory, run claude remote-control once and answer y to 'Enable Remote Control?'. Then stop that terminal bridge with Ctrl+C: while it runs, the service cannot serve the folder. A background service cannot answer the prompt itself."
     if ($config -is [hashtable] -and $config['remoteDialogSeen'] -eq $true) {
         ConvertTo-ClaudeRcCheck -Check 'Remote Control consent' -Status 'Ready' -Detail 'Remote Control was enabled once on this machine.' -Step ''
     }
@@ -329,6 +358,14 @@ function Get-ClaudeRcCheck {
     }
     else {
         ConvertTo-ClaudeRcCheck -Check 'Remote Control consent' -Status 'Action' -Detail 'Remote Control was never enabled on this machine.' -Step $consentStep
+    }
+
+    $terminal = @(Get-ClaudeRcTerminalBridge -Service $Service -ServiceProcessId $ServiceProcessId)
+    if ($terminal) {
+        ConvertTo-ClaudeRcCheck -Check 'Terminal bridge' -Status 'Action' -Detail "A terminal claude remote-control (PID $($terminal -join ', ')) already serves $directory, so the service cannot start: 'This folder is already served by a terminal claude remote-control on this device'." -Step "Stop the terminal bridge with Ctrl+C in its terminal, or kill $($terminal -join ' '). The service takes over within a minute."
+    }
+    else {
+        ConvertTo-ClaudeRcCheck -Check 'Terminal bridge' -Status 'Ready' -Detail "No terminal claude remote-control serves $directory." -Step ''
     }
 
     if ($Service.Platform -eq 'Linux') {

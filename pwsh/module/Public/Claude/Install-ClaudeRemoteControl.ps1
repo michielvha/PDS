@@ -20,7 +20,8 @@ function Install-ClaudeRemoteControl {
 
         It then checks the traps that stop Remote Control from starting and prints the steps that are left.
         Two of them are the owner's decision and stay manual: accepting workspace trust and answering
-        "Enable Remote Control?" once. This function never records either. The service retries every minute,
+        "Enable Remote Control?" once. This function never records either. It also reports a terminal
+        claude remote-control that already serves the directory, which keeps the service from starting. The service retries every minute,
         so it starts by itself once the steps are done.
 
     .PARAMETER WorkingDirectory
@@ -34,7 +35,7 @@ function Install-ClaudeRemoteControl {
         /opt/homebrew/bin/claude from the Homebrew cask claude-code@latest.
 
     .PARAMETER SpawnMode
-        How the bridge starts sessions: same-dir (default), worktree or session.
+        How the bridge starts sessions: worktree (default, a Git worktree per session), same-dir or session.
 
     .PARAMETER SearchPath
         The PATH the service and the sessions it starts get. Defaults to the current PATH.
@@ -45,7 +46,12 @@ function Install-ClaudeRemoteControl {
     .EXAMPLE
         Install-ClaudeRemoteControl -WorkingDirectory ~/code/vh-adlc -Name macbook-vh-adlc
 
-        Installs and starts the bridge for ~/code/vh-adlc, shown as macbook-vh-adlc.
+        Installs and starts the bridge for ~/code/vh-adlc, shown as macbook-vh-adlc, with a worktree per session.
+
+    .EXAMPLE
+        Install-ClaudeRemoteControl -WorkingDirectory ~/code/vh-adlc -SpawnMode same-dir
+
+        Starts every session in ~/code/vh-adlc itself instead of in a worktree.
 
     .EXAMPLE
         Install-ClaudeRemoteControl -WorkingDirectory ~/code/vh-adlc -EnableLinger
@@ -64,8 +70,8 @@ function Install-ClaudeRemoteControl {
         [string]$WorkingDirectory = (Get-Location).Path,
         [string]$Name,
         [string]$ClaudePath,
-        [ValidateSet('same-dir', 'worktree', 'session')]
-        [string]$SpawnMode = 'same-dir',
+        [ValidateSet('worktree', 'same-dir', 'session')]
+        [string]$SpawnMode = 'worktree',
         [string]$SearchPath = $env:PATH,
         [switch]$EnableLinger
     )

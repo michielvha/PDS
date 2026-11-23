@@ -47,7 +47,7 @@ Describe 'Install-ClaudeRemoteControl' {
             $values[$dict.ChildNodes[$i].InnerText] = $dict.ChildNodes[$i + 1]
         }
         $values['Label'].InnerText | Should -Be 'pro.vhco.claude-remote-control.vh-adlc'
-        @($values['ProgramArguments'].string) | Should -Be @($claude, 'remote-control', '--spawn=same-dir', '--name', 'macbook-vh-adlc')
+        @($values['ProgramArguments'].string) | Should -Be @($claude, 'remote-control', '--spawn=worktree', '--name', 'macbook-vh-adlc')
         $values['WorkingDirectory'].InnerText | Should -Be $repo
         $values['RunAtLoad'].Name | Should -Be 'true'
         $values['KeepAlive'].Name | Should -Be 'true'
@@ -101,6 +101,16 @@ Describe 'Install-ClaudeRemoteControl' {
         Should -Invoke Write-Host -ModuleName PDS -ParameterFilter { "$Object" -like "*answer y to 'Enable Remote Control?'*" }
     }
 
+    It 'tells the owner to stop a terminal bridge that serves the same folder' {
+        Mock Invoke-ClaudeRcCommand -ModuleName PDS -ParameterFilter { $FilePath -eq 'ps' } { Get-CommandResult -Output '  77240 claude remote-control' }
+        Mock Invoke-ClaudeRcCommand -ModuleName PDS -ParameterFilter { $FilePath -eq 'lsof' } { Get-CommandResult -Output @('p77240', 'fcwd', "n$script:repo") }
+
+        Install-ClaudeRemoteControl -WorkingDirectory $repo -ClaudePath $claude | Out-Null
+
+        Should -Invoke Write-Host -ModuleName PDS -ParameterFilter { "$Object" -like '*Terminal bridge: Action*PID 77240*' }
+        Should -Invoke Write-Host -ModuleName PDS -ParameterFilter { "$Object" -like '*Stop the terminal bridge with Ctrl+C*' }
+    }
+
     It 'changes nothing with -WhatIf' {
         Install-ClaudeRemoteControl -WorkingDirectory $repo -ClaudePath $claude -WhatIf | Out-Null
 
@@ -121,7 +131,7 @@ Describe 'Install-ClaudeRemoteControl' {
         Mock Get-ClaudeRcPlatform -ModuleName PDS { 'Linux' }
         Mock Invoke-ClaudeRcCommand -ModuleName PDS -ParameterFilter { $FilePath -eq 'id' } { Get-CommandResult -Output 'michiel' }
 
-        Install-ClaudeRemoteControl -WorkingDirectory $repo -Name 'fedora 43' -ClaudePath $claude -SearchPath '/usr/bin' -EnableLinger | Out-Null
+        Install-ClaudeRemoteControl -WorkingDirectory $repo -Name 'fedora 43' -ClaudePath $claude -SearchPath '/usr/bin' -SpawnMode same-dir -EnableLinger | Out-Null
 
         $content = Get-Content -LiteralPath $unit -Raw
         $content | Should -BeLike "*WorkingDirectory=$repo*"

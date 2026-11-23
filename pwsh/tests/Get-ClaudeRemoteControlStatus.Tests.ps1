@@ -67,7 +67,7 @@ Describe 'Get-ClaudeRemoteControlStatus' {
         ($checks | Where-Object Check -EQ 'Workspace trust').Status | Should -Be 'Action'
         ($checks | Where-Object Check -EQ 'Workspace trust').Step | Should -BeLike '*run claude in*accept the workspace trust dialog*'
         ($checks | Where-Object Check -EQ 'Remote Control consent').Status | Should -Be 'Action'
-        ($checks | Where-Object Check -EQ 'Remote Control consent').Step | Should -BeLike "*claude remote-control once, answer y*"
+        ($checks | Where-Object Check -EQ 'Remote Control consent').Step | Should -BeLike "*claude remote-control once and answer y*"
     }
 
     It 'accepts trust recorded for the directory or a parent, and recorded consent' {
@@ -123,6 +123,46 @@ Describe 'Get-ClaudeRemoteControlStatus' {
 
         $check.Status | Should -Be 'Unknown'
         $check.Detail | Should -BeLike '*Keychain*'
+    }
+
+    It 'tells the owner to stop the terminal bridge after answering the consent prompt' {
+        $step = ((Get-ClaudeRemoteControlStatus -WorkingDirectory $repo -ClaudePath $claude).Checks | Where-Object Check -EQ 'Remote Control consent').Step
+
+        $step | Should -BeLike "*answer y to 'Enable Remote Control?'*stop that terminal bridge with Ctrl+C*"
+    }
+
+    It 'finds a terminal claude remote-control in the same folder and ignores the service and other folders' {
+        $other = (New-Item -ItemType Directory -Path (Join-Path $root 'code/other') -Force).FullName
+        Mock Invoke-ClaudeRcCommand -ModuleName PDS -ParameterFilter { $FilePath -eq 'launchctl' } { Get-CommandResult -Output "`tpid = 100" }
+        Mock Invoke-ClaudeRcCommand -ModuleName PDS -ParameterFilter { $FilePath -eq 'ps' } {
+            Get-CommandResult -Output @(
+                '  100 /opt/homebrew/bin/claude remote-control --spawn=worktree --name mac'
+                '  200 claude remote-control'
+                '  300 claude remote-control'
+                '  400 claude --resume abc'
+                '  500 vim remote-control.md'
+            )
+        }
+        Mock Invoke-ClaudeRcCommand -ModuleName PDS -ParameterFilter { $FilePath -eq 'lsof' } {
+            $target = switch ($ArgumentList[2]) { '200' { $script:repo } '300' { $other } default { $script:repo } }
+            Get-CommandResult -Output @("p$($ArgumentList[2])", 'fcwd', "n$target")
+        }
+
+        $check = (Get-ClaudeRemoteControlStatus -WorkingDirectory $repo -ClaudePath $claude).Checks | Where-Object Check -EQ 'Terminal bridge'
+
+        $check.Status | Should -Be 'Action'
+        $check.Detail | Should -BeLike '*(PID 200)*already served by a terminal*'
+        Should -Invoke Invoke-ClaudeRcCommand -ModuleName PDS -Times 0 -Exactly -ParameterFilter { $FilePath -eq 'lsof' -and $ArgumentList[2] -in '100', '400', '500' }
+    }
+
+    It 'reads the working directory of a terminal bridge from /proc on Linux' {
+        Mock Get-ClaudeRcPlatform -ModuleName PDS { 'Linux' }
+        Mock Invoke-ClaudeRcCommand -ModuleName PDS -ParameterFilter { $FilePath -eq 'ps' } { Get-CommandResult -Output '  200 /usr/bin/claude remote-control' }
+        Mock Invoke-ClaudeRcCommand -ModuleName PDS -ParameterFilter { $FilePath -eq 'readlink' -and $ArgumentList[0] -eq '/proc/200/cwd' } { Get-CommandResult -Output $script:repo }
+
+        $check = (Get-ClaudeRemoteControlStatus -WorkingDirectory $repo -ClaudePath $claude).Checks | Where-Object Check -EQ 'Terminal bridge'
+
+        $check.Status | Should -Be 'Action'
     }
 
     It 'reports a missing claude binary' {

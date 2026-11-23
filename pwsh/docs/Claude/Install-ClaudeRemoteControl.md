@@ -42,6 +42,8 @@ It then checks the traps that stop Remote Control from starting and prints the s
 Two of them are the owner's decision and stay manual: accepting workspace trust and answering
 "Enable Remote Control?" once.
 This function never records either.
+It also reports a terminal
+claude remote-control that already serves the directory, which keeps the service from starting.
 The service retries every minute,
 so it starts by itself once the steps are done.
 
@@ -52,9 +54,16 @@ so it starts by itself once the steps are done.
 Install-ClaudeRemoteControl -WorkingDirectory ~/code/vh-adlc -Name macbook-vh-adlc
 ```
 
-Installs and starts the bridge for ~/code/vh-adlc, shown as macbook-vh-adlc.
+Installs and starts the bridge for ~/code/vh-adlc, shown as macbook-vh-adlc, with a worktree per session.
 
 ### EXAMPLE 2
+```
+Install-ClaudeRemoteControl -WorkingDirectory ~/code/vh-adlc -SpawnMode same-dir
+```
+
+Starts every session in ~/code/vh-adlc itself instead of in a worktree.
+
+### EXAMPLE 3
 ```
 Install-ClaudeRemoteControl -WorkingDirectory ~/code/vh-adlc -EnableLinger
 ```
@@ -144,7 +153,7 @@ Accept wildcard characters: False
 ```
 
 ### -SpawnMode
-How the bridge starts sessions: same-dir (default), worktree or session.
+How the bridge starts sessions: worktree (default, a Git worktree per session), same-dir or session.
 
 ```yaml
 Type: String
@@ -153,7 +162,7 @@ Aliases:
 
 Required: False
 Position: 4
-Default value: Same-dir
+Default value: Worktree
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
