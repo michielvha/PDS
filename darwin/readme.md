@@ -37,6 +37,10 @@ Available setup [functions](functions.sh):
   - `install_zi` – Installs the ZI plugin manager.
   - `configure_zsh` – Applies the Zsh configuration.
 
+## Claude Code Remote Control
+
+To keep this Mac available as a Claude Code Remote Control environment, install PowerShell 7 and the PDS module, then run `Install-ClaudeRemoteControl` from the [PowerShell module](../pwsh/docs/Claude/Install-ClaudeRemoteControl.md). It writes and loads a LaunchAgent and lists the steps you still have to take yourself.
+
 ## ⌨️ Shortcuts
 
 - `command + q` - actually quit apps (red cross doesn't behave like on windows).

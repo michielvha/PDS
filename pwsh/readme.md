@@ -54,6 +54,7 @@ Below is a list of software and tools supported by the custom PowerShell functio
 7. **longpath support**: `Enable-LongPath` allows support for longerfile paths.  
 8. **SSH server**: `Enable-SshServer` installs/enables OpenSSH server, opens the firewall and optionally authorizes public keys.  
 9. **WinRM server**: `Enable-WinRmServer` enables WinRM over HTTP with NTLM authentication, opens TCP 5985 on every network profile and optionally creates a local user for Ansible or other WinRM clients. `Disable-WinRmServer` reverses it.  
+10. **Claude Code Remote Control**: `Install-ClaudeRemoteControl` runs `claude remote-control` as a per-user service on macOS (LaunchAgent) or Linux (systemd --user), so the machine stays available as a Remote Control environment. It prints the steps only the owner can take, such as accepting workspace trust. `Get-ClaudeRemoteControlStatus` repeats the checks and `Uninstall-ClaudeRemoteControl` removes the service. These three need PowerShell 7 and do not run on Windows.  
 **TODO: expand with all functions**
 
 ### Additional Notes

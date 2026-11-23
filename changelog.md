@@ -14,6 +14,7 @@
 
 ### Features
 
+- Add `Install-ClaudeRemoteControl`, `Get-ClaudeRemoteControlStatus` and `Uninstall-ClaudeRemoteControl`, the first PDS functions for macOS and Linux. Install runs `claude remote-control` as a per-user service: a LaunchAgent in the `gui/<uid>` domain on macOS, which can read the Keychain login that SSH cannot, or a `systemd --user` unit on Linux, with linger on request. A second run with the same parameters changes nothing. It checks the traps that stop a bridge from starting: `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` in a settings file, a missing login, workspace trust and the one-time "Enable Remote Control?" prompt. It never records trust or consent and prints the steps the owner takes instead. `scripts/vm-set.ps1` lists these functions under other platforms rather than the Windows VM set.
 - Keep Btrfs allocation headroom from the Fedora storage maintenance: a new `balance` mode and hourly `pds-btrfs-balance` timer check per-device unallocated space against what the metadata profile needs (two devices for RAID1), aiming for 16 GiB at night and 8 GiB by day. When a device is short it balances data chunks off it in bounded, load-guarded batches. `--dry-run` previews it.
 - Docker retention also prunes build cache unused for 72 hours and dangling images older than a day. Volumes and containers stay untouched.
 - Add `Enable-WinRmServer` and `Disable-WinRmServer`, which prepare a Windows test host for Ansible over WinRM with NTLM authentication, also on networks classed Public, and undo it.

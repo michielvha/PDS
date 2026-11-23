@@ -14,6 +14,9 @@
     software does not count. Each mocked-only entry names its reason and the file:line of the
     dependency or the loop, so every reason can be checked.
 
+    A function that does not run on Windows, such as the Claude Remote Control functions for macOS
+    and Linux, is listed under other platforms with the platforms it runs on, and is proved there.
+
 .PARAMETER Base
     The ref to compare with; the script uses its merge base with HEAD.
 
@@ -45,6 +48,14 @@ $mockedOnly = [ordered]@{
     'Get-AzureDevOpsLibrary'                  = @('needs a cloud account: an Azure DevOps organization', 'https://dev\.azure\.com')
     'Start-TaintWatcher'                      = @('needs a cluster and never terminates', 'while \(\$true\)')
     'Start-ScrollLockToggle'                  = @('never terminates', 'while \(\$true\)')
+}
+
+# Functions that do not run on Windows. A Windows VM proves nothing for them; each changed one
+# runs for real on the platforms named here instead.
+$otherPlatform = [ordered]@{
+    'Get-ClaudeRemoteControlStatus' = 'macOS and Linux'
+    'Install-ClaudeRemoteControl'   = 'macOS and Linux'
+    'Uninstall-ClaudeRemoteControl' = 'macOS and Linux'
 }
 
 function Get-NormalizedToken {
@@ -86,6 +97,7 @@ git diff --name-status -M50% --diff-filter=R $mergeBase HEAD -- pwsh/module/Publ
 
 $vmSet = [System.Collections.Generic.List[object]]::new()
 $mocked = [System.Collections.Generic.List[object]]::new()
+$elsewhere = [System.Collections.Generic.List[object]]::new()
 $files = git ls-tree -r --name-only HEAD -- pwsh/module/Public | Where-Object { $_ -like '*.ps1' -and $_ -notlike '*.Tests.ps1' }
 foreach ($file in $files) {
     $name = [IO.Path]::GetFileNameWithoutExtension($file)
@@ -96,7 +108,10 @@ foreach ($file in $files) {
     $changed = $isNew -or (Compare-Object (Get-NormalizedToken $oldText) (Get-NormalizedToken $newText) -SyncWindow 0)
     if (-not $changed -and $name -ne 'Enable-SshServer') { continue }
 
-    if ($mockedOnly.Contains($name)) {
+    if ($otherPlatform.Contains($name)) {
+        $elsewhere.Add([pscustomobject]@{ Function = $name; Platform = $otherPlatform[$name]; File = $file })
+    }
+    elseif ($mockedOnly.Contains($name)) {
         $reason, $pattern = $mockedOnly[$name]
         $line = Get-DependencyLine -Line ($newText -split "`n") -Pattern $pattern
         $mocked.Add([pscustomobject]@{ Function = $name; Reason = $reason; Where = "${file}:$line" })
@@ -111,3 +126,5 @@ Write-Output "VM set ($($vmSet.Count)): run each for real on the Windows 11 VM"
 $vmSet | Sort-Object Function | ForEach-Object { Write-Output "  $($_.Function)  $($_.File)" }
 Write-Output "Mocked-only ($($mocked.Count)): Pester tests only"
 $mocked | Sort-Object Function | ForEach-Object { Write-Output "  $($_.Function)  $($_.Reason)  $($_.Where)" }
+Write-Output "Other platforms ($($elsewhere.Count)): run each for real on the platforms named, not on Windows"
+$elsewhere | Sort-Object Function | ForEach-Object { Write-Output "  $($_.Function)  $($_.Platform)  $($_.File)" }

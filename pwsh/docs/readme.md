@@ -33,6 +33,16 @@ Locale: en-US
 ### [Show-AksInfo](Azure/Show-AksInfo.md)
 {{ Fill in the Description }}
 
+## Claude Cmdlets
+### [Get-ClaudeRemoteControlStatus](Claude/Get-ClaudeRemoteControlStatus.md)
+Reports the Remote Control service for a working directory and what still stops it from starting.
+
+### [Install-ClaudeRemoteControl](Claude/Install-ClaudeRemoteControl.md)
+Runs claude remote-control as a LaunchAgent on macOS or a systemd --user unit on Linux.
+
+### [Uninstall-ClaudeRemoteControl](Claude/Uninstall-ClaudeRemoteControl.md)
+Stops and removes that service.
+
 ## diagnostics Cmdlets
 ### [Get-LogonActivity](diagnostics/Get-LogonActivity.md)
 {{ Fill in the Description }}
