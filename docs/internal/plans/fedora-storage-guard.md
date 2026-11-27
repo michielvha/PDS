@@ -461,7 +461,7 @@ the final result must still report incomplete/failed work.
 The root job uses only `unix:///var/run/docker.sock` and builder `default`,
 ignoring ambient remote endpoints/contexts and builder selection. It invokes
 `docker buildx prune --builder default --max-used-space 20000000000 --reserved-space 10000000000 --force`
-and `docker image prune --all --filter until=168h --force`. The space settings
+and `docker image prune --all --filter until=168h --filter label!=com.docker.compose.project --force`. The space settings
 are explicit bytes for decimal 20 GB and 10 GB; no suffix-dependent parsing is
 assumed. In-use records are preserved by the
 engine. Any excess that cannot be reclaimed remains visible in the report.

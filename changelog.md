@@ -16,6 +16,7 @@
 
 - Keep Btrfs allocation headroom from the Fedora storage maintenance: a new `balance` mode and hourly `pds-btrfs-balance` timer check per-device unallocated space against what the metadata profile needs (two devices for RAID1), aiming for 16 GiB at night and 8 GiB by day. When a device is short it balances data chunks off it in bounded, load-guarded batches. `--dry-run` previews it.
 - Docker retention also prunes build cache unused for 72 hours and dangling images older than a day. Volumes and containers stay untouched.
+- Docker retention keeps images that Docker Compose built (they carry the `com.docker.compose.project` label). A Compose stack's job images are used only by short-lived job containers, so the seven-day prune used to delete them between jobs, and the stack could no longer run jobs.
 - Add `Enable-WinRmServer` and `Disable-WinRmServer`, which prepare a Windows test host for Ansible over WinRM with NTLM authentication, also on networks classed Public, and undo it.
 
 ### Documentation
