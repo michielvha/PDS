@@ -305,7 +305,10 @@ storage_consumers() (
                     _pds_consumer_error 'Native Docker build-cache retention failed.'
                 _pds_consumer_docker image prune --filter dangling=true --filter until=24h --force ||
                     _pds_consumer_error 'Native Docker dangling-image retention failed.'
-                _pds_consumer_docker image prune --all --filter until=168h --force ||
+                # Compose-built images are kept: a stack's job images are used only by short-lived
+                # job containers, so they look unused between jobs, and losing them stops the stack.
+                _pds_consumer_docker image prune --all --filter until=168h \
+                    --filter label!=com.docker.compose.project --force ||
                     _pds_consumer_error 'Native Docker image retention failed.'
                 _pds_consumer_docker_audit || consumer_status=2
             fi

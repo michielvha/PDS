@@ -106,7 +106,8 @@ class ConsumerTests(unittest.TestCase):
         calls = [entry['args'][2:] for entry in self.commands('docker')]
         self.assertIn(['buildx', 'prune', '--builder', 'default', '--max-used-space',
                        '20000000000', '--reserved-space', '10000000000', '--force'], calls)
-        self.assertIn(['image', 'prune', '--all', '--filter', 'until=168h', '--force'], calls)
+        self.assertIn(['image', 'prune', '--all', '--filter', 'until=168h', '--filter',
+                       'label!=com.docker.compose.project', '--force'], calls)
         self.assertIn(['buildx', 'prune', '--builder', 'default', '--filter', 'until=72h',
                        '--force'], calls)
         self.assertIn(['image', 'prune', '--filter', 'dangling=true', '--filter', 'until=24h',
@@ -273,6 +274,7 @@ printf cache-fixture >/var/tmp/pds-native-build/marker
 printf 'FROM scratch\\nCOPY marker /marker\\n' >/var/tmp/pds-native-build/Dockerfile
 docker build --build-arg SOURCE_DATE_EPOCH=1577836800 --label pds.fixture=unused -t pds-old-unused /var/tmp/pds-native-build
 docker build --build-arg SOURCE_DATE_EPOCH=1577836800 --label pds.fixture=referenced -t pds-old-referenced /var/tmp/pds-native-build
+docker build --build-arg SOURCE_DATE_EPOCH=1577836800 --label pds.fixture=compose --label com.docker.compose.project=pds-fixture -t pds-old-compose /var/tmp/pds-native-build
 docker build --label pds.fixture=recent -t pds-recent /var/tmp/pds-native-build
 docker create --name pds-retained --entrypoint /not-running pds-old-referenced
 docker volume create pds-unattached
@@ -292,6 +294,9 @@ printf preserve-volume >"$volume/keep"
         self.assertIn(result.returncode, (0, 1), result.stdout + result.stderr)
         self.assertNotEqual(self.execute('docker image inspect pds-old-unused',
                                          check=False).returncode, 0)
+        # An old, unreferenced image Docker Compose built is kept: a stack's job images look
+        # unused between jobs.
+        self.execute('docker image inspect pds-old-compose >/dev/null')
         self.execute('docker image inspect pds-recent >/dev/null; '
                      'volume=$(docker volume inspect -f "{{.Mountpoint}}" pds-unattached); '
                      'test "$(cat "$volume/keep")" = preserve-volume')
